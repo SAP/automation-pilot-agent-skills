@@ -1,6 +1,6 @@
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/automation-pilot-agent-skills)](https://api.reuse.software/info/github.com/SAP/automation-pilot-agent-skills)
 
-# Automation Pilot Agent Skills
+# SAP Automation Pilot agent skills
 
 ## About this project
 
