@@ -1,12 +1,12 @@
 ---
 name: manage-sap-automation-pilot-commands-catalogs-and-inputs-via-api
-description: This skill should be used when the user asks to "list autopi catalogs", "manage commands","upload command to autopi", "deploy command", "create input", "trigger webhook", "list commands", "list inputs", "manage automation pilot content", "export command", "import command", or discusses SAP Automation Pilot Content API operations for catalogs, commands, inputs, or webhooks.
-version: 1.1.0
+description: This skill should be used when the user asks to "list autopi catalogs", "import command","manage commands","upload command to autopi", "deploy command", "create input", "trigger webhook", "list commands", "list inputs", "manage automation pilot content", "export command", "import command", "list MCP servers", "create MCP server", "deploy MCP server", "update MCP server", "delete MCP server", "export MCP server", "manage MCP servers", or discusses SAP Automation Pilot Content API operations for catalogs, commands, inputs, webhooks, or MCP servers.
+version: 1.2.0
 ---
 
 # SAP Automation Pilot Content API Management
 
-This skill manages catalogs, commands, inputs, and webhooks in SAP Automation Pilot using the Content API.
+This skill manages catalogs, commands, inputs, webhooks, and MCP servers in SAP Automation Pilot using the Content API.
 
 ## ⚠️ CRITICAL: Command Release Policy
 
@@ -50,8 +50,10 @@ Reusable shell scripts are available in `scripts/` directory. These scripts hand
 | `autopi-commands.sh` | List, get, deploy, delete, release commands |
 | `autopi-inputs.sh` | List, get, create, update, delete inputs |
 | `autopi-webhooks.sh` | List, get, create, trigger webhooks |
+| `autopi-mcp-servers.sh` | List, get, create, update, delete MCP servers |
 | `autopi-deploy.sh` | Smart deploy (create or update) a command |
-| `autopi-export.sh` | Export commands/inputs to files |
+| `autopi-deploy-mcp-server.sh` | Smart deploy (create or update) an MCP server |
+| `autopi-export.sh` | Export commands/inputs/MCP servers to files |
 | `autopi-sync.sh` | Batch sync all commands from a directory |
 
 ## Usage Examples
@@ -77,6 +79,15 @@ Reusable shell scripts are available in `scripts/` directory. These scripts hand
 
 # Trigger a webhook
 ./scripts/autopi-webhooks.sh trigger my-webhook-id '{"message":"hello"}'
+
+# List MCP servers
+./scripts/autopi-mcp-servers.sh list
+
+# Deploy an MCP server (creates if new, updates if exists)
+./scripts/autopi-deploy-mcp-server.sh my-server.json
+
+# Export all MCP servers to a directory
+./scripts/autopi-export.sh mcp-servers ./exported-servers/
 ```
 
 ## Script Details
@@ -117,6 +128,30 @@ Validates JSON, checks if command exists, creates or updates accordingly, and re
 # [INFO]   Catalog: my-catalog
 # [INFO] Command exists, updating...
 # [OK] Deployed: my-catalog:MyCommand:1
+```
+
+### autopi-mcp-servers.sh
+
+```bash
+autopi-mcp-servers.sh list                            # List all MCP servers
+autopi-mcp-servers.sh get <mcp-server-id>             # Get MCP server details
+autopi-mcp-servers.sh create <file.json>              # Create MCP server from file
+autopi-mcp-servers.sh update <mcp-server-id> <file>   # Update MCP server (auto-fetches ETag)
+autopi-mcp-servers.sh delete <mcp-server-id>          # Delete MCP server (auto-fetches ETag)
+```
+
+### autopi-deploy-mcp-server.sh (Smart Deploy)
+
+Validates JSON, checks if MCP server exists, creates or updates accordingly. Handles ETag automatically for updates.
+
+```bash
+./scripts/autopi-deploy-mcp-server.sh my-server.json
+# Output:
+# [INFO] Deploying MCP server: BTP Resource Discovery
+# [INFO]   Tools: 5
+# [INFO]   Enabled: true
+# [INFO] Creating new MCP server...
+# [OK] Deployed: BTP Resource Discovery (5 tools)
 ```
 
 ---
@@ -310,7 +345,9 @@ curl -s -X DELETE -u "$USER:$PASS" "https://$HOST/api/v1/commands/$COMMAND_ID"
 
 ## Release Command
 
-Release a draft command for execution:
+!!! USE ONLY IF THE USER EXPLICITLY REQUESTED IT 
+
+Release a draft command:
 
 ```bash
 COMMAND_ID="mycatalog-xxx:MyCommand:1"
@@ -454,6 +491,8 @@ curl -s -X DELETE -u "$USER:$PASS" "https://$HOST/api/v1/inputs/$INPUT_ID"
 
 ## Release Input
 
+!!! USE ONLY IF THE USER EXPLICITLY REQUESTED IT 
+
 ```bash
 INPUT_ID="mycatalog-xxx:MyInput:1"
 curl -s -X PUT -u "$USER:$PASS" "https://$HOST/api/v1/inputs/$INPUT_ID/release" | jq .
@@ -566,6 +605,121 @@ curl -s -X POST \
 
 # Trigger without event data
 curl -s -X POST -u "$USER:$PASS" "https://$HOST/api/v1/webhooks/$WEBHOOK_ID/trigger" | jq .
+```
+
+---
+
+# MCP Servers
+
+MCP servers expose Automation Pilot commands as MCP tools for AI assistants. The API is secured by Basic Authentication and requires the `GenAI` permission for write operations. Update and delete operations use ETag-based optimistic concurrency via the `If-Match` header.
+
+## List MCP Servers
+
+```bash
+curl -s -u "$USER:$PASS" "https://$HOST/api/v1/mcp-servers" | jq .
+```
+
+## Get MCP Server by ID
+
+The MCP server ID is its name (e.g., `"BTP Resource Discovery"`).
+
+```bash
+MCP_SERVER_ID="BTP Resource Discovery"
+curl -s -u "$USER:$PASS" "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID" | jq .
+```
+
+The response includes an `ETag` header needed for update/delete operations.
+
+## Create MCP Server
+
+```bash
+MCP_SERVER_FILE="path/to/my-server.json"
+
+# Validate JSON first
+if ! jq empty "$MCP_SERVER_FILE" 2>/dev/null; then
+  echo "Error: Invalid JSON in $MCP_SERVER_FILE"
+  exit 1
+fi
+
+curl -s -X POST \
+  -u "$USER:$PASS" \
+  -H "Content-Type: application/json" \
+  -d @"$MCP_SERVER_FILE" \
+  "https://$HOST/api/v1/mcp-servers" | jq .
+```
+
+## Update MCP Server
+
+Update requires the `If-Match` header with the current ETag value:
+
+```bash
+MCP_SERVER_ID="BTP Resource Discovery"
+MCP_SERVER_FILE="path/to/updated-server.json"
+
+# Get current ETag
+ETAG=$(curl -s -I -u "$USER:$PASS" \
+  "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID" | \
+  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
+
+# Update with If-Match
+curl -s -X PUT \
+  -u "$USER:$PASS" \
+  -H "Content-Type: application/json" \
+  -H "If-Match: $ETAG" \
+  -d @"$MCP_SERVER_FILE" \
+  "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID" | jq .
+```
+
+If the ETag does not match (HTTP 412), the server was modified since you last read it. Fetch the latest version and retry.
+
+## Delete MCP Server
+
+Delete also requires the `If-Match` header:
+
+```bash
+MCP_SERVER_ID="My Old Server"
+
+# Get current ETag
+ETAG=$(curl -s -I -u "$USER:$PASS" \
+  "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID" | \
+  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
+
+curl -s -X DELETE \
+  -u "$USER:$PASS" \
+  -H "If-Match: $ETAG" \
+  "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+## Deploy MCP Server (Upsert Pattern)
+
+```bash
+MCP_SERVER_FILE="my-server.json"
+MCP_SERVER_ID=$(jq -r '.name' "$MCP_SERVER_FILE")
+
+# Check if exists
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -u "$USER:$PASS" \
+  "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID")
+
+if [[ "$STATUS" == "200" ]]; then
+  echo "Updating existing MCP server..."
+  ETAG=$(curl -s -I -u "$USER:$PASS" \
+    "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID" | \
+    grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
+  curl -s -X PUT \
+    -u "$USER:$PASS" \
+    -H "Content-Type: application/json" \
+    -H "If-Match: $ETAG" \
+    -d @"$MCP_SERVER_FILE" \
+    "https://$HOST/api/v1/mcp-servers/$MCP_SERVER_ID" | jq .
+else
+  echo "Creating new MCP server..."
+  curl -s -X POST \
+    -u "$USER:$PASS" \
+    -H "Content-Type: application/json" \
+    -d @"$MCP_SERVER_FILE" \
+    "https://$HOST/api/v1/mcp-servers" | jq .
+fi
 ```
 
 ---
@@ -689,6 +843,7 @@ echo "$BODY" | jq .
 | List/Get resources | `Read` |
 | Create/Update/Delete resources | `Write` |
 | Trigger webhooks | `Execute` |
+| Create/Update/Delete MCP servers | `GenAI` |
 
 ---
 
@@ -726,3 +881,7 @@ echo "$BODY" | jq .
 **System Operations:**
 - **exitCode** - The exit code returned by the script execution
 - **instanceId** - The ID of the [instance/object]
+
+---
+
+!!! CAUTION: DO NOT RELEASE COMMANDS & INPUTS IF NOT EXPLICITLY REQUESTED BY THE USER

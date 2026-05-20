@@ -130,54 +130,13 @@ The `dryRun.output` contains **sample values for ALL output keys** that the exec
 }
 ```
 
-## IMPORTANT: Catalog ID Naming Convention
+## IMPORTANT: Catalog Naming & ForEach Version
 
-When creating new commands, follow this naming convention:
+See **`references/catalogs.md`** for the complete catalog reference. Key rules:
 
-- **Generated commands** (new commands): Use `<<<TENANT_ID>>>` suffix for the catalog
-- **Built-in SAP commands** (referenced): Use `sapcp` suffix
-
-### Examples
-
-```json
-// NEW command you are creating - use <<<TENANT_ID>>>
-{
-  "id": "mycommands-<<<TENANT_ID>>>:MyNewCommand:1",
-  "catalog": "mycommands-<<<TENANT_ID>>>",
-  ...
-}
-
-// REFERENCING built-in SAP command - use sapcp suffix
-{
-  "execute": "http-sapcp:HttpRequest:1",
-  ...
-}
-```
-
-**NEVER use `sapcp` suffix for generated commands. Always use `<<<TENANT_ID>>>`.**
-
-## IMPORTANT: ForEach Version
-
-**Always use `ForEach:2`, never `ForEach:1`.** Version 1 is deprecated.
-
-```json
-// CORRECT - use ForEach:2
-{
-  "execute": "utils-sapcp:ForEach:2",
-  "input": {
-    "command": "mycommands-<<<TENANT_ID>>>:ProcessItem:1",
-    "inputs": "$(.items)",
-    "defaultValues": "{}",
-    "batchSize": "5"
-  }
-}
-
-// WRONG - never use ForEach:1
-{
-  "execute": "utils-sapcp:ForEach:1",  // DEPRECATED - DO NOT USE
-  ...
-}
-```
+- **Generated commands**: Use `<<<TENANT_ID>>>` suffix (e.g., `mycommands-<<<TENANT_ID>>>:MyCommand:1`)
+- **Built-in SAP commands**: Use `sapcp` suffix (e.g., `http-sapcp:HttpRequest:1`)
+- **ForEach**: Always use `ForEach:2`, never `ForEach:1` (deprecated)
 
 ## Command Structure
 
@@ -503,27 +462,6 @@ Provide custom error messages:
   }
 ]
 ```
-
-## Available Built-in Catalogs (sapcp suffix)
-
-Reference built-in commands by `catalog-sapcp:Command:version`. Key catalogs:
-
-| Catalog | Purpose | Examples |
-|---------|---------|----------|
-| `http-sapcp` | HTTP requests | `HttpRequest:1` |
-| `utils-sapcp` | Utilities | `ForEach:2`, `Delay:1`, `Void:1` |
-| `cf-sapcp` | Cloud Foundry | `GetCfSpace:1`, `CreateCfTask:1` |
-| `applm-sapcp` | App lifecycle | `StartCfApp:1`, `RestartCfApp:1` |
-| `sm-sapcp` | Service Manager | `GetServiceInstance:1` |
-| `jira-sapcp` | JIRA | `CreateJiraIssue:1` |
-| `scripts-sapcp` | Bash scripts | `ExecuteScript:1` |
-| `aicore-sapcp` | AI/GPT | `Gpt4OmniCompletion:1` |
-| `kubernetes-sapcp` | Kubernetes | `ListK8sResources:1`, `KubernetesApiRequest:1` |
-
-**Remember**:
-- Built-in commands use `-sapcp` suffix
-- Your generated commands use `-<<<TENANT_ID>>>` suffix
-- Always use `ForEach:2`, never `ForEach:1`
 
 ## Development Workflow
 
