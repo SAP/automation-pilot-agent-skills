@@ -1,0 +1,17 @@
+# Credentials and secrets
+.env
+.env.local
+.env.*.local
+
+# Claude Code local settings (may contain credentials/local paths)
+.claude/settings.local.json
+.claude/projects/
+.claude/memory/
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
