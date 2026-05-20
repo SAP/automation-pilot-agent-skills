@@ -7,22 +7,6 @@ description: Discover available commands and catalogs in SAP Automation Pilot vi
 
 Discover available commands in SAP Automation Pilot dynamically via API.
 
-## Purpose
-
-This skill enables real-time discovery of:
-- Available catalogs in the user's tenant
-- Commands within a specific catalog
-- Full command definitions (inputs, outputs, executors)
-
-**Why this matters:** SAP continuously adds new catalogs and commands. Querying the API ensures you always have access to the latest available executors — no outdated documentation.
-
-## When to Use
-
-- **Before generating complex commands** involving multiple services (CF + SM, HTTP + scripts, etc.)
-- **When user mentions an unfamiliar catalog** or executor
-- **To verify executor names and parameters** before including in generated commands
-- **When user asks** "what commands are available for X?"
-
 ## Prerequisites
 
 Environment variables must be set:

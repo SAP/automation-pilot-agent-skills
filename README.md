@@ -52,8 +52,6 @@ Think of it as Infrastructure-as-Code meets workflow automation, purpose-built f
 | **Scripting** | Bash, Python, Node.js, PowerShell, Terraform with BTP Provider |
 | **Utilities** | Data transformation, JSON-to-HTML, parallel execution (ForEach), delays |
 
-**Available Command Catalogs:** `aicore` · `ans` · `applm` · `autopi` · `calmhm` · `cf` · `cis` · `ctms` · `dblm` · `dest` · `dynatrace` · `email` · `github` · `http` · `jenkins` · `jira` · `kubernetes` · `monitoring` · `scripts` · `sm` · `sql` · `utils` · `xsuaa`
-
 ## Why this repository
 
 SAP Automation Pilot provides a powerful automation engine with hundreds of built-in Commands and a rich expression language. **This repository amplifies that power with AI-assisted development.**
