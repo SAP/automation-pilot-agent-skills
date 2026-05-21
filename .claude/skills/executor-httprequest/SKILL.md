@@ -35,14 +35,9 @@ The HTTP executor (`http-sapcp:HttpRequest:1`) is the most commonly used executo
 - **Validation**: `length`, `contains`, `isGuid`, `valueIn`
 - **Array/Object**: `filter`, `map`, `select`, `any`, `all`, `keys`, `values`
 
-**❌ DO NOT** invent functions like `type`, `isBool`, `isString` - they don't exist in Automation Pilot.
+**Do not** invent functions like `type`, `isBool`, `isString` - they don't exist in Automation Pilot.
 
-**To verify a function exists before using:**
-```bash
-grep -r "| functionName" content/**/*.command.json | wc -l
-# If result = 0 → DO NOT USE
-# If result > 0 → Safe to use
-```
+Only use functions listed in `references/expressions.md` or the official SAP documentation.
 
 ---
 

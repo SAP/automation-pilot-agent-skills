@@ -20,7 +20,7 @@ Every MCP server definition follows this structure:
 
 ```json
 {
-  "name": "<Human-Readable Server Name>",
+  "name": "kebab-case-server-name",
   "enabled": true,
   "instructions": "<Natural-language description for the AI>",
   "mcpTools": [ ...tool objects... ]
@@ -29,7 +29,7 @@ Every MCP server definition follows this structure:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Display name for the MCP server (matches the filename without `.json`) |
+| `name` | string | Kebab-case identifier (e.g., `cf-app-management`). Must match filename without `.json`. No spaces. |
 | `enabled` | boolean | Activates/deactivates the entire server |
 | `instructions` | string | Natural-language guidance for the AI on what this server does and when to use it |
 | `mcpTools` | array | Array of tool definitions (1 or more) |
@@ -260,12 +260,12 @@ The `autopi-mcp-servers/` directory at the project root contains 7 production ex
 
 | File | Tools | Complexity | Good Example Of |
 |------|-------|-----------|-----------------|
-| `ANS Event Producer.json` | 1 | Simple | Minimal single-tool server |
-| `BTP Resource Discovery.json` | 5 | Simple | All read-only tools, single credential |
-| `Incident Management.json` | 3 | Medium | Mixed catalogs, disabled tool, empty inputReferences |
-| `Application Logs and Metrics.json` | 4 | Medium | Multiple credential types in one server |
-| `Cloud Landscape Directory.json` | 6 | Medium | Rich instructions with markdown |
-| `Cloud Transport Management.json` | 14 | Complex | Full CRUD + destructive ops, openWorldHint variations |
-| `SAP HANA Cloud Lifecycle Management.json` | 14 | Complex | Lifecycle management, idempotent operations, destructive operations |
+| `ans-event-producer.json` | 1 | Simple | Minimal single-tool server |
+| `btp-resource-discovery.json` | 5 | Simple | All read-only tools, single credential |
+| `incident-management.json` | 3 | Medium | Mixed catalogs, disabled tool |
+| `application-logs-and-metrics.json` | 4 | Medium | Multiple credential types in one server |
+| `cloud-landscape-directory.json` | 6 | Medium | Rich instructions with markdown |
+| `cloud-transport-management.json` | 14 | Complex | Full CRUD + destructive ops, openWorldHint variations |
+| `hana-cloud-lifecycle-management.json` | 14 | Complex | Lifecycle management, idempotent operations, destructive operations |
 
 Always read and reference these examples when generating new definitions. Use them to validate that your output follows the established patterns.

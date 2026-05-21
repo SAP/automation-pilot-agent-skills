@@ -8,11 +8,9 @@ version: 1.2.0
 
 This skill provides guidance for creating SAP Automation Pilot commands by composing existing reference commands from the content library.
 
-## ⚠️ CRITICAL: Do NOT Auto-Release Commands
+## Command Release Policy
 
-After creating and deploying a command, it will be in **DRAFT** state. This is correct and intentional.
-
-**NEVER release commands automatically.** Only release when:
+Deployed commands start in DRAFT state. Do not release automatically — only release when:
 1. The command has been tested and works correctly
 2. The user explicitly requests release
 
@@ -139,6 +137,18 @@ See **`references/catalogs.md`** for the complete catalog reference. Key rules:
 - **ForEach**: Always use `ForEach:2`, never `ForEach:1` (deprecated)
 
 ## Command Structure
+
+### Naming Conventions
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Command name | PascalCase | `RestartCfApp`, `GetHanaInstance` |
+| Input name | PascalCase | `BtpCredentials`, `JiraConfig` |
+| Input/output keys | camelCase | `resourceName`, `subAccount` |
+| Aliases | camelCase | `getResource`, `createInstance` |
+| Catalog ID | kebab-case | `mycommands-xxx` |
+
+Names must not contain spaces (causes API issues). PascalCase matches SAP's built-in commands.
 
 ### Basic Command Definition
 
@@ -466,7 +476,7 @@ Provide custom error messages:
 ## Development Workflow
 
 1. **Identify requirements** - Inputs, outputs, steps needed
-2. **Find reference commands** - Search `content/` for similar commands
+2. **Find reference commands** - Use catalog-explorer skill or check `references/catalogs.md`
 3. **Design the flow** - Map out executors and data transformations
 4. **Write expressions** - Use jq syntax for data manipulation
 5. **Add dryRun config** - Define mock outputs for each executor (MANDATORY)
@@ -579,44 +589,7 @@ For detailed patterns and complete expression reference:
 
 ### Example Files
 
-Working command examples in `examples/`:
-- **`composite-http.json`** - HTTP request with retry and validation
-- **`polling-workflow.json`** - Polling pattern with repeat
-- **`foreach-batch.json`** - Batch processing pattern
-
-### Packaged Content Library
-
-The full SAP Automation Pilot command library is packaged in `references/content/`. This contains 380+ production commands organized by catalog:
-
-```
-references/content/
-├── aicore/      # AI Core / GPT commands
-├── ans/         # Alert Notification Service
-├── applm/       # Application Lifecycle Management (56 commands)
-├── autopi/      # Automation Pilot self-management
-├── calmhm/      # Cloud ALM Health Monitoring
-├── cf/          # Cloud Foundry operations (38 commands)
-├── cis/         # Cloud Integration Suite
-├── ctms/        # Change & Transport Management
-├── dblm/        # Database Lifecycle Management
-├── dest/        # Destination Service
-├── dynatrace/   # Dynatrace monitoring
-├── email/       # Email/SMTP
-├── github/      # GitHub integration
-├── http/        # HTTP requests (7 commands)
-├── jenkins/     # Jenkins CI/CD
-├── jira/        # JIRA integration (22 commands)
-├── kubernetes/  # Kubernetes operations (29 commands)
-├── metadata/    # Reusable input references (CfRegionData, NeoRegionData)
-├── monitoring/  # SAP monitoring
-├── scripts/     # Script execution
-├── sm/          # Service Manager (23 commands)
-├── sql/         # SQL operations
-├── utils/       # Utilities (ForEach:2, Delay, Void)
-└── xsuaa/       # XSUAA authentication
-```
-
-To find similar commands when building new ones:
-1. Search by catalog: `references/content/{catalog}/*.command.json`
-2. Read command definitions to understand input/output patterns
-3. Copy and adapt patterns from existing commands
+Working command examples in `examples/` (note PascalCase naming):
+- **`GetResourceWithRetry.command.json`** - HTTP request with retry and validation
+- **`WaitForOperation.command.json`** - Polling pattern with repeat
+- **`ProcessAppsBatch.command.json`** - Batch processing with ForEach

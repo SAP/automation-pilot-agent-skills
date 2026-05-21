@@ -105,7 +105,7 @@ payload=$(jq -n \
   --arg cmd "$command_id" \
   --argjson input "$input_json" \
   --argjson tags "$tags" \
-  '{commandId: $cmd, input: $input, tags: $tags}')
+  '{commandId: $cmd, inputValues: $input, tags: $tags}')
 
 autopi_info "Triggering execution of: $command_id"
 

@@ -8,13 +8,24 @@ version: 1.2.0
 
 This skill manages catalogs, commands, inputs, webhooks, and MCP servers in SAP Automation Pilot using the Content API.
 
-## ⚠️ CRITICAL: Command Release Policy
+## Command Release Policy
 
-**NEVER automatically release commands after deployment.** Commands should remain in DRAFT state until:
+Commands deploy in DRAFT state by default. Do not release automatically — only release when:
 1. The command has been tested and verified working
-2. The user explicitly requests release ("release this command", "make it production ready")
+2. The user explicitly requests release
 
-Draft state is protective — it allows safe testing without affecting production. Releasing broken or untested commands makes them visible in the catalog and implies production readiness.
+Draft state allows safe testing without affecting production.
+
+## Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Commands | PascalCase | `RestartCfApp`, `GetHanaInstance` |
+| Inputs | PascalCase | `BtpCredentials`, `JiraConfig` |
+| Catalogs | kebab-case | `my-automations-xxx` |
+| MCP Servers | kebab-case | `cf-app-management` |
+
+Names must not contain spaces (causes API failures with URL encoding).
 
 ## Prerequisites
 
@@ -526,6 +537,156 @@ curl -s -X POST \
   }' \
   "https://$HOST/api/v1/bulk/inputs" | jq .
 ```
+
+---
+
+# Working with Inputs
+
+Inputs are **reusable parameter sets** stored in Automation Pilot. They allow you to save credentials, configurations, or commonly-used values that can be referenced when triggering command executions.
+
+## Input Structure
+
+```json
+{
+  "name": "MyCfCredentials",
+  "catalog": "mycatalog-xxx",
+  "description": "CF credentials for eu10 region",
+  "version": 1,
+  "keys": {
+    "region": { "type": "string", "sensitive": false },
+    "user": { "type": "string", "sensitive": false },
+    "password": { "type": "string", "sensitive": true }
+  },
+  "values": {
+    "region": "cf-eu10",
+    "user": "technical-user",
+    "password": "secret-value"
+  },
+  "tags": {}
+}
+```
+
+- **keys**: Defines the schema (type and sensitivity) for each value
+- **values**: The actual stored values
+- **sensitive: true**: Value is masked in logs and UI
+
+## Common Input Patterns
+
+### CF Credentials (for applm-sapcp, cf-sapcp commands)
+
+```json
+{
+  "name": "CfCredentials-EU10",
+  "catalog": "mycatalog-xxx",
+  "description": "Cloud Foundry credentials for EU10",
+  "version": 1,
+  "keys": {
+    "region": { "type": "string", "sensitive": false },
+    "user": { "type": "string", "sensitive": false },
+    "password": { "type": "string", "sensitive": true }
+  },
+  "values": {
+    "region": "cf-eu10",
+    "user": "cf-technical-user@example.com",
+    "password": "your-password"
+  }
+}
+```
+
+### Service Key (for sm-sapcp, aicore-sapcp commands)
+
+```json
+{
+  "name": "HanaCloudServiceKey",
+  "catalog": "mycatalog-xxx",
+  "description": "HANA Cloud service binding credentials",
+  "version": 1,
+  "keys": {
+    "serviceKey": { "type": "object", "sensitive": true }
+  },
+  "values": {
+    "serviceKey": {
+      "url": "https://hana-instance.hana.cloud.sap",
+      "user": "DBADMIN",
+      "password": "secret",
+      "certificate": "..."
+    }
+  }
+}
+```
+
+### API Token (for jira-sapcp, github-sapcp commands)
+
+```json
+{
+  "name": "JiraCredentials",
+  "catalog": "mycatalog-xxx",
+  "description": "JIRA API credentials",
+  "version": 1,
+  "keys": {
+    "host": { "type": "string", "sensitive": false },
+    "user": { "type": "string", "sensitive": false },
+    "password": { "type": "string", "sensitive": true }
+  },
+  "values": {
+    "host": "https://jira.example.com",
+    "user": "automation@example.com",
+    "password": "api-token-here"
+  }
+}
+```
+
+### Kubernetes Config (for kubernetes-sapcp commands)
+
+```json
+{
+  "name": "K8sClusterConfig",
+  "catalog": "mycatalog-xxx",
+  "description": "Kubernetes cluster kubeconfig",
+  "version": 1,
+  "keys": {
+    "kubeconfig": { "type": "object", "sensitive": true }
+  },
+  "values": {
+    "kubeconfig": {
+      "apiVersion": "v1",
+      "kind": "Config",
+      "clusters": [...],
+      "users": [...],
+      "contexts": [...]
+    }
+  }
+}
+```
+
+## Using Inputs in Executions
+
+When triggering a command execution, reference an input:
+
+```bash
+curl -s -X POST \
+  -u "$USER:$PASS" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "commandId": "applm-sapcp:RestartCfApp:1",
+    "input": "mycatalog-xxx:CfCredentials-EU10:1",
+    "additionalValues": {
+      "appName": "my-application",
+      "subAccount": "my-org"
+    }
+  }' \
+  "https://$HOST/api/v1/executions" | jq .
+```
+
+- **input**: References a stored input by ID
+- **additionalValues**: Override or add values not in the input
+
+## Best Practices
+
+1. **Separate inputs by environment** - Create distinct inputs for dev/staging/prod
+2. **Mark sensitive values** - Always set `"sensitive": true` for passwords, tokens, and keys
+3. **Use descriptive names** - Include region/environment in the name (e.g., `CfCredentials-EU10-Prod`)
+4. **Keep inputs minimal** - Store only reusable values; command-specific values go in `additionalValues`
 
 ---
 

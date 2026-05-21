@@ -75,10 +75,11 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 | [**Command Generation**](.claude/skills/command-generation/SKILL.md) | Create Commands from natural language descriptions using patterns and best practices |
 | [**Catalog Explorer**](.claude/skills/catalog-explorer/SKILL.md) | Discover available Commands and executors in your tenant via API |
 | [**Code Review**](.claude/skills/code-reviewer/SKILL.md) | Validate security, naming conventions, expression sanitization, and best practices |
-| [**Content Management API**](.claude/skills/content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands and Inputs via API |
+| [**Content Management API**](.claude/skills/content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands, Inputs, and MCP servers via API |
 | [**Executions API**](.claude/skills/executions-api/SKILL.md) | Trigger Commands, monitor status, view logs |
 | [**Execution Debugger**](.claude/skills/autopi-debugger/SKILL.md) | Debug failed Executions, error pattern matching, troubleshooting workflows |
 | [**Scheduled Executions API**](.claude/skills/scheduled-executions-api/SKILL.md) | Create and manage recurring Command schedules |
+| [**MCP Server Generation**](.claude/skills/mcp-server-generation/SKILL.md) | Create MCP server definitions to expose Commands as AI assistant tools |
 | [**HTTP Executor**](.claude/skills/executor-httprequest/SKILL.md) | Guidance for HTTP requests with retry, timeout, and error handling |
 | [**Script Executor**](.claude/skills/executor-executescript/SKILL.md) | Guidance for ExecuteScript with Base64 encoding and language wrappers |
 
