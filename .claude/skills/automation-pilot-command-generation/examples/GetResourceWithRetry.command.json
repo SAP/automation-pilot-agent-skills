@@ -1,0 +1,196 @@
+{
+  "id": "examples-<<<TENANT_ID>>>:GetResourceWithRetry:1",
+  "catalog": "examples-<<<TENANT_ID>>>",
+  "name": "GetResourceWithRetry",
+  "description": "Example: HTTP GET with OAuth authentication, retry logic, and validation",
+  "version": 1,
+  "inputKeys": {
+    "region": {
+      "type": "string",
+      "required": true,
+      "description": "Cloud Foundry region (e.g., cf-eu10)",
+      "allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]
+    },
+    "user": {
+      "type": "string",
+      "required": false,
+      "description": "CF user email"
+    },
+    "password": {
+      "type": "string",
+      "required": false,
+      "sensitive": true,
+      "description": "CF user password"
+    },
+    "refreshToken": {
+      "type": "string",
+      "required": false,
+      "sensitive": true,
+      "description": "CF refresh token (alternative to user/password)"
+    },
+    "resourceId": {
+      "type": "string",
+      "required": true,
+      "description": "ID of the resource to retrieve"
+    }
+  },
+  "outputKeys": {
+    "resource": {
+      "type": "object",
+      "description": "The retrieved resource object"
+    },
+    "resourceName": {
+      "type": "string",
+      "description": "Name of the retrieved resource"
+    }
+  },
+  "configuration": {
+    "values": [
+      {
+        "alias": "regionData",
+        "valueFrom": {
+          "inputReference": "metadata-sapcp:CfRegionData:1",
+          "inputKey": "$(.execution.input.region)"
+        }
+      }
+    ],
+    "output": {
+      "resource": "$(.getResource.output.body | toObject)",
+      "resourceName": "$(.getResource.output.body | toObject.name)"
+    },
+    "executors": [
+      {
+        "execute": "http-sapcp:HttpRequest:1",
+        "alias": "getResource",
+        "input": {
+          "url": "$(.regionData.cfApiUrl)/v3/apps/$(.execution.input.resourceId | toUrlEncoded)",
+          "method": "GET",
+          "headers": "{\"Accept\": \"application/json\", \"Content-Type\": \"application/json\"}",
+          "user": "$(.execution.input.user)",
+          "password": "$(.execution.input.password)",
+          "refreshToken": "$(.execution.input.refreshToken)",
+          "tokenUrl": "$(.regionData.uaaTokenUrl)",
+          "clientId": "cf",
+          "timeout": "20"
+        },
+        "dryRun": {
+          "output": {
+            "status": "200",
+            "body": "{\"guid\": \"mock-resource-id\", \"name\": \"Mock Resource\"}",
+            "headers": "{\"content-type\": \"application/json\"}",
+            "method": "GET",
+            "url": "https://api.example.com/v3/apps/mock-resource-id",
+            "time": "100",
+            "size": "50"
+          }
+        },
+        "progressMessage": null,
+        "initialDelay": null,
+        "pause": null,
+        "when": null,
+        "validate": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.getResource.output.status)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": ["200"]
+                }
+              ]
+            }
+          ]
+        },
+        "autoRetry": {
+          "maxCount": 3,
+          "delay": "5s",
+          "logic": "INCREMENTAL",
+          "applyOnValidation": false,
+          "when": {
+            "semantic": "OR",
+            "conditions": [
+              {
+                "semantic": "OR",
+                "cases": [
+                  {
+                    "expression": "$([408, 429, 500, 502, 503, 504, -1] | filter(. == $.getResource.output.status) | length)",
+                    "operator": "EQUALS",
+                    "semantic": "OR",
+                    "values": ["1"]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "repeat": null,
+        "errorMessages": [
+          {
+            "message": "Resource not found: $(.execution.input.resourceId)",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.getResource.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": ["404"]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "message": "Authentication failed - check credentials",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.getResource.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": ["401", "403"]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "message": "Request failed with status $(.getResource.output.status): $(.getResource.output.body)",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.getResource.output.status)",
+                      "operator": "NOT_EQUALS",
+                      "semantic": "OR",
+                      "values": ["200", "401", "403", "404"]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "listeners": []
+  },
+  "tags": {
+    "env": "cf"
+  }
+}

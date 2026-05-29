@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(/.claude/skills/mcp-server-generation/**)",
+      "Edit(/.claude/skills/content-management-via-api/**)",
+      "Edit(/.claude/skills/executions-api/**)"
+    ]
+  }
+}

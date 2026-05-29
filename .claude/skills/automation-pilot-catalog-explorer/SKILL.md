@@ -1,0 +1,138 @@
+---
+name: automation-pilot-catalog-explorer
+description: Discover available commands and catalogs in SAP Automation Pilot via API. Use when you need to find what executors/commands exist, get command definitions, or explore a catalog before generating new commands. Essential for complex command generation involving multiple services.
+version: 1.0.0
+---
+
+# Catalog Explorer
+
+Discover available commands in SAP Automation Pilot dynamically via API.
+
+## Prerequisites
+
+Environment variables must be set:
+
+```bash
+export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
+export AUTOPI_USERNAME="your-username"
+export AUTOPI_PASSWORD="your-password"
+```
+
+## API Operations
+
+### List All Catalogs
+
+Discover what catalogs are available in the tenant.
+
+```bash
+# List all catalogs (SAP-provided + custom)
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs" | jq '.data[] | {id, name, description}'
+
+# List only SAP-provided catalogs (built-in)
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false" | jq '.data[] | {id, name}'
+
+# List only custom/tenant catalogs
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true" | jq '.data[] | {id, name}'
+```
+
+### List Commands in a Catalog
+
+Find available commands within a specific catalog.
+
+```bash
+CATALOG="applm-sapcp"
+
+# List all commands in a catalog
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | jq '.data[] | {id, name, description}'
+
+# Search for commands by name pattern
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | \
+  jq '.data[] | select(.name | test("Restart"; "i")) | {id, name}'
+
+# Get command count
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | jq '.data | length'
+```
+
+### Get Command Definition
+
+Fetch the full definition of a specific command (inputs, outputs, executors).
+
+```bash
+COMMAND_ID="applm-sapcp:RestartCfApp:1"
+
+# Get full command definition
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq .
+
+# Get just input keys
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.inputKeys'
+
+# Get just output keys
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.outputKeys'
+
+# Get executors (the workflow steps)
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.configuration.executors'
+```
+
+### Search Across Catalogs
+
+Find commands matching a pattern.
+
+```bash
+# List all SAP-provided catalog IDs
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false" | jq -r '.data[].id'
+
+# Search specific catalogs for commands matching a keyword
+for catalog in applm-sapcp sm-sapcp cf-sapcp; do
+  echo "=== $catalog ==="
+  curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+    "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$catalog" | \
+    jq -r '.data[] | select(.name | test("Service"; "i")) | .id'
+done
+```
+
+## Workflow: Complex Command Generation
+
+When generating a command that involves multiple services:
+
+```
+1. User: "Create a command that restarts CF apps and checks SM bindings"
+
+2. Discover relevant catalogs:
+   - Query: GET /commands?catalog=applm-sapcp
+   - Query: GET /commands?catalog=sm-sapcp
+
+3. Find specific commands:
+   - Found: applm-sapcp:RestartCfApp:1
+   - Found: sm-sapcp:GetServiceBinding:1
+
+4. Fetch definitions to understand parameters:
+   - GET /commands/applm-sapcp:RestartCfApp:1
+   - GET /commands/sm-sapcp:GetServiceBinding:1
+
+5. Generate composite command using discovered executors
+```
+
+## Error Handling
+
+| Error | Meaning | Action |
+|-------|---------|--------|
+| 401 Unauthorized | Invalid credentials | Check AUTOPI_USERNAME/PASSWORD in .env |
+| 404 Not Found | Catalog/command doesn't exist | Use discovery to find correct ID |
+| Empty response | No commands in catalog | Catalog may be empty or restricted |
+
+## Related Skills
+
+- **automation-pilot-command-generation** — Uses this skill for executor discovery
+- **automation-pilot-content-management-via-api** — Deploy generated commands
+- **automation-pilot-executions-api** — Run and monitor commands
