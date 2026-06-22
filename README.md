@@ -1,10 +1,12 @@
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/automation-pilot-agent-skills)](https://api.reuse.software/info/github.com/SAP/automation-pilot-agent-skills)
 
-# SAP Automation Pilot Agent Skills
+# <img src="sap-automation-pilot.svg" width="32" height="32" alt="SAP Automation Pilot" valign="middle"> SAP Automation Pilot Agent Skills
 
 ### The fastest way to build SAP BTP automations — describe what you want, deploy in minutes.
 
 This repository brings **AI-powered development** to [SAP Automation Pilot](https://help.sap.com/docs/automation-pilot). Using [Claude Code](https://claude.ai/code), you can generate production-ready Commands through natural conversation — the AI handles JSON schemas, jq expressions, and best practices while you focus on what to automate. Review code, deploy to your tenant, trigger Executions, and troubleshoot failures — all without leaving your IDE or terminal.
+
+![Overview](overview.svg)
 
 **What makes the difference:**
 
@@ -26,7 +28,7 @@ This repository brings **AI-powered development** to [SAP Automation Pilot](http
 
 ## About SAP Automation Pilot
 
-[SAP Automation Pilot](https://help.sap.com/docs/automation-pilot) is SAP's native automation engine for Business Technology Platform — the control plane for your BTP operations. From routine maintenance to complex incident response, it handles the workflows that keep your landscape running.
+<img src="sap-automation-pilot.svg" width="16" height="16" alt="SAP Automation Pilot icon"> [SAP Automation Pilot](https://help.sap.com/docs/automation-pilot) is SAP's native automation engine for Business Technology Platform — the control plane for your BTP operations. From routine maintenance to complex incident response, it handles the workflows that keep your landscape running.
 
 Think of it as Infrastructure-as-Code meets workflow automation, purpose-built for SAP BTP. **Commands** define your automations, **Inputs** store credentials and configuration, and **Executions** are running instances you can monitor and troubleshoot.
 
@@ -87,9 +89,13 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 
 ### Prerequisites
 
-- [Claude Code](https://claude.ai/code) installed (VS Code extension, CLI, or desktop app)
-- `curl` and `jq` available in your terminal
-- An SAP Automation Pilot tenant with API credentials
+| Tool | Purpose |
+|------|---------|
+| [Claude Code](https://claude.ai/code) | Required to use the skills (VS Code extension, CLI, or desktop app) |
+| `curl` | API calls to SAP Automation Pilot |
+| `jq` | JSON parsing and transformation |
+
+You'll also need an SAP Automation Pilot tenant with API credentials.
 
 ### 1. Clone the repository
 
