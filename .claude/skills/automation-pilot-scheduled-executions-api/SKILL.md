@@ -8,17 +8,6 @@ version: 1.0.0
 
 This skill manages scheduled command executions in SAP Automation Pilot - creating, listing, updating, and deleting scheduled executions with flexible scheduling options and time zone support.
 
-## Quick Start — Most Common Commands
-
-```bash
-# List all schedules
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions" | \
-  jq '.[] | {id, description, enabled, command: .commandId}'
-```
-
-**API Endpoint:** `GET /api/v1/scheduled-executions` (not `/schedules`)
-
 ## Prerequisites
 
 1. Set the following **required** environment variables:
@@ -30,14 +19,9 @@ export AUTOPI_PASSWORD="your-password"
 export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 ```
 
-**Supported hostnames**:
-- `emea.autopilot.cloud.sap` (default - Europe)
-- `aus.autopilot.cloud.sap` (Australia)
-- `apac.autopilot.cloud.sap` (Asia Pacific)
-- `amer.autopilot.cloud.sap` (Americas)
-- `ksa.autopilot.cloud.sap` (Saudi Arabia)
+For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
 
-2. Ensure `curl` and `jq` are available in your environment.
+2. Ensure `curl` is available in your environment.
 
 ---
 
@@ -102,7 +86,6 @@ Execute on specific date each year.
 # Creating Scheduled Executions
 
 ```bash
-# Daily schedule at 9:00 AM Berlin time
 curl -s -X POST \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
@@ -122,65 +105,7 @@ curl -s -X POST \
     },
     "description": "Daily morning check"
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions" | jq .
-
-# Hourly schedule
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandId": "my-catalog:MyCommand:1",
-    "schedule": {
-      "timeZone": "Etc/UTC",
-      "deadlineInMinutes": 5,
-      "hourly": {
-        "minutes": [0, 15, 30, 45]
-      }
-    },
-    "enabled": true,
-    "inputValues": {}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions" | jq .
-
-# Weekly schedule (Mon, Wed, Fri at 9:00 AM)
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandId": "my-catalog:MyCommand:1",
-    "schedule": {
-      "timeZone": "Europe/Berlin",
-      "deadlineInMinutes": 5,
-      "weekly": {
-        "days": [1, 3, 5],
-        "hours": [9],
-        "minutes": [0]
-      }
-    },
-    "enabled": true,
-    "inputValues": {}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions" | jq .
-
-# Monthly schedule (1st and 15th at 9:00 AM)
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandId": "my-catalog:MyCommand:1",
-    "schedule": {
-      "timeZone": "Europe/Berlin",
-      "deadlineInMinutes": 5,
-      "monthly": {
-        "days": [1, 15],
-        "hours": [9],
-        "minutes": [0]
-      }
-    },
-    "enabled": true,
-    "inputValues": {}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions"
 ```
 
 ---
@@ -191,7 +116,7 @@ curl -s -X POST \
 
 ```bash
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions"
 ```
 
 ## Get Schedule Details
@@ -206,19 +131,21 @@ curl -s -i -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ## Enable/Disable Schedule
 
-```bash
-# Get current schedule body and ETag, then PUT with enabled flag changed
-RESPONSE=$(curl -s -i -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID")
-ETAG=$(echo "$RESPONSE" | grep -i "etag:" | awk '{print $2}' | tr -d '\r')
-BODY=$(echo "$RESPONSE" | tail -1)
+Fetch the current schedule body and ETag, then PUT the full body back with the `enabled` flag changed:
 
+```bash
+# 1. Fetch current schedule (note the ETag from the response headers)
+curl -s -i -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
+
+# 2. PUT with the full updated body (set "enabled": true or false) and the captured ETag
+ETAG="<etag-from-response-header>"
 curl -s -X PUT \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
   -H "If-Match: $ETAG" \
-  -d "$(echo "$BODY" | jq '.enabled = true')" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID" | jq .
+  -d '<full schedule body with enabled changed>' \
+  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
 ```
 
 ## Delete Schedule
@@ -265,7 +192,7 @@ curl -s -X PUT \
     "enabled": true,
     "inputValues": {}
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
 ```
 
 ---
@@ -275,14 +202,8 @@ curl -s -X PUT \
 ## List Available Time Zones
 
 ```bash
-# All time zones
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/time-zones" | jq .
-
-# Filter by region
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/time-zones" | \
-  jq '.[] | select(. | test("Europe"))'
+  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/time-zones"
 ```
 
 ## Common Time Zones
@@ -309,9 +230,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   "commandId": "catalog:CommandName:version",
   "description": "Optional description",
   "correlationId": "optional-correlation-id",
-  "tags": {
-    "feature:logs": "true"
-  },
+  "tags": {},
   "inputValues": {
     "param1": "value1"
   },
@@ -325,41 +244,6 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
     }
   },
   "enabled": true
-}
-```
-
-## Response
-
-```json
-{
-  "id": "T000153R2-0000001234567890-0-1",
-  "commandId": "catalog:CommandName:version",
-  "description": "Daily health check",
-  "correlationId": null,
-  "owner": null,
-  "tags": {},
-  "inputValues": {},
-  "inputReferences": [],
-  "schedule": {
-    "timeZone": "Europe/Berlin",
-    "deadlineInMinutes": 5,
-    "once": null,
-    "hourly": null,
-    "daily": {
-      "hours": [9],
-      "minutes": [0]
-    },
-    "weekly": null,
-    "monthly": null,
-    "yearly": null
-  },
-  "enabled": true,
-  "state": {
-    "executionId": "...",
-    "triggeredAt": 1708250400000,
-    "status": "SUCCESS",
-    "message": ""
-  }
 }
 ```
 

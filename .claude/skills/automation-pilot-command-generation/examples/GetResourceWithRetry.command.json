@@ -2,45 +2,79 @@
   "id": "examples-<<<TENANT_ID>>>:GetResourceWithRetry:1",
   "catalog": "examples-<<<TENANT_ID>>>",
   "name": "GetResourceWithRetry",
-  "description": "Example: HTTP GET with OAuth authentication, retry logic, and validation",
+  "description": "Example: HTTP GET with OAuth authentication, retry logic, validate, and errorMessages",
   "version": 1,
   "inputKeys": {
     "region": {
       "type": "string",
+      "sensitive": false,
       "required": true,
-      "description": "Cloud Foundry region (e.g., cf-eu10)",
-      "allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
     },
     "user": {
       "type": "string",
+      "sensitive": false,
       "required": false,
-      "description": "CF user email"
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'"
     },
     "password": {
       "type": "string",
-      "required": false,
       "sensitive": true,
-      "description": "CF user password"
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
     },
     "refreshToken": {
       "type": "string",
-      "required": false,
       "sensitive": true,
-      "description": "CF refresh token (alternative to user/password)"
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'"
     },
     "resourceId": {
       "type": "string",
+      "sensitive": false,
       "required": true,
-      "description": "ID of the resource to retrieve"
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The technical name of the resource. Example: my-app-guid"
     }
   },
   "outputKeys": {
     "resource": {
       "type": "object",
+      "sensitive": false,
       "description": "The retrieved resource object"
     },
     "resourceName": {
       "type": "string",
+      "sensitive": false,
       "description": "Name of the retrieved resource"
     }
   },
@@ -61,7 +95,6 @@
     "executors": [
       {
         "execute": "http-sapcp:HttpRequest:1",
-        "alias": "getResource",
         "input": {
           "url": "$(.regionData.cfApiUrl)/v3/apps/$(.execution.input.resourceId | toUrlEncoded)",
           "method": "GET",
@@ -73,17 +106,8 @@
           "clientId": "cf",
           "timeout": "20"
         },
-        "dryRun": {
-          "output": {
-            "status": "200",
-            "body": "{\"guid\": \"mock-resource-id\", \"name\": \"Mock Resource\"}",
-            "headers": "{\"content-type\": \"application/json\"}",
-            "method": "GET",
-            "url": "https://api.example.com/v3/apps/mock-resource-id",
-            "time": "100",
-            "size": "50"
-          }
-        },
+        "alias": "getResource",
+        "description": null,
         "progressMessage": null,
         "initialDelay": null,
         "pause": null,
@@ -129,7 +153,7 @@
         "repeat": null,
         "errorMessages": [
           {
-            "message": "Resource not found: $(.execution.input.resourceId)",
+            "message": "Resource '$(.execution.input.resourceId)' not found",
             "when": {
               "semantic": "OR",
               "conditions": [
@@ -165,32 +189,12 @@
                 }
               ]
             }
-          },
-          {
-            "message": "Request failed with status $(.getResource.output.status): $(.getResource.output.body)",
-            "when": {
-              "semantic": "OR",
-              "conditions": [
-                {
-                  "semantic": "OR",
-                  "cases": [
-                    {
-                      "expression": "$(.getResource.output.status)",
-                      "operator": "NOT_EQUALS",
-                      "semantic": "OR",
-                      "values": ["200", "401", "403", "404"]
-                    }
-                  ]
-                }
-              ]
-            }
           }
-        ]
+        ],
+        "dryRun": null
       }
     ],
     "listeners": []
   },
-  "tags": {
-    "env": "cf"
-  }
+  "tags": {}
 }

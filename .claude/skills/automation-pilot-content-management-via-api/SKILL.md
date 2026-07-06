@@ -1,20 +1,16 @@
 ---
 name: automation-pilot-content-management-via-api
-description: Manage SAP Automation Pilot content (commands, catalogs, inputs, webhooks, MCP servers) via Content API. Use when importing or exporting commands, deploying MCP servers, listing catalogs, or managing automation content programmatically.
+description: Manage SAP Automation Pilot content (commands, catalogs, inputs) via Content API. Use when importing or exporting commands, listing catalogs, or managing automation content programmatically.
 version: 1.2.0
 ---
 
 # SAP Automation Pilot Content API Management
 
-This skill manages catalogs, commands, inputs, webhooks, and MCP servers in SAP Automation Pilot using the Content API.
+This skill manages catalogs, commands, and inputs in SAP Automation Pilot using the Content API.
 
 ## Command Release Policy
 
-Commands deploy in DRAFT state by default. Do not release automatically — only release when:
-1. The command has been tested and verified working
-2. The user explicitly requests release
-
-Draft state allows safe testing without affecting production.
+⚠️ Commands deploy in DRAFT state. **Never release automatically** — only when the user explicitly requests it and the command has been tested. See `automation-pilot-command-generation/SKILL.md` for the full policy.
 
 ## Naming Conventions
 
@@ -23,7 +19,6 @@ Draft state allows safe testing without affecting production.
 | Commands | PascalCase | `RestartCfApp`, `GetHanaInstance` |
 | Inputs | PascalCase | `BtpCredentials`, `JiraConfig` |
 | Catalogs | kebab-case | `my-automations-xxx` |
-| MCP Servers | kebab-case | `cf-app-management` |
 
 Names must not contain spaces (causes API failures with URL encoding).
 
@@ -45,7 +40,7 @@ export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 - `amer.autopilot.cloud.sap` (Americas)
 - `ksa.autopilot.cloud.sap` (Saudi Arabia)
 
-2. Ensure `curl` and `jq` are available in your environment.
+2. Ensure `curl` is available in your environment.
 
 ---
 
@@ -55,23 +50,20 @@ export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 
 ```bash
 # List all catalogs owned by the tenant
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true"
 # List catalogs provided by SAP
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs?provided=true" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs?provided=true"
 # List all catalogs (owned + provided)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs"
 # List catalogs filtered by tag
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs?tag=environment:production" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs?tag=environment:production"
 ```
 
 ## Get Catalog by ID
 
 ```bash
 CATALOG_ID="mycatalog-xxx"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs/$CATALOG_ID" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/catalogs/$CATALOG_ID"
 ```
 
 ## Create Catalog
@@ -87,7 +79,7 @@ curl -s -X POST \
       "environment": "development"
     }
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs"
 ```
 
 ## Update Catalog
@@ -103,7 +95,7 @@ curl -s -X PUT \
       "environment": "production"
     }
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs/$CATALOG_ID" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs/$CATALOG_ID"
 ```
 
 ## Delete Catalog
@@ -124,16 +116,13 @@ curl -s -X DELETE -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNA
 ```bash
 # List all commands in a catalog
 CATALOG="mycatalog-xxx"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG"
 # List commands with design-time issues
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG&includeIssues=true" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG&includeIssues=true"
 # List commands by tag
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands?tag=type:monitoring" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands?tag=type:monitoring"
 # List only command IDs (lightweight)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/ids?catalog=$CATALOG" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/ids?catalog=$CATALOG"
 ```
 
 ## Get Command by ID
@@ -142,7 +131,7 @@ Command ID format: `catalog:name:version`
 
 ```bash
 COMMAND_ID="mycatalog-xxx:MyCommand:1"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
 ```
 
 ## Create/Upload Command
@@ -152,18 +141,12 @@ Upload a command from a `.command.json` file:
 ```bash
 COMMAND_FILE="path/to/MyCommand.command.json"
 
-# Validate JSON first
-if ! jq empty "$COMMAND_FILE" 2>/dev/null; then
-  echo "Error: Invalid JSON in $COMMAND_FILE"
-  exit 1
-fi
-
 # Create the command
 curl -s -X POST \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
   -d @"$COMMAND_FILE" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/commands"
 ```
 
 Create command inline:
@@ -193,7 +176,7 @@ curl -s -X POST \
     "configuration": null,
     "tags": {}
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/commands"
 ```
 
 ## Update Command
@@ -206,7 +189,7 @@ curl -s -X PUT \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
   -d @"$COMMAND_FILE" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
 ```
 
 ## Delete Command
@@ -224,7 +207,7 @@ Release a draft command:
 
 ```bash
 COMMAND_ID="mycatalog-xxx:MyCommand:1"
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID/release" | jq .
+curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID/release"
 ```
 
 ## Deprecate Command
@@ -233,7 +216,7 @@ Mark a command as deprecated:
 
 ```bash
 COMMAND_ID="mycatalog-xxx:MyCommand:1"
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID/deprecate" | jq .
+curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID/deprecate"
 ```
 
 ## Restore Command
@@ -242,7 +225,7 @@ Restore a deprecated command:
 
 ```bash
 COMMAND_ID="mycatalog-xxx:MyCommand:1"
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID/restore" | jq .
+curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID/restore"
 ```
 
 ## Bulk Create Commands
@@ -259,7 +242,7 @@ curl -s -X POST \
       {"name": "Cmd2", "catalog": "mycatalog-xxx", ...}
     ]
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/bulk/commands" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/bulk/commands"
 ```
 
 ---
@@ -271,10 +254,9 @@ curl -s -X POST \
 ```bash
 # List inputs in a catalog
 CATALOG="mycatalog-xxx"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs?catalog=$CATALOG" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs?catalog=$CATALOG"
 # List inputs by tag
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs?tag=type:credentials" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs?tag=type:credentials"
 ```
 
 ## Get Input by ID
@@ -283,7 +265,7 @@ Input ID format: `catalog:name:version`
 
 ```bash
 INPUT_ID="mycatalog-xxx:MyInput:1"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID"
 ```
 
 ## Create Input
@@ -317,7 +299,7 @@ curl -s -X POST \
       "type": "credentials"
     }
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/inputs" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/inputs"
 ```
 
 ## Update Input (Full)
@@ -335,7 +317,7 @@ curl -s -X PUT \
     "keys": {...},
     "values": {...}
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID"
 ```
 
 ## Update Input (Partial - Values Only)
@@ -352,7 +334,7 @@ curl -s -X PATCH \
       "password": "newSecret456"
     }
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID"
 ```
 
 ## Delete Input
@@ -368,21 +350,21 @@ curl -s -X DELETE -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNA
 
 ```bash
 INPUT_ID="mycatalog-xxx:MyInput:1"
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID/release" | jq .
+curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID/release"
 ```
 
 ## Deprecate Input
 
 ```bash
 INPUT_ID="mycatalog-xxx:MyInput:1"
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID/deprecate" | jq .
+curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID/deprecate"
 ```
 
 ## Restore Input
 
 ```bash
 INPUT_ID="mycatalog-xxx:MyInput:1"
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID/restore" | jq .
+curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID/restore"
 ```
 
 ## Bulk Create Inputs
@@ -397,7 +379,7 @@ curl -s -X POST \
       {"name": "Input2", "catalog": "mycatalog-xxx", ...}
     ]
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/bulk/inputs" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/bulk/inputs"
 ```
 
 ---
@@ -521,229 +503,12 @@ Inputs are **reusable parameter sets** stored in Automation Pilot. They allow yo
 }
 ```
 
-## Using Inputs in Executions
-
-When triggering a command execution, reference an input:
-
-```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandId": "applm-sapcp:RestartCfApp:1",
-    "input": "mycatalog-xxx:CfCredentials-EU10:1",
-    "additionalValues": {
-      "appName": "my-application",
-      "subAccount": "my-org"
-    }
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions" | jq .
-```
-
-- **input**: References a stored input by ID
-- **additionalValues**: Override or add values not in the input
-
 ## Best Practices
 
 1. **Separate inputs by environment** - Create distinct inputs for dev/staging/prod
 2. **Mark sensitive values** - Always set `"sensitive": true` for passwords, tokens, and keys
 3. **Use descriptive names** - Include region/environment in the name (e.g., `CfCredentials-EU10-Prod`)
 4. **Keep inputs minimal** - Store only reusable values; command-specific values go in `additionalValues`
-
----
-
-# Webhooks
-
-## List Webhooks
-
-```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/webhooks" | jq .
-```
-
-## Get Webhook by ID
-
-```bash
-WEBHOOK_ID="my-webhook-id"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/webhooks/$WEBHOOK_ID" | jq .
-```
-
-## Create Webhook
-
-```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "MyWebhook",
-    "commandId": "mycatalog-xxx:MyCommand:1",
-    "description": "Webhook to trigger MyCommand",
-    "inputMapping": {
-      "message": "$.event.message"
-    }
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/webhooks" | jq .
-```
-
-## Update Webhook
-
-```bash
-WEBHOOK_ID="my-webhook-id"
-curl -s -X PUT \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "MyWebhook",
-    "commandId": "mycatalog-xxx:MyCommand:1",
-    "description": "Updated webhook description",
-    "inputMapping": {...}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/webhooks/$WEBHOOK_ID" | jq .
-```
-
-## Delete Webhook
-
-```bash
-WEBHOOK_ID="my-webhook-id"
-curl -s -X DELETE -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/webhooks/$WEBHOOK_ID"
-```
-
-## Trigger/Execute Webhook
-
-Execute a webhook to start a command execution:
-
-```bash
-WEBHOOK_ID="my-webhook-id"
-
-# Trigger with event data
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "event": {
-      "message": "Hello from webhook",
-      "timestamp": "2024-01-15T10:30:00Z"
-    }
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/webhooks/$WEBHOOK_ID/trigger" | jq .
-
-# Trigger without event data
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/webhooks/$WEBHOOK_ID/trigger" | jq .
-```
-
----
-
-# MCP Servers
-
-MCP servers expose Automation Pilot commands as MCP tools for AI assistants. The API is secured by Basic Authentication and requires the `GenAI` permission for write operations. Update and delete operations use ETag-based optimistic concurrency via the `If-Match` header.
-
-## List MCP Servers
-
-```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers" | jq .
-```
-
-## Get MCP Server by ID
-
-The MCP server ID is its name (e.g., `"BTP Resource Discovery"`).
-
-```bash
-MCP_SERVER_ID="BTP Resource Discovery"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | jq .
-```
-
-The response includes an `ETag` header needed for update/delete operations.
-
-## Create MCP Server
-
-```bash
-MCP_SERVER_FILE="path/to/my-server.json"
-
-# Validate JSON first
-if ! jq empty "$MCP_SERVER_FILE" 2>/dev/null; then
-  echo "Error: Invalid JSON in $MCP_SERVER_FILE"
-  exit 1
-fi
-
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d @"$MCP_SERVER_FILE" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers" | jq .
-```
-
-## Update MCP Server
-
-Update requires the `If-Match` header with the current ETag value:
-
-```bash
-MCP_SERVER_ID="BTP Resource Discovery"
-MCP_SERVER_FILE="path/to/updated-server.json"
-
-# Get current ETag
-ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
-  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
-
-# Update with If-Match
-curl -s -X PUT \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -H "If-Match: $ETAG" \
-  -d @"$MCP_SERVER_FILE" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | jq .
-```
-
-If the ETag does not match (HTTP 412), the server was modified since you last read it. Fetch the latest version and retry.
-
-## Delete MCP Server
-
-Delete also requires the `If-Match` header:
-
-```bash
-MCP_SERVER_ID="My Old Server"
-
-# Get current ETag
-ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
-  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
-
-curl -s -X DELETE \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "If-Match: $ETAG" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
-```
-
-## Deploy MCP Server (Upsert Pattern)
-
-```bash
-MCP_SERVER_FILE="my-server.json"
-MCP_SERVER_ID=$(jq -r '.name' "$MCP_SERVER_FILE")
-
-# Check if exists
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID")
-
-if [[ "$STATUS" == "200" ]]; then
-  echo "Updating existing MCP server..."
-  ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
-    grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
-  curl -s -X PUT \
-    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    -H "Content-Type: application/json" \
-    -H "If-Match: $ETAG" \
-    -d @"$MCP_SERVER_FILE" \
-    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | jq .
-else
-  echo "Creating new MCP server..."
-  curl -s -X POST \
-    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    -H "Content-Type: application/json" \
-    -d @"$MCP_SERVER_FILE" \
-    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers" | jq .
-fi
-```
 
 ---
 
@@ -756,7 +521,7 @@ COMMAND_ID="mycatalog-xxx:MyCommand:1"
 OUTPUT_FILE="MyCommand.command.json"
 
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq . > "$OUTPUT_FILE"
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" > "$OUTPUT_FILE"
 
 echo "Command exported to $OUTPUT_FILE"
 ```
@@ -768,12 +533,11 @@ DIRECTORY="./commands"
 
 for file in "$DIRECTORY"/*.command.json; do
   echo "Uploading: $file"
-  RESPONSE=$(curl -s -X POST \
+  curl -s -X POST \
     -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
     -H "Content-Type: application/json" \
     -d @"$file" \
-    "https://$AUTOPI_HOSTNAME/api/v1/commands")
-  echo "$RESPONSE" | jq -r '.id // .message'
+    "https://$AUTOPI_HOSTNAME/api/v1/commands"
 done
 ```
 
@@ -798,7 +562,7 @@ fi
 
 ```bash
 COMMAND_FILE="MyCommand.command.json"
-COMMAND_ID=$(jq -r '.id' "$COMMAND_FILE")
+COMMAND_ID="<catalog:name:version-from-file>"
 
 # Check if exists
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -811,14 +575,14 @@ if [[ "$STATUS" == "200" ]]; then
     -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
     -H "Content-Type: application/json" \
     -d @"$COMMAND_FILE" \
-    "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq .
+    "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
 else
   echo "Creating new command..."
   curl -s -X POST \
     -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
     -H "Content-Type: application/json" \
     -d @"$COMMAND_FILE" \
-    "https://$AUTOPI_HOSTNAME/api/v1/commands" | jq .
+    "https://$AUTOPI_HOSTNAME/api/v1/commands"
 fi
 ```
 
@@ -850,11 +614,11 @@ HTTP_CODE=$(echo "$RESPONSE" | tail -1)
 BODY=$(echo "$RESPONSE" | head -n -1)
 
 if [[ "$HTTP_CODE" != "200" && "$HTTP_CODE" != "201" ]]; then
-  echo "Error ($HTTP_CODE): $(echo "$BODY" | jq -r '.message // .')"
+  echo "Error ($HTTP_CODE): $BODY"
   exit 1
 fi
 
-echo "$BODY" | jq .
+echo "$BODY"
 ```
 
 ---
@@ -865,8 +629,6 @@ echo "$BODY" | jq .
 |-----------|-------------------|
 | List/Get resources | `Read` |
 | Create/Update/Delete resources | `Write` |
-| Trigger webhooks | `Execute` |
-| Create/Update/Delete MCP servers | `GenAI` |
 
 ---
 
@@ -874,36 +636,7 @@ echo "$BODY" | jq .
 
 ⚠️ **When creating or updating commands/inputs, use these exact description patterns for standard parameters.**
 
-## 📥 Input Parameters
-
-**Authentication:**
-- **password** - The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'
-- **user** - The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'
-- **refreshToken** - An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-
-**Region & Organization:**
-- **region** - The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002
-- **subAccount** - The name or the ID of the Cloud Foundry organization. Examples: my-org-name-1, 0ffeb410-5f78-0000-af5c-5b26baf46623
-
-**Resources & Services:**
-- **resourceName** - The technical name of the [resource type]. Example: [examples]
-- **serviceKey** - A service key for [service]
-- **name** - The name of the [object]
-
-## 📤 Output Parameters
-
-**Status & Response:**
-- **status** - The status code of the response. Examples: 200, 301, 404, 503
-- **responseCode** - The HTTP response code
-- **state** - The state of the [object/entity]. Examples: [examples]
-
-**Data Collections:**
-- **output** - The original response from [service/API]
-- **result** - The result of the [operation]
-
-**System Operations:**
-- **exitCode** - The exit code returned by the script execution
-- **instanceId** - The ID of the [instance/object]
+See the complete authoritative list in **`automation-pilot-command-generation/SKILL.md`** → "Mandatory Description Patterns" section.
 
 ---
 
@@ -913,10 +646,9 @@ echo "$BODY" | jq .
 
 User: "Deploy this command to Automation Pilot"
 
-1. Validate the file: `jq empty MyCommand.command.json`
-2. Check if the command already exists by reading its ID from the file and doing a GET
-3. If it exists: PUT to `/api/v1/commands/$COMMAND_ID`; if not: POST to `/api/v1/commands`
-4. Report success with the command ID from the response
+1. Check if the command already exists by reading its ID from the file and doing a GET
+2. If it exists: PUT to `/api/v1/commands/$COMMAND_ID`; if not: POST to `/api/v1/commands`
+3. Report success with the command ID from the response
 
 ## Example 2: Export all commands from a catalog
 
@@ -934,16 +666,6 @@ User: "Update the password in my JiraCredentials input"
 2. Send only `{"values": {"password": "<new-value>"}}` — do not replace the entire input
 3. Confirm the update succeeded (HTTP 200)
 
-## Example 4: Deploy an MCP server definition
-
-User: "Deploy this MCP server"
-
-1. Validate the file: `jq empty my-server.json`
-2. Extract the server name: `jq -r '.name' my-server.json`
-3. GET `/api/v1/mcp-servers/$NAME` to check if it exists
-4. If it exists: fetch the ETag, then PUT with `If-Match: $ETAG`; if not: POST to `/api/v1/mcp-servers`
-5. Report the result
-
 ---
 
 # Troubleshooting
@@ -954,19 +676,15 @@ User: "Deploy this MCP server"
 
 **Error:** HTTP 403 Forbidden
 **Cause:** The user lacks the required permission for the operation.
-**Solution:** Check the Required Permissions table — MCP server writes need `GenAI`, webhook triggers need `Execute`, everything else needs `Write`.
+**Solution:** Check the Required Permissions table — everything needs `Write`.
 
 **Error:** HTTP 409 Conflict on command or input create
 **Cause:** A resource with the same ID already exists.
 **Solution:** Use the Upsert Pattern — GET first to check existence, then PUT if found or POST if not.
 
-**Error:** HTTP 412 Precondition Failed on MCP server update or delete
-**Cause:** The `If-Match` ETag doesn't match — the server was modified since you last fetched it.
-**Solution:** Fetch the current ETag with `curl -s -I ... | grep -i "^etag:"`, then retry the PUT/DELETE with the fresh value.
-
 **Error:** HTTP 400 Bad Request on command create
 **Cause:** Invalid JSON or a missing required field in the command definition.
-**Solution:** Validate the file with `jq empty <file>` before uploading. Check the response body for the specific field that failed.
+**Solution:** Check the response body for the specific field that failed.
 
 **Error:** HTTP 404 on command update
 **Cause:** The command ID in the request URL doesn't match any existing command.

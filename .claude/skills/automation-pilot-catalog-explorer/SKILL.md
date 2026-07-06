@@ -27,60 +27,31 @@ Discover what catalogs are available in the tenant.
 ```bash
 # List all catalogs (SAP-provided + custom)
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs" | jq '.data[] | {id, name, description}'
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs"
 
 # List only SAP-provided catalogs (built-in)
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false" | jq '.data[] | {id, name}'
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?provided=true"
 
 # List only custom/tenant catalogs
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true" | jq '.data[] | {id, name}'
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true"
 ```
 
 ### List Commands in a Catalog
 
-Find available commands within a specific catalog.
-
 ```bash
 CATALOG="applm-sapcp"
-
-# List all commands in a catalog
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | jq '.data[] | {id, name, description}'
-
-# Search for commands by name pattern
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | \
-  jq '.data[] | select(.name | test("Restart"; "i")) | {id, name}'
-
-# Get command count
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG" | jq '.data | length'
+  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG"
 ```
 
 ### Get Command Definition
 
-Fetch the full definition of a specific command (inputs, outputs, executors).
-
 ```bash
 COMMAND_ID="applm-sapcp:RestartCfApp:1"
-
-# Get full command definition
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq .
-
-# Get just input keys
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.inputKeys'
-
-# Get just output keys
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.outputKeys'
-
-# Get executors (the workflow steps)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.configuration.executors'
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
 ```
 
 ### Search Across Catalogs
@@ -90,14 +61,13 @@ Find commands matching a pattern.
 ```bash
 # List all SAP-provided catalog IDs
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false" | jq -r '.data[].id'
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false"
 
 # Search specific catalogs for commands matching a keyword
 for catalog in applm-sapcp sm-sapcp cf-sapcp; do
   echo "=== $catalog ==="
   curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$catalog" | \
-    jq -r '.data[] | select(.name | test("Service"; "i")) | .id'
+    "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$catalog"
 done
 ```
 

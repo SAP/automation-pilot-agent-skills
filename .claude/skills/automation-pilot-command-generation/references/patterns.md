@@ -23,8 +23,7 @@ Basic pattern for making an authenticated API call with error handling.
     "region": {
       "type": "string",
       "required": true,
-      "description": "Cloud Foundry region",
-      "allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]
+      "description": "Cloud Foundry region"
     },
     "user": {
       "type": "string",
@@ -74,7 +73,7 @@ Basic pattern for making an authenticated API call with error handling.
           "password": "$(.execution.input.password)",
           "tokenUrl": "$(.regionData.uaaTokenUrl)",
           "clientId": "cf",
-          "timeout": "20"
+          "timeout": "10"
         },
         "validate": {
           "semantic": "OR",
@@ -96,6 +95,7 @@ Basic pattern for making an authenticated API call with error handling.
           "maxCount": 3,
           "delay": "5s",
           "logic": "INCREMENTAL",
+          "applyOnValidation": false,
           "when": {
             "semantic": "OR",
             "conditions": [

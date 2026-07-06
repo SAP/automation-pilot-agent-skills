@@ -15,18 +15,15 @@ Debug failed Executions, check recent execution health, and investigate error pa
 ```bash
 # Last 10 executions summary
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=10" | \
-  jq '[.[] | {id, status, commandId, startedAt, finishedAt}]'
+  "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=10"
 
 # Last 5 failed executions
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&limit=5" | \
-  jq '[.[] | {id, commandId, error: .error.message}]'
+  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&limit=5"
 
 # Last 5 successful executions
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FINISHED&limit=5" | \
-  jq '[.[] | {id, commandId, finishedAt}]'
+  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FINISHED&limit=5"
 ```
 
 ### Investigate a Specific Execution
@@ -34,17 +31,11 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 ```bash
 EXEC_ID="your-execution-id"
 
-# Full execution details
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
 
-# Just the error message
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '.error'
-
-# Execution logs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs" | jq '.logs'
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs"
 ```
 
 ---
@@ -111,16 +102,15 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 "password": {
   "type": "string",
   "sensitive": true,
-  "defaultValue": "secret123"  // NOT ALLOWED
+  "defaultValue": "secret123"
 }
 ```
 
 **Correct**:
 ```json
 "password": {
-  "type": "string", 
+  "type": "string",
   "sensitive": true
-  // No defaultValue for sensitive fields
 }
 ```
 
@@ -137,11 +127,13 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 ```bash
 # Check if command exists
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/catalog:CommandName:1" | jq '{id, name}'
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/catalog:CommandName:1"
+```
 
-# Release the command if it's a draft
+⚠️ If the command is in draft state, release it only after verifying it works correctly and only if the user explicitly requests it:
+```bash
 curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/catalog:CommandName:1/release" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/catalog:CommandName:1/release"
 ```
 
 ---
@@ -154,18 +146,19 @@ curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 3. Polling loop (`repeat`) hasn't met exit condition
 4. Execution is paused or waiting for user input
 
-**Diagnosis**:
 ```bash
-# Check current state
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '{status, progressMessage, currentExecutorPath}'
-
-# Check if waiting for input
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '.userChoice'
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
 ```
 
 **Fix Options**:
 1. Wait for delay/polling to complete
-2. Abort if stuck: `curl -X POST -d '{"action":"abort"}' .../executions/$EXEC_ID/actions`
+2. Abort if stuck:
+```bash
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "abort"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+```
 
 ---
 
@@ -199,119 +192,26 @@ $(.step.output.body | toObject.field // "default")
 
 ## Debugging Workflow
 
-### Step 1: Get Execution Status
+### Step 1: Get Execution Status and Error Details
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '{status, error, progressMessage}'
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
 ```
 
-### Step 2: If FAILED, Get Error Details
+### Step 2: Check Execution Logs
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '.error'
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?maxPageSize=50"
 ```
 
-### Step 3: Check Execution Logs
+### Step 3: Check Input That Was Used
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?maxPageSize=50" | jq '.logs'
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
 ```
 
-### Step 4: Check Input That Was Used
-```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input" | jq '.values'
-```
-
-### Step 5: Match Error to Pattern
+### Step 4: Match Error to Pattern
 Look up the error message in the Error Pattern Reference above.
 
-### Step 6: Verify Command Definition
+### Step 5: Verify Command Definition
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID" | jq '.configuration.executors'
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
 ```
 
----
-
-## Known Issues & Environment Notes
-
-### Canary Environment (canary.autopilot.cloud.sap)
-
-- The "required parameter not provided" bug has been observed here
-- May have different behavior than production environments
-- Use for testing, not production workloads
-
-### SMTP from Cloud
-
-- Internal SAP mail relays require authentication from cloud
-- `mail.sap.corp` does NOT work without credentials from Automation Pilot
-- Consider using ANS (Alert Notification Service) for notifications instead
-
-### Command Release Requirement
-
-- Newly deployed commands are in DRAFT state
-- Must call `/commands/{id}/release` before execution
-- Check for `autopi:released` tag to verify release status
-
----
-
-## Quick Reference
-
-```bash
-# Last 10 executions summary
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=10" | \
-  jq '[.[] | {id, status, commandId}]'
-
-# Get execution details
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq .
-
-# Get error only
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '.error'
-
-# Get logs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs" | jq '.logs'
-
-# Abort stuck execution
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"action":"abort"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
-```
-
----
-
-## Lessons Learned Log
-
-This section captures debugging insights discovered over time.
-
-### 2026-05-20: Required Parameters API Bug
-
-**Scenario**: Creating command `GenerateGuidAndEmail:1` with required inputs `smtpHost`, `smtpPort`, `recipientEmail`, `senderEmail`.
-
-**Issue**: Triggering execution with valid JSON payload always returned `400: Parameter 'smtpHost' is required but not provided`.
-
-**Investigation**:
-- Verified JSON was valid
-- Tried different content types
-- Tried string vs number types
-- Confirmed same payload structure works for commands with NO required inputs
-
-**Resolution**: Hardcoded all values directly in the command executor inputs instead of using input parameters. Commands with `inputKeys: {}` execute successfully.
-
-**Hypothesis**: Possible permission issue with the technical user, or canary environment bug.
-
-### 2026-05-20: SMTP Authentication from Cloud
-
-**Scenario**: Using `email-sapcp:SendEmail:1` with `mail.sap.corp` as host.
-
-**Issue**: Execution failed with authentication error after successfully completing GUID generation and delay steps.
-
-**Resolution**: `mail.sap.corp` requires authentication when accessed from cloud. Need SMTP credentials or use ANS instead.
-
-### 2026-05-20: Quiet Mode Added
-
-**Scenario**: Using `autopi_debug_summary` to check execution health.
-
-**Issue**: The "Debug functions loaded" help text was noisy when just wanting quick results.
-
-**Resolution**: Added `AUTOPI_DEBUG_QUIET=1` environment variable to suppress the help banner. Use for scripting or when you just want results without the preamble.

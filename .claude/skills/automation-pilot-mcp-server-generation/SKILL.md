@@ -1,6 +1,6 @@
 ---
 name: automation-pilot-mcp-server-generation
-description: Create and configure SAP Automation Pilot MCP server definitions and tool configurations. Use when building MCP servers, defining tools, or setting up Automation Pilot MCP configs.
+description: Create, configure, and deploy SAP Automation Pilot MCP server definitions and tool configurations. Use when building MCP servers, defining tools, setting up Automation Pilot MCP configs, or deploying MCP server definitions via API.
 version: 1.0.0
 ---
 
@@ -307,11 +307,135 @@ User: "Create a minimal MCP server with one tool to send ANS alerts"
 
 ---
 
+# Deploying MCP Servers via API
+
+## Prerequisites
+
+Set the following **required** environment variables:
+
+```bash
+export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
+export AUTOPI_USERNAME="your-username"
+export AUTOPI_PASSWORD="your-password"
+```
+
+For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
+
+Ensure `curl` is available in your environment.
+
+The API requires the `GenAI` permission for all write operations. Update and delete use ETag-based optimistic concurrency via the `If-Match` header.
+
+## List MCP Servers
+
+```bash
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+```
+
+## Get MCP Server by ID
+
+MCP servers have a system-generated `id` field (e.g. `T000414R2-0000001779286543418-1-1`) returned in the create/list responses. This is distinct from the human-readable `name` field. Always use the `id` for GET, update, and delete operations.
+
+```bash
+# First, find the ID from the list response
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers" | jq '[.[] | {name, id}]'
+
+# Then fetch by ID
+MCP_SERVER_ID="T000414R2-0000001779286543418-1-1"
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+The response includes an `ETag` header required for update and delete operations.
+
+## Create MCP Server
+
+```bash
+MCP_SERVER_FILE="path/to/my-server.json"
+curl -s -X POST \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d @"$MCP_SERVER_FILE" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+```
+
+## Update MCP Server
+
+Update requires the `If-Match` header with the current ETag. Use the system-generated `id` (not the `name`) in the URL.
+
+```bash
+MCP_SERVER_ID="<id-from-list-response>"
+MCP_SERVER_FILE="path/to/updated-server.json"
+
+ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
+  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
+
+curl -s -X PUT \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -H "If-Match: $ETAG" \
+  -d @"$MCP_SERVER_FILE" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+## Delete MCP Server
+
+```bash
+MCP_SERVER_ID="<id-from-list-response>"
+
+ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
+  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
+
+curl -s -X DELETE \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "If-Match: $ETAG" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+## Deploy MCP Server (Upsert Pattern)
+
+Check for existence first — create if new, update if already deployed. Use the system-generated `id` returned from a previous create or list call:
+
+```bash
+MCP_SERVER_FILE="my-server.json"
+MCP_SERVER_ID="<id-from-prior-create-or-list>"
+
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID")
+
+if [[ "$STATUS" == "200" ]]; then
+  echo "Updating existing MCP server..."
+  ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
+    grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
+  curl -s -X PUT \
+    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+    -H "Content-Type: application/json" \
+    -H "If-Match: $ETAG" \
+    -d @"$MCP_SERVER_FILE" \
+    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+else
+  echo "Creating new MCP server..."
+  curl -s -X POST \
+    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+    -H "Content-Type: application/json" \
+    -d @"$MCP_SERVER_FILE" \
+    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+fi
+```
+
+---
+
 ## Troubleshooting
 
 **Error:** Duplicate tool names in server
 **Cause:** Two tools have the same `name` field value.
 **Solution:** Each tool name must be unique within a server. Use verb prefixes (`list_`, `get_`, `create_`) to differentiate tools that operate on the same resource type.
+
+**Error:** HTTP 412 Precondition Failed on update or delete
+**Cause:** The `If-Match` ETag doesn't match — the server was modified since you last fetched it.
+**Solution:** Fetch the current ETag with `curl -s -I ... | grep -i "^etag:"`, then retry the PUT/DELETE with the fresh value.
 
 **Error:** Conflicting hint booleans
 **Cause:** `readOnlyHint: true` and `destructiveHint: true` set on the same tool.

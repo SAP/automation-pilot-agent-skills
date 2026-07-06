@@ -1,0 +1,345 @@
+{
+  "id": "examples-<<<TENANT_ID>>>:CreateResourceWithServiceKey:1",
+  "catalog": "examples-<<<TENANT_ID>>>",
+  "name": "CreateResourceWithServiceKey",
+  "description": "Example: POST to create a resource using service key / mTLS auth. Demonstrates clientCert, conditional initialDelay, autoRetry, validate, and errorMessages.",
+  "version": 1,
+  "inputKeys": {
+    "serviceKey": {
+      "type": "object",
+      "sensitive": true,
+      "required": true,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "A service key for the target service"
+    },
+    "resourceName": {
+      "type": "string",
+      "sensitive": false,
+      "required": true,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The technical name of the resource to create"
+    },
+    "description": {
+      "type": "string",
+      "sensitive": false,
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "Optional description for the resource"
+    },
+    "parentId": {
+      "type": "string",
+      "sensitive": false,
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "GUID of the parent resource. If empty, the resource is created at the root level"
+    },
+    "user": {
+      "type": "string",
+      "sensitive": false,
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'"
+    },
+    "password": {
+      "type": "string",
+      "sensitive": true,
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
+    },
+    "refreshToken": {
+      "type": "string",
+      "sensitive": true,
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'"
+    }
+  },
+  "outputKeys": {
+    "resourceId": {
+      "type": "string",
+      "sensitive": false,
+      "description": "GUID of the created resource"
+    },
+    "resource": {
+      "type": "object",
+      "sensitive": false,
+      "description": "The full resource object returned by the API"
+    }
+  },
+  "configuration": {
+    "values": [],
+    "output": {
+      "resourceId": "$(.createResource.output.body | toObject.guid)",
+      "resource": "$(.createResource.output.body | toObject)"
+    },
+    "executors": [
+      {
+        "execute": "http-sapcp:HttpRequest:1",
+        "input": {
+          "url": "$(.execution.input.serviceKey.endpoints.service_url)/v1/resources$(if (.execution.input.parentId | length > 0) then \"?parentId=\" + (.execution.input.parentId | toUrlEncoded) else \"\" end)",
+          "method": "POST",
+          "headers": "{\"Accept\": \"application/json\", \"Content-Type\": \"application/json\"}",
+          "clientCert": "$(.execution.input.serviceKey.uaa.certificate + .execution.input.serviceKey.uaa.key)",
+          "clientId": "$(.execution.input.serviceKey.uaa.clientid)",
+          "clientSecret": "$(.execution.input.serviceKey.uaa.clientsecret)",
+          "tokenUrl": "$((if (.execution.input.serviceKey.uaa.certificate == null) and (.execution.input.serviceKey.uaa.key == null) then .execution.input.serviceKey.uaa.url else .execution.input.serviceKey.uaa.certurl end) + \"/oauth/token\")",
+          "user": "$(.execution.input.user)",
+          "password": "$(.execution.input.password)",
+          "refreshToken": "$(.execution.input.refreshToken)",
+          "body": "{\"name\": \"$(.execution.input.resourceName | toEscapedJson)\", \"description\": \"$(.execution.input.description | toEscapedJson)\"}",
+          "timeout": "30"
+        },
+        "alias": "createResource",
+        "description": null,
+        "progressMessage": null,
+        "initialDelay": null,
+        "pause": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": {
+          "maxCount": 3,
+          "delay": "5s",
+          "logic": "INCREMENTAL",
+          "applyOnValidation": false,
+          "when": {
+            "semantic": "OR",
+            "conditions": [
+              {
+                "semantic": "OR",
+                "cases": [
+                  {
+                    "expression": "$([408, 429, 502, 503, 504] | filter(. == $.createResource.output.status) | length)",
+                    "operator": "EQUALS",
+                    "semantic": "OR",
+                    "values": ["1"]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "repeat": null,
+        "errorMessages": [
+          {
+            "message": "Resource '$(.execution.input.resourceName)' already exists",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.createResource.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": ["409"]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "message": "Parent resource '$(.execution.input.parentId)' does not exist",
+            "when": {
+              "semantic": "AND",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.createResource.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": ["404"]
+                    }
+                  ]
+                },
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.execution.input.parentId | length)",
+                      "operator": "GREATER_THAN",
+                      "semantic": "OR",
+                      "values": ["0"]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "message": "The service key is invalid",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.createResource.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": ["401"]
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "message": "$(.createResource.output.body | toObject.error.message)",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.createResource.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": ["400"]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "dryRun": null
+      },
+      {
+        "execute": "http-sapcp:HttpRequest:1",
+        "input": {
+          "url": "$(.execution.input.serviceKey.endpoints.service_url)/v1/resources/$(.createResource.output.body | toObject.guid | toUrlEncoded)",
+          "method": "GET",
+          "headers": "{\"Accept\": \"application/json\"}",
+          "clientCert": "$(.execution.input.serviceKey.uaa.certificate + .execution.input.serviceKey.uaa.key)",
+          "clientId": "$(.execution.input.serviceKey.uaa.clientid)",
+          "clientSecret": "$(.execution.input.serviceKey.uaa.clientsecret)",
+          "tokenUrl": "$((if (.execution.input.serviceKey.uaa.certificate == null) and (.execution.input.serviceKey.uaa.key == null) then .execution.input.serviceKey.uaa.url else .execution.input.serviceKey.uaa.certurl end) + \"/oauth/token\")",
+          "user": "$(.execution.input.user)",
+          "password": "$(.execution.input.password)",
+          "refreshToken": "$(.execution.input.refreshToken)",
+          "timeout": "10"
+        },
+        "alias": "getCreatedResource",
+        "description": null,
+        "progressMessage": null,
+        "initialDelay": {
+          "interval": "1m",
+          "when": {
+            "semantic": "OR",
+            "conditions": [
+              {
+                "semantic": "OR",
+                "cases": [
+                  {
+                    "expression": "$(.createResource.output.body | toObject.state)",
+                    "operator": "NOT_EQUALS",
+                    "semantic": "OR",
+                    "values": ["READY"]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "pause": null,
+        "when": null,
+        "validate": {
+          "semantic": "AND",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.getCreatedResource.output.body | toObject.guid | isGuid)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": ["true"]
+                }
+              ]
+            },
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.getCreatedResource.output.body | toObject.name)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": ["$(.execution.input.resourceName)"]
+                }
+              ]
+            }
+          ]
+        },
+        "autoRetry": {
+          "maxCount": 3,
+          "delay": "5s",
+          "logic": "INCREMENTAL",
+          "applyOnValidation": false,
+          "when": {
+            "semantic": "OR",
+            "conditions": [
+              {
+                "semantic": "OR",
+                "cases": [
+                  {
+                    "expression": "$([408, 429, 502, 503, 504] | filter(. == $.getCreatedResource.output.status) | length)",
+                    "operator": "EQUALS",
+                    "semantic": "OR",
+                    "values": ["1"]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "repeat": null,
+        "errorMessages": [],
+        "dryRun": null
+      }
+    ],
+    "listeners": []
+  },
+  "tags": {}
+}

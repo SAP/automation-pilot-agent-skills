@@ -2,63 +2,91 @@
   "id": "examples-<<<TENANT_ID>>>:ProcessAppsBatch:1",
   "catalog": "examples-<<<TENANT_ID>>>",
   "name": "ProcessAppsBatch",
-  "description": "Example: Batch processing with ForEach - list apps and process each",
+  "description": "Example: Batch processing with ForEach - list apps and process each in parallel batches",
   "version": 1,
   "inputKeys": {
     "region": {
       "type": "string",
+      "sensitive": false,
       "required": true,
-      "description": "Cloud Foundry region",
-      "allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
     },
     "user": {
       "type": "string",
+      "sensitive": false,
       "required": false,
-      "description": "CF user email"
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'"
     },
     "password": {
       "type": "string",
-      "required": false,
       "sensitive": true,
-      "description": "CF user password"
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
     },
     "refreshToken": {
       "type": "string",
-      "required": false,
       "sensitive": true,
-      "description": "CF refresh token"
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'"
     },
     "spaceId": {
       "type": "string",
+      "sensitive": false,
       "required": true,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
       "description": "Space GUID to list apps from"
-    },
-    "appStateFilter": {
-      "type": "string",
-      "required": false,
-      "defaultValue": "STARTED",
-      "description": "Filter apps by state (STARTED, STOPPED, or empty for all)"
     },
     "batchSize": {
       "type": "number",
+      "sensitive": false,
       "required": false,
-      "defaultValue": "5",
+      "minSize": null,
+      "maxSize": null,
       "minValue": 1,
       "maxValue": 10,
+      "defaultValue": "5",
+      "defaultValueFromInput": null,
       "description": "Number of apps to process in parallel"
     }
   },
   "outputKeys": {
-    "totalApps": {
-      "type": "number",
-      "description": "Total number of apps found"
-    },
     "processedCount": {
       "type": "number",
+      "sensitive": false,
       "description": "Number of apps processed"
     },
     "results": {
       "type": "array",
+      "sensitive": false,
       "description": "Processing results for each app"
     }
   },
@@ -73,16 +101,14 @@
       }
     ],
     "output": {
-      "totalApps": "$(.listApps.output.body | toObject.pagination.total_results)",
       "processedCount": "$(.processApps.output.outputs | length)",
       "results": "$(.processApps.output.outputs)"
     },
     "executors": [
       {
         "execute": "http-sapcp:HttpRequest:1",
-        "alias": "listApps",
         "input": {
-          "url": "$(.regionData.cfApiUrl)/v3/apps?space_guids=$(.execution.input.spaceId | toUrlEncoded)$(if .execution.input.appStateFilter != \"\" then \"&states=\" + .execution.input.appStateFilter else \"\" end)",
+          "url": "$(.regionData.cfApiUrl)/v3/apps?space_guids=$(.execution.input.spaceId | toUrlEncoded)",
           "method": "GET",
           "headers": "{\"Accept\": \"application/json\"}",
           "user": "$(.execution.input.user)",
@@ -92,18 +118,11 @@
           "clientId": "cf",
           "timeout": "30"
         },
-        "dryRun": {
-          "output": {
-            "status": "200",
-            "body": "{\"pagination\": {\"total_results\": 2}, \"resources\": [{\"guid\": \"app-1\", \"name\": \"my-app\", \"state\": \"STARTED\"}, {\"guid\": \"app-2\", \"name\": \"other-app\", \"state\": \"STARTED\"}]}",
-            "headers": "{\"content-type\": \"application/json\"}",
-            "method": "GET",
-            "url": "https://api.example.com/v3/apps",
-            "time": "200",
-            "size": "300"
-          }
-        },
+        "alias": "listApps",
+        "description": null,
         "progressMessage": "Listing applications in space...",
+        "initialDelay": null,
+        "pause": null,
         "when": null,
         "validate": {
           "semantic": "OR",
@@ -125,6 +144,7 @@
           "maxCount": 3,
           "delay": "5s",
           "logic": "INCREMENTAL",
+          "applyOnValidation": false,
           "when": {
             "semantic": "OR",
             "conditions": [
@@ -143,56 +163,22 @@
           }
         },
         "repeat": null,
-        "errorMessages": []
-      },
-      {
-        "execute": "utils-sapcp:Void:1",
-        "alias": "prepareInputs",
-        "input": {
-          "message": "$(.listApps.output.body | toObject.resources | map({appGuid: .guid, appName: .name, appState: .state, region: $.execution.input.region, user: $.execution.input.user, password: $.execution.input.password, refreshToken: $.execution.input.refreshToken}) | toMinifiedJsonString)"
-        },
-        "dryRun": {
-          "output": {
-            "message": "[{\"appGuid\":\"app-1\",\"appName\":\"my-app\",\"appState\":\"STARTED\"}]"
-          }
-        },
-        "progressMessage": "Found $(.listApps.output.body | toObject.pagination.total_results) apps to process",
-        "when": {
-          "semantic": "OR",
-          "conditions": [
-            {
-              "semantic": "OR",
-              "cases": [
-                {
-                  "expression": "$(.listApps.output.body | toObject.pagination.total_results)",
-                  "operator": "NOT_EQUALS",
-                  "semantic": "OR",
-                  "values": ["0"]
-                }
-              ]
-            }
-          ]
-        },
-        "validate": null,
-        "autoRetry": null,
-        "repeat": null,
-        "errorMessages": []
+        "errorMessages": [],
+        "dryRun": null
       },
       {
         "execute": "utils-sapcp:ForEach:2",
-        "alias": "processApps",
         "input": {
           "command": "examples-<<<TENANT_ID>>>:ProcessSingleApp:1",
-          "inputs": "$(.prepareInputs.output.message | toArray)",
+          "inputs": "$(.listApps.output.body | toObject.resources | map({appGuid: .guid, appName: .name}) | toMinifiedJsonString | toArray)",
           "defaultValues": "{}",
           "batchSize": "$(.execution.input.batchSize)"
         },
-        "dryRun": {
-          "output": {
-            "outputs": "[{\"status\": \"SUCCESS\"}]"
-          }
-        },
-        "progressMessage": "Processing $(.prepareInputs.output.message | toArray | length) apps with batch size $(.execution.input.batchSize)...",
+        "alias": "processApps",
+        "description": null,
+        "progressMessage": "Processing apps with batch size $(.execution.input.batchSize)...",
+        "initialDelay": null,
+        "pause": null,
         "when": {
           "semantic": "OR",
           "conditions": [
@@ -212,12 +198,11 @@
         "validate": null,
         "autoRetry": null,
         "repeat": null,
-        "errorMessages": []
+        "errorMessages": [],
+        "dryRun": null
       }
     ],
     "listeners": []
   },
-  "tags": {
-    "env": "cf"
-  }
+  "tags": {}
 }

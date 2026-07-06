@@ -306,9 +306,10 @@ $([range(5)])                # [0, 1, 2, 3, 4]
 
 ### Type Checking
 
+The `| type` function does not exist in Automation Pilot's expression engine. To check whether a value is present or non-empty, use `| length` with an `EQUALS "0"` condition instead.
+
 ```
-$(.value | type)              # "string", "number", "array", etc.
-$(.value | type == "array")   # true/false
+$(.value | length)    # 0 if null/empty, >0 if present
 ```
 
 ## Common Patterns
