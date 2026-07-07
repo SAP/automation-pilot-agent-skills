@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-command-review
 description: Review production commands, inputs, and catalogs for Automation Pilot. Validates file structure, naming conventions, security requirements, mandatory patterns, and best practices. Use when reviewing .command.json, .input.json, or .catalog.json files.
-version: 1.0.0
 ---
 
 # Code Review
@@ -65,16 +64,6 @@ JSON: "name": "CreateDir"
 - Inputs: `.input.json`
 - Catalogs: `.catalog.json`
 
-**File Placement:**
-
-| Type | Location | Example |
-|------|----------|---------|
-| Production command | `content/public/catalogs/[catalog]/` | `catalogs/http/HttpRequest.command.json` |
-| Canary command | `content/canary/` | `canary/SensitiveHttpRequest.command.json` |
-| Internal command | `content/internal/catalogs/[catalog]/` | `internal/catalogs/cld/GetCldSystem.command.json` |
-
-**Critical:** ALL files (.command.json, .input.json, .catalog.json) MUST be inside `content/` folder.
-
 ### Naming Conventions
 
 | Element | Convention | Example | Max Length |
@@ -94,8 +83,8 @@ JSON: "name": "CreateDir"
 **Validate input/output key definitions:**
 - Correct **data types** used: array, string, object, number, boolean
 - Optional input keys have **default** values when appropriate
-- **allowedValues** specified when there's a fixed set of valid options
-- **suggestedValues** provided when there's a recommended default
+- `allowedValues`, `suggestedValues`, `allowedValuesFromInputKeys`, `suggestedValuesFromInputKeys` exist but should only be present when needed
+- **Region inputs must use `allowedValuesFromInputKeys`**: CF regions → `["metadata-sapcp:CfRegionData:1"]`, Neo regions → `["metadata-sapcp:NeoRegionData:1"]`
 
 **Example:**
 ```json
@@ -108,10 +97,6 @@ JSON: "name": "CreateDir"
     "maxSize": null,
     "minValue": null,
     "maxValue": null,
-    "allowedValues": ["1", "2", "5", "10"],
-    "allowedValuesFromInputKeys": null,
-    "suggestedValues": ["5"],
-    "suggestedValuesFromInputKeys": null,
     "defaultValue": "5",
     "defaultValueFromInput": null,
     "description": "Request timeout in seconds"
@@ -128,7 +113,7 @@ These fields MUST have `"sensitive": true`:
 ```json
 "password": {
   "type": "string",
-  "sensitive": true,  // ⚠️ REQUIRED
+  "sensitive": true,
   "required": true,
   "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
 }
@@ -197,123 +182,7 @@ Sensitive data should be stored in Input definitions and referenced:
 
 ⚠️ **All descriptions of the following parameters must be one of these exact sentences or start with them.** No variations, alternatives, or creative rewording allowed for these Input and Output keys!
 
-### 📥 Input Parameters
-
-**Authentication:**
-- **password**
-  - description
-    - The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'
-    - The password of a service account with [permissions]. Related input keys: 'user'
-    - The password of the provided user
-  - type - string | sensitive 🔒
-- **user**
-  - description
-    - The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'
-    - The ID (username) of a service account with [permissions]. Related input keys: 'password'
-    - The user ID or the email of a Cloud Foundry user to be used for authentication
-    - The username of the [service/system]
-  - type - string
-- **refreshToken**
-  - description
-    - An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-    - An OAuth 2.0 refresh token which will be used to get a new access token via the Refresh Token grant type. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-  - type - string | sensitive 🔒
-
-**Region & Organization:**
-- **region**
-  - description
-    - The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002
-    - The technical name of the Neo region. Example: neo-eu1, neo-us1
-  - type - string
-  - Allowed values should be used
-- **subAccount**
-  - description
-    - The name or the ID of the Cloud Foundry organization. Examples: my-org-name-1, 0ffeb410-5f78-0000-af5c-5b26baf46623
-  - type - string
-
-**Resources & Services:**
-- **resourceName**
-  - description
-    - The technical name of the [resource type]. Example: [examples]
-  - type - string
-- **serviceKey**
-  - description
-    - A service key for [service]
-  - type - object | sensitive 🔒
-- **name**
-  - description
-    - The name of the [object]
-  - type - string
-
-### 📤 Output Parameters
-
-**Status & Response:**
-- **status**
-  - description
-    - The status of the [object]
-    - The status code of the response. Examples: 200, 301, 404, 503
-    - The status code of the response. Examples: 200, 301, 404, 503. In case of no response or a timeout, the status codes may be 0 and -1.
-  - types - number, string, object
-- **responseCode**
-  - description
-    - The HTTP response code
-  - type - number
-- **state**
-  - description
-    - The state of the [object/entity]. Examples: [examples]
-  - type - string
-
-**Data Collections:**
-- **resourceInstancesStates**
-  - description
-    - An array of all application instances after command execution
-  - type - array
-- **output**
-  - description
-    - The original response from [service/API]
-  - types - array, string, object
-- **result**
-  - description
-    - The result of the [operation]
-  - types - array, string, object
-
-**System Operations:**
-- **exitCode**
-  - description
-    - The exit code returned by the script execution
-  - type - number
-- **instanceId**
-  - description
-    - The ID of the [instance/object]
-  - type - string
-
-**When reviewing descriptions, verify:**
-- Authentication parameters use exact patterns from the list above
-- Region parameters include examples (cf-eu10, neo-eu1, etc.)
-- Output parameters like `status` include example values
-- No creative rewording of mandatory patterns
-
-### Description Rules
-
-**DO NOT:**
-- End with period unless complete sentence
-- Use forbidden verbs: abort, terminate, kill, disable
-- Use generic descriptions like "The password."
-- Skip examples when helpful
-
-**DO:**
-- Start with capital letter
-- Include examples where applicable
-- Be specific and descriptive
-- Use exact mandatory patterns for auth/region
-
-**Examples of Good vs Bad Descriptions:**
-
-| ✅ Good | ❌ Bad | Issue |
-|---------|--------|-------|
-| `"Password used for authentication"` | `"The password."` | Ends with punctuation, too generic |
-| `"Technical name of the Cloud Foundry region"` | `"Region name"` | Doesn't follow mandatory pattern |
-| `"Status of the Jenkins build execution"` | `"Build status."` | Ends with punctuation, too vague |
+See the complete authoritative list in **[`../automation-pilot-command-generation/references/description-patterns.md`](../automation-pilot-command-generation/references/description-patterns.md)**.
 
 ## Expression Sanitization (CRITICAL)
 
@@ -345,7 +214,7 @@ Sensitive data should be stored in Input definitions and referenced:
 | **Error Messages** | Dynamic values in single quotes | Flag static messages like "Resource not found" |
 | **Error Structure** | `when.semantic.OR.conditions.cases` | Verify proper error condition structure |
 
-**For HTTP implementation details:** See [executor-httprequest SKILL](./executor-httprequest/SKILL.md)
+**For HTTP implementation details:** See [executor-httprequest SKILL](../automation-pilot-executor-httprequest/SKILL.md)
 
 ## Validation Examples
 
@@ -379,7 +248,7 @@ Sensitive data should be stored in Input definitions and referenced:
   },
   "values": {
     "password": "",
-    "user": "P2004056162",
+    "user": "technical-user",
     "mail": "technical.user@example.com"
   }
 }
@@ -479,9 +348,7 @@ Validate in this order:
 ### 1. File Structure (CRITICAL - Build Fails)
 - File name matches `"name"` field exactly (PascalCase for commands/inputs)
 - File extension: `.command.json`, `.input.json`, or `.catalog.json`
-- File location: `content/public/catalogs/[catalog]/` (production)
 - All names ≤ 32 characters
-- Files inside `content/` folder (build fails if outside)
 
 ### 2. Naming Conventions (CRITICAL)
 - Commands/Inputs: PascalCase (CreateDirectory, HttpRequest)
@@ -514,8 +381,6 @@ Validate in this order:
 ### 7. Data Types (MEDIUM PRIORITY)
 - Correct types: string, number, boolean, array, object
 - Optional keys have `default` values
-- `allowedValues` specified when applicable
-- `suggestedValues` provided when helpful
 
 ### 8. Deprecated Commands (HIGH PRIORITY)
 - No deprecated commands in new content
@@ -537,5 +402,5 @@ Validate in this order:
 
 ## Related Skills
 
-- **oq-testing** - For creating and reviewing OQ test files (.OQ.command.json)
-- Use code-review for production commands, oq-testing for test files
+- Use `automation-pilot-command-generation` for creating commands before review
+- Use `automation-pilot-content-management-via-api` for deploying reviewed commands

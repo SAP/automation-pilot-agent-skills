@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-command-generation
-description: Generate SAP Automation Pilot commands with dynamic expressions, jq transformations, and composite workflows. Use when creating commands, building orchestration flows, or working with Automation Pilot expressions.
-version: 1.2.0
+description: Generate SAP Automation Pilot commands with dynamic expressions, jq transformations, and composite workflows. Use when creating commands, building orchestration flows, or working with Automation Pilot expressions and script execution (Bash, Python, Node.js, PowerShell).
 ---
 
 # SAP Automation Pilot Command Development
@@ -35,99 +34,28 @@ Use the **catalog-explorer** skill to discover available executors via API:
 ```bash
 # List available catalogs
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false" | jq '.data[] | {id, name}'
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false"
 
 # Find commands in a catalog
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=applm-sapcp" | jq '.data[] | {id, name}'
+  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=applm-sapcp"
 
 # Get full command definition (inputs, outputs, executors)
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/applm-sapcp:RestartCfApp:1" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/applm-sapcp:RestartCfApp:1"
 ```
 
 This ensures you always use valid executor names and correct parameters, even for newly added catalogs.
 
-## IMPORTANT: Dry Run Configuration (MANDATORY)
+## Dry Run
 
-**Every executor MUST include a `dryRun` configuration.** This enables safe testing of commands without making actual changes when the execution is triggered with the `feature:dryRun` tag.
-
-The `dryRun.output` contains **sample values for ALL output keys** that the executed command would produce. When running in dry run mode, these mock values are returned instead of actually executing the command.
+`dryRun` is always present on every executor. Set it to `null` unless you have a specific reason to provide mock output.
 
 ```json
-{
-  "execute": "http-sapcp:HttpRequest:1",
-  "alias": "getResource",
-  "input": {
-    "url": "https://api.example.com/resource",
-    "method": "GET"
-  },
-  "dryRun": {
-    "output": {
-      "status": "200",
-      "body": "{\"id\": \"mock-id-123\", \"name\": \"Mock Resource\"}",
-      "headers": "{\"content-type\": \"application/json\"}",
-      "method": "GET",
-      "url": "https://api.example.com/resource",
-      "time": "100",
-      "size": "50"
-    }
-  }
-}
+"dryRun": null
 ```
 
-### How to Define Dry Run Output
-
-1. **Identify the executed command's output keys** - Check what outputs the command produces (e.g., `HttpRequest:1` outputs: `status`, `body`, `headers`, `method`, `url`, `time`, `size`)
-2. **Provide sample values for ALL output keys** - Every output key must have a mock value
-3. **Use realistic values** - Values should represent what a successful execution would return
-4. **Ensure downstream compatibility** - If other executors reference this output (e.g., `$(.getResource.output.body)`), the mock values must work with those expressions
-
-### Common Executor Output Keys
-
-**`http-sapcp:HttpRequest:1`:**
-```json
-"dryRun": {
-  "output": {
-    "status": "200",
-    "body": "{\"result\": \"success\"}",
-    "headers": "{\"content-type\": \"application/json\"}",
-    "method": "GET",
-    "url": "https://api.example.com",
-    "time": "100",
-    "size": "50"
-  }
-}
-```
-
-**`utils-sapcp:Void:1`:**
-```json
-"dryRun": {
-  "output": {
-    "message": "Dry run: skipped actual operation"
-  }
-}
-```
-
-**`scripts-sapcp:ExecuteScript:2`:**
-```json
-"dryRun": {
-  "output": {
-    "output": "[\"Mock script output line 1\", \"Mock output line 2\"]",
-    "exitCode": "0"
-  }
-}
-```
-
-**`kubernetes-sapcp:ListK8sResources:1`:**
-```json
-"dryRun": {
-  "output": {
-    "status": "200",
-    "body": "{\"apiVersion\": \"v1\", \"kind\": \"PodList\", \"items\": []}"
-  }
-}
-```
+The `dryRun: {output: {...}}` form (with mock values) is only needed if a downstream executor references this executor's output AND you want dry-run mode to propagate realistic values through the chain. In practice, `null` is the standard.
 
 ## IMPORTANT: Catalog Naming & ForEach Version
 
@@ -180,11 +108,20 @@ Define command parameters:
     "sensitive": false,         // true masks in logs
     "defaultValue": "value",
     "minValue": 1,              // for numbers
-    "maxValue": 100,
-    "allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]
+    "maxValue": 100
   }
 }
 ```
+
+Additional optional fields exist: `allowedValues` (fixed set of valid options), `suggestedValues` (hints shown in UI), `allowedValuesFromInputKeys` and `suggestedValuesFromInputKeys` (dynamic lists from an input reference). Omit them when not needed.
+
+**`defaultValue` is always a JSON string on the wire** regardless of the declared `type`. For non-string types, stringify the JSON: `"defaultValue": "5"` for a number, `"defaultValue": "true"` for a boolean, `"defaultValue": "[\"a\",\"b\"]"` for an array, `"defaultValue": "{\"key\":\"val\"}"` for an object.
+
+**Region inputs** must always use `allowedValuesFromInputKeys` to constrain the value to the SAP-provided region list:
+- Cloud Foundry: `"allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]`
+- Neo: `"allowedValuesFromInputKeys": ["metadata-sapcp:NeoRegionData:1"]`
+
+This ensures only valid Automation Pilot regions can be entered.
 
 ### Output Keys
 
@@ -215,7 +152,7 @@ Commands with `configuration` orchestrate multiple steps:
 
 ### Input References (values)
 
-Load reusable metadata like region configurations:
+Load reusable credentials or metadata at execution time. Three forms of `inputKey`:
 
 ```json
 "values": [
@@ -225,13 +162,31 @@ Load reusable metadata like region configurations:
       "inputReference": "metadata-sapcp:CfRegionData:1",
       "inputKey": "$(.execution.input.region)"
     }
+  },
+  {
+    "alias": "fullInputObject",
+    "valueFrom": {
+      "inputReference": "mycatalog-<<<TENANT_ID>>>:MyCredentials:1",
+      "inputKey": null
+    }
+  },
+  {
+    "alias": "ServiceAccountPassword",
+    "valueFrom": {
+      "inputReference": "mycatalog-<<<TENANT_ID>>>:MyCredentials:1",
+      "inputKey": "password"
+    }
   }
 ]
 ```
 
+- **Expression** (`"$(.execution.input.region)"`) — dynamically selects which key to load based on input
+- **`null`** — loads the entire input reference as an object (access its fields via `$(.alias.fieldName)`)
+- **Plain string** (`"password"`) — loads a single named key directly
+
 ### Executors
 
-Each executor runs a command with mapped inputs. **Every executor MUST include a `dryRun` configuration.**
+Each executor runs a command with mapped inputs.
 
 ```json
 {
@@ -246,22 +201,16 @@ Each executor runs a command with mapped inputs. **Every executor MUST include a
     "clientId": "cf",
     "timeout": "20"
   },
+  "description": null,
+  "progressMessage": null,
+  "initialDelay": null,
+  "pause": null,
   "when": null,
   "validate": null,
   "autoRetry": null,
   "repeat": null,
   "errorMessages": [],
-  "dryRun": {
-    "output": {
-      "status": "200",
-      "body": "{\"resources\": [], \"pagination\": {\"total_results\": 0}}",
-      "headers": "{\"content-type\": \"application/json\"}",
-      "method": "GET",
-      "url": "https://api.cf.example.com/v3/apps",
-      "time": "150",
-      "size": "100"
-    }
-  }
+  "dryRun": null
 }
 ```
 
@@ -273,58 +222,23 @@ Expressions use jq 1.6 syntax wrapped in `$()`. Access data with:
 - `.regionData.field` - Values from input references
 - `$` - Global scope (use inside pipes)
 
-### Essential Expressions
-
-| Pattern | Description |
-|---------|-------------|
-| `$(.execution.input.name)` | Access input |
-| `$(.step.output.body \| toObject)` | Parse JSON response |
-| `$(.step.output.body \| toObject.items[0].id)` | Extract nested value |
-| `$(if .cond then "a" else "b" end)` | Conditional |
-| `$(.arr \| map(.field))` | Transform array |
-| `$(.str \| toUrlEncoded)` | URL encode |
-| `$(.obj \| toObject.key // "default")` | Fallback value |
-
-### String Operations
-
-- `toUpperCase`, `toLowerCase`, `strip`
-- `split(".")`, `join(",")`
-- `gsub("old"; "new")` - Replace all
-- `"\(.var) text"` - Interpolation
-
-### Array/Object Operations
-
-- `filter(condition)`, `select(condition)`
-- `map(transform)`, `sort`, `sortBy(.field)`
-- `unique`, `uniqueBy(.field)`
-- `keys`, `values`, `length`
-- `toEntries`, `fromEntries`
-
-### Type Conversions
-
-- `toObject`, `toArray`, `toString`, `toNumber`, `toBoolean`
-- `toBase64`, `fromBase64`
-- `toUrlEncoded`, `fromUrlEncoded`
-- `toMd5`, `toSha256`
-- `fromYaml`, `toYaml`
-
-### Utilities
-
-- `now` - Unix timestamp
-- `guid`, `guidShort` - Generate UUIDs
-- `isGuid` - Validate GUID format
+See **[`references/expressions.md`](references/expressions.md)** for the full expression reference — patterns, string/array/object operations, type conversions, and utilities.
 
 ## IMPORTANT: Expression Complexity Limits
 
 Expressions have a complexity limit. If you get "Expression contains too many elements" error, break complex object construction into intermediate `Void` steps:
 
+Too complex — avoid this:
+
 ```json
-// WRONG - too many elements in one expression
 "output": {
   "counts": "$({\"a\": .x, \"b\": .y, \"c\": .z, \"d\": .w, \"e\": .v, ...})"
 }
+```
 
-// CORRECT - use Void step to build complex objects
+Use a `Void` step instead:
+
+```json
 "executors": [
   {
     "execute": "utils-sapcp:Void:1",
@@ -480,103 +394,14 @@ Provide custom error messages:
 2. **Find reference commands** - Use catalog-explorer skill or check `references/catalogs.md`
 3. **Design the flow** - Map out executors and data transformations
 4. **Write expressions** - Use jq syntax for data manipulation
-5. **Add dryRun config** - Define mock outputs for each executor (MANDATORY)
-6. **Add error handling** - Validate, autoRetry, errorMessages
-7. **Test incrementally** - Verify each step works (use `--dry-run` first)
+5. **Add error handling** - validate, autoRetry, errorMessages
+6. **Test incrementally** - Verify each step works (use `feature:dryRun` tag)
 
 ## Mandatory Description Patterns
 
 ⚠️ **When creating commands, use these exact description patterns for standard parameters.** No variations or creative rewording allowed!
 
-### 📥 Input Parameters
-
-**Authentication:**
-- **password**
-  - description
-    - The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'
-    - The password of a service account with [permissions]. Related input keys: 'user'
-    - The password of the provided user
-  - type - string | sensitive 🔒
-- **user**
-  - description
-    - The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'
-    - The ID (username) of a service account with [permissions]. Related input keys: 'password'
-    - The user ID or the email of a Cloud Foundry user to be used for authentication
-    - The username of the [service/system]
-  - type - string
-- **refreshToken**
-  - description
-    - An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-    - An OAuth 2.0 refresh token which will be used to get a new access token via the Refresh Token grant type. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-  - type - string | sensitive 🔒
-
-**Region & Organization:**
-- **region**
-  - description
-    - The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002
-    - The technical name of the Neo region. Example: neo-eu1, neo-us1
-  - type - string
-  - Allowed values should be used
-- **subAccount**
-  - description
-    - The name or the ID of the Cloud Foundry organization. Examples: my-org-name-1, 0ffeb410-5f78-0000-af5c-5b26baf46623
-  - type - string
-
-**Resources & Services:**
-- **resourceName**
-  - description
-    - The technical name of the [resource type]. Example: [examples]
-  - type - string
-- **serviceKey**
-  - description
-    - A service key for [service]
-  - type - object | sensitive 🔒
-- **name**
-  - description
-    - The name of the [object]
-  - type - string
-
-### 📤 Output Parameters
-
-**Status & Response:**
-- **status**
-  - description
-    - The status of the [object]
-    - The status code of the response. Examples: 200, 301, 404, 503
-    - The status code of the response. Examples: 200, 301, 404, 503. In case of no response or a timeout, the status codes may be 0 and -1.
-  - types - number, string, object
-- **responseCode**
-  - description
-    - The HTTP response code
-  - type - number
-- **state**
-  - description
-    - The state of the [object/entity]. Examples: [examples]
-  - type - string
-
-**Data Collections:**
-- **resourceInstancesStates**
-  - description
-    - An array of all application instances after command execution
-  - type - array
-- **output**
-  - description
-    - The original response from [service/API]
-  - types - array, string, object
-- **result**
-  - description
-    - The result of the [operation]
-  - types - array, string, object
-
-**System Operations:**
-- **exitCode**
-  - description
-    - The exit code returned by the script execution
-  - type - number
-- **instanceId**
-  - description
-    - The ID of the [instance/object]
-  - type - string
+See the complete authoritative list in **[`references/description-patterns.md`](references/description-patterns.md)**.
 
 ## Examples
 
@@ -628,9 +453,9 @@ User: "Create a command that starts an async operation and polls until it comple
 **Cause:** Applying the wrong suffix convention.
 **Solution:** Generated commands use `<<<TENANT_ID>>>` suffix. Only SAP-provided built-in commands use `-sapcp`.
 
-**Error:** Missing `dryRun` configuration on an executor
-**Cause:** Executor defined without a `dryRun` block.
-**Solution:** Every executor MUST include `dryRun.output` with sample values for ALL output keys of the executed command.
+**Error:** Missing `dryRun` field on an executor
+**Cause:** Executor defined without a `dryRun` field.
+**Solution:** Always include `"dryRun": null` unless mock output propagation through a chain is needed.
 
 ---
 
@@ -647,6 +472,7 @@ For detailed patterns and complete expression reference:
 ### Example Files
 
 Working command examples in `examples/` (note PascalCase naming):
-- **`GetResourceWithRetry.command.json`** - HTTP request with retry and validation
+- **`CreateResourceWithServiceKey.command.json`** - POST with service key / clientCert auth, autoRetry, errorMessages, and conditional initialDelay
+- **`GetResourceWithRetry.command.json`** - HTTP GET with OAuth, retry, validate, and errorMessages
 - **`WaitForOperation.command.json`** - Polling pattern with repeat
 - **`ProcessAppsBatch.command.json`** - Batch processing with ForEach

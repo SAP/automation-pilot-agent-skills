@@ -1,0 +1,265 @@
+<svg viewBox="0 0 1150 600" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            /* Animations */
+            @keyframes flow-forward {
+                from { stroke-dashoffset: 24; }
+                to { stroke-dashoffset: 0; }
+            }
+
+            @keyframes pulse-glow {
+                0% { filter: drop-shadow(0 0 5px rgba(217, 119, 87, 0.4)); transform: scale(1); }
+                50% { filter: drop-shadow(0 0 15px rgba(217, 119, 87, 0.9)); transform: scale(1.02); }
+                100% { filter: drop-shadow(0 0 5px rgba(217, 119, 87, 0.4)); transform: scale(1); }
+            }
+
+            @keyframes float {
+                0% { transform: translate(470px, 195px); }
+                50% { transform: translate(470px, 205px); }
+                100% { transform: translate(470px, 195px); }
+            }
+
+            @keyframes blink-light {
+                0%, 100% { fill: #10b981; filter: brightness(1); }
+                50% { fill: #047857; filter: brightness(0.5); }
+            }
+
+            /* SVG Line Styles */
+            .anim-line {
+                fill: none;
+                stroke-width: 2.5;
+                stroke-dasharray: 6 6;
+                animation: flow-forward 1s linear infinite;
+            }
+
+            .user-line { stroke: #06b6d4; }
+            .claude-line { stroke: #D97757; }
+            .json-line { stroke: #eab308; stroke-dasharray: 4 4; animation-duration: 0.8s; }
+            .sap-line { stroke: #0ea5e9; }
+            .ext-line { stroke: #10b981; }
+
+            .pulse-node {
+                transform-origin: 260px 300px;
+                animation: pulse-glow 3s ease-in-out infinite;
+            }
+
+            .server-light {
+                animation: blink-light 1.5s infinite;
+            }
+        </style>
+
+        <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0b1120" />
+            <stop offset="100%" stop-color="#0f172a" />
+        </linearGradient>
+
+        <linearGradient id="sap-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0369a1" />
+            <stop offset="100%" stop-color="#082f49" />
+        </linearGradient>
+
+        <linearGradient id="skill-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#5C2A18" />
+            <stop offset="100%" stop-color="#2E150C" />
+        </linearGradient>
+
+        <!-- Arrow Markers -->
+        <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4" />
+        </marker>
+        <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#D97757" />
+        </marker>
+        <marker id="arrow-yellow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#eab308" />
+        </marker>
+        <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#0ea5e9" />
+        </marker>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+        </marker>
+
+        <!-- Glow Filters -->
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+
+        <!-- SAP Automation Pilot Logo Gradients -->
+        <linearGradient id="paint-sap-0" x1="1.99008" y1="2.85702" x2="11.3367" y2="8.85798" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#0195FF"/>
+            <stop offset="0.991028" stop-color="#1147E9"/>
+        </linearGradient>
+        <linearGradient id="paint-sap-1" x1="8.40832" y1="3.79682" x2="16.5056" y2="9.7828" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#1348FF"/>
+            <stop offset="1" stop-color="#06238D"/>
+        </linearGradient>
+        <linearGradient id="paint-sap-2" x1="8.40832" y1="3.79682" x2="16.5056" y2="9.7828" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#1348FF"/>
+            <stop offset="1" stop-color="#06238D"/>
+        </linearGradient>
+        <linearGradient id="paint-sap-3" x1="8.40832" y1="3.79682" x2="16.5056" y2="9.7828" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#1348FF"/>
+            <stop offset="1" stop-color="#06238D"/>
+        </linearGradient>
+        <clipPath id="clip-sap-logo">
+            <rect width="16" height="16" fill="white" transform="matrix(-1 0 0 1 15.9995 0.00195312)"/>
+        </clipPath>
+    </defs>
+
+    <!-- Background -->
+    <rect width="1150" height="600" fill="url(#bg-grad)" rx="10" />
+
+    <!-- Global Title -->
+    <text x="575" y="45" fill="#f8fafc" font-size="24" font-weight="bold" text-anchor="middle" letter-spacing="1" font-family="Inter, system-ui, -apple-system, sans-serif">Overview</text>
+
+    <!-- ================= PATHS / LINES ================= -->
+
+    <!-- User to Reasoning -->
+    <path class="anim-line user-line" d="M 100 300 L 205 300" marker-end="url(#arrow-cyan)" />
+    <text x="155" y="285" fill="#cffafe" font-size="12" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif">Send Prompts</text>
+
+    <!-- Reasoning to Skills -->
+    <path class="anim-line claude-line" d="M 305 300 C 340 300, 340 130, 375 130" marker-end="url(#arrow-orange)" />
+    <path class="anim-line claude-line" d="M 305 300 C 340 300, 340 290, 375 290" marker-end="url(#arrow-orange)" />
+    <path class="anim-line claude-line" d="M 305 300 C 340 300, 340 390, 375 390" marker-end="url(#arrow-orange)" />
+    <path class="anim-line claude-line" d="M 305 300 C 340 300, 340 490, 375 490" marker-end="url(#arrow-orange)" />
+    <text x="325" y="240" fill="#F5D5C6" font-size="11" transform="rotate(-75 325 240)" font-family="Inter, system-ui, -apple-system, sans-serif">Uses Skills</text>
+
+    <!-- JSON Flow -->
+    <path class="anim-line json-line" d="M 470 160 L 470 185" marker-end="url(#arrow-yellow)" />
+    <path class="anim-line json-line" d="M 470 235 L 470 255" marker-end="url(#arrow-yellow)" />
+    <text x="485" y="180" fill="#fef08a" font-size="11" font-family="Inter, system-ui, -apple-system, sans-serif">creates</text>
+    <text x="485" y="250" fill="#fef08a" font-size="11" font-family="Inter, system-ui, -apple-system, sans-serif">consumes</text>
+
+    <!-- Skills to SAP -->
+    <path class="anim-line sap-line" d="M 560 290 C 650 290, 670 270, 775 270" marker-end="url(#arrow-blue)" />
+    <path class="anim-line sap-line" d="M 560 390 C 650 390, 670 300, 775 300" marker-end="url(#arrow-blue)" />
+    <path class="anim-line sap-line" d="M 560 490 C 680 490, 670 330, 775 330" marker-end="url(#arrow-blue)" />
+
+    <text x="670" y="255" fill="#bae6fd" font-size="12" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif">manages content</text>
+    <text x="670" y="340" fill="#bae6fd" font-size="12" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif">manages executions</text>
+    <text x="670" y="420" fill="#bae6fd" font-size="12" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif">manages scheduled executions</text>
+
+    <!-- SAP to External Systems -->
+    <path class="anim-line ext-line" d="M 940 270 C 990 270, 990 170, 1045 170" marker-end="url(#arrow-green)" />
+    <path class="anim-line ext-line" d="M 940 300 C 990 300, 990 290, 1045 290" marker-end="url(#arrow-green)" />
+    <path class="anim-line ext-line" d="M 940 330 C 990 330, 990 410, 1045 410" marker-end="url(#arrow-green)" />
+
+    <text x="990" y="240" fill="#a7f3d0" font-size="12" font-weight="600" text-anchor="middle" font-family="Inter, system-ui, -apple-system, sans-serif">executes actions</text>
+
+    <!-- ================= ENTITIES ================= -->
+
+    <!-- User -->
+    <g transform="translate(70, 300)">
+        <circle cx="0" cy="-20" r="16" fill="#94a3b8" />
+        <path d="M -25 20 C -25 0, 25 0, 25 20" fill="none" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+        <text x="0" y="45" text-anchor="middle" fill="#e2e8f0" font-size="14" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">User</text>
+    </g>
+
+    <!-- Claude Code Environment Box -->
+    <rect x="180" y="60" width="410" height="490" rx="15" fill="#0f172a" stroke="#D97757" stroke-width="2" stroke-dasharray="8 6" opacity="0.8"/>
+    <path d="M 180 85 Q 180 60, 195 60 L 575 60 Q 590 60, 590 85 L 590 110 L 180 110 Z" fill="#5C2A18" opacity="0.6" />
+    <text x="385" y="85" text-anchor="middle" fill="#F5D5C6" font-size="18" font-weight="bold" letter-spacing="2" font-family="Inter, system-ui, -apple-system, sans-serif">CLAUDE CODE</text>
+
+    <!-- Reasoning Engine -->
+    <g class="pulse-node">
+        <circle cx="260" cy="300" r="50" fill="#5C2A18" stroke="#D97757" stroke-width="3" />
+        <!-- <path d="M 245 290 Q 260 280, 275 290 T 275 310 Q 260 320, 245 310 T 245 290" fill="none" stroke="#F0A890" stroke-width="2" opacity="0.5" />
+        <circle cx="245" cy="290" r="3" fill="#F0A890" />
+        <circle cx="275" cy="310" r="3" fill="#F0A890" /> -->
+        <text x="260" y="295" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Reasoning &amp;</text>
+        <text x="260" y="313" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Orchestration</text>
+    </g>
+
+    <!-- Skill 1: Command Generation -->
+    <g transform="translate(380, 100)">
+        <rect x="0" y="0" width="180" height="60" rx="8" fill="url(#skill-grad)" stroke="#D97757" stroke-width="2" />
+        <text x="15" y="35" fill="#F0A890" font-family="monospace" font-size="20" font-weight="bold">&gt;_</text>
+        <text x="95" y="26" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Command / MCP</text>
+        <text x="95" y="44" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Generation</text>
+    </g>
+
+    <!-- Floating JSON File -->
+    <g transform="translate(470, 200)">
+        <rect x="-22" y="-22" width="44" height="44" rx="6" fill="#422006" stroke="#eab308" stroke-width="2" filter="url(#glow)"/>
+        <text x="0" y="5" text-anchor="middle" fill="#fde047" font-family="monospace" font-size="16" font-weight="bold">{ }</text>
+        <text x="30" y="5" text-anchor="start" fill="#fef08a" font-size="12" font-weight="600" font-family="Inter, system-ui, -apple-system, sans-serif">command.json / mcp.json</text>
+    </g>
+
+    <!-- Skill 2: Content Management -->
+    <g transform="translate(380, 260)">
+        <rect x="0" y="0" width="180" height="60" rx="8" fill="url(#skill-grad)" stroke="#D97757" stroke-width="2" />
+        <path d="M 12 35 L 18 25 L 24 35 Z M 18 25 L 18 45" fill="none" stroke="#F0A890" stroke-width="2" stroke-linecap="round"/>
+        <path d="M 10 40 L 26 40" fill="none" stroke="#F0A890" stroke-width="2" stroke-linecap="round"/>
+        <text x="95" y="26" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Content</text>
+        <text x="95" y="44" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Management</text>
+    </g>
+
+    <!-- Skill 3: Executions Management -->
+    <g transform="translate(380, 360)">
+        <rect x="0" y="0" width="180" height="60" rx="8" fill="url(#skill-grad)" stroke="#D97757" stroke-width="2" />
+        <circle cx="18" cy="30" r="10" fill="none" stroke="#F0A890" stroke-width="2"/>
+        <polygon points="15,25 24,30 15,35" fill="#F0A890" />
+        <text x="95" y="26" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Executions</text>
+        <text x="95" y="44" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Management</text>
+    </g>
+
+    <!-- Skill 4: Scheduled Executions Management -->
+    <g transform="translate(380, 460)">
+        <rect x="0" y="0" width="180" height="60" rx="8" fill="url(#skill-grad)" stroke="#D97757" stroke-width="2" />
+        <rect x="10" y="22" width="16" height="16" rx="2" fill="none" stroke="#F0A890" stroke-width="2"/>
+        <line x1="14" y1="20" x2="14" y2="24" stroke="#F0A890" stroke-width="2"/>
+        <line x1="22" y1="20" x2="22" y2="24" stroke="#F0A890" stroke-width="2"/>
+        <line x1="10" y1="28" x2="26" y2="28" stroke="#F0A890" stroke-width="2"/>
+        <text x="95" y="26" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Scheduled Exec.</text>
+        <text x="95" y="44" text-anchor="middle" fill="#F5D5C6" font-size="13" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Management</text>
+    </g>
+
+    <!-- SAP Automation Pilot Box -->
+    <g transform="translate(780, 240)">
+        <rect x="0" y="0" width="160" height="120" rx="12" fill="url(#sap-grad)" stroke="#0ea5e9" stroke-width="3" filter="url(#glow)"/>
+        <!-- SAP Automation Pilot Logo (scaled 4x, centered) -->
+        <g transform="translate(48, 20) scale(4)">
+            <g clip-path="url(#clip-sap-logo)">
+                <path d="M6.85703 0.661621H7.86059C8.20467 0.661621 8.52007 0.776313 8.8068 1.0057C9.07442 1.21597 9.2369 1.49314 9.29424 1.83722L9.49495 2.78343L9.99996 3.08878L9.54591 3.42704H9.15391C8.27025 3.42704 7.55391 4.14339 7.55391 5.02704C7.55391 5.04563 7.55423 5.06414 7.55486 5.08258C7.49473 5.07905 7.43416 5.07728 7.37315 5.07728C6.97173 5.07728 6.58942 5.15374 6.22623 5.30666C5.86304 5.45959 5.54763 5.66986 5.28002 5.93747C5.0124 6.20509 4.80213 6.51093 4.64921 6.85501C4.49629 7.2182 4.41983 7.60051 4.41983 8.00194C4.41983 8.40336 4.49629 8.77611 4.64921 9.12019C4.80213 9.48338 5.0124 9.79878 5.28002 10.0664C5.54763 10.334 5.86304 10.5443 6.22623 10.6972C6.58942 10.8501 6.97173 10.9266 7.37315 10.9266C7.4375 10.9266 7.50136 10.9246 7.56472 10.9207C7.55758 10.982 7.55391 11.0444 7.55391 11.1077C7.55391 11.9913 8.27026 12.7077 9.15391 12.7077H9.54591L9.903 12.9737L9.49495 13.2204L9.29424 14.1667C9.21778 14.5107 9.04574 14.7879 8.77813 14.9982C8.51051 15.2276 8.20467 15.3423 7.86059 15.3423H6.85703C6.51296 15.3423 6.20711 15.2276 5.9395 14.9982C5.67188 14.7879 5.49984 14.5107 5.42338 14.1667L5.25134 13.2204L3.98973 12.4749L3.12954 12.819C2.97662 12.8955 2.79502 12.9337 2.58475 12.9337C2.31713 12.9337 2.06864 12.8668 1.83925 12.733C1.59075 12.5992 1.3996 12.3985 1.26579 12.1309L0.749675 11.07C0.634983 10.8788 0.577637 10.659 0.577637 10.4105C0.577637 9.93259 0.778348 9.55028 1.17977 9.26355L1.86792 8.74744V7.25643L1.17977 6.76899C0.778348 6.46315 0.577637 6.07128 0.577637 5.59339C0.577637 5.36401 0.634983 5.14418 0.749675 4.93391L1.26579 3.87301C1.3996 3.60539 1.59075 3.40468 1.83925 3.27087C2.06864 3.13707 2.31713 3.07016 2.58475 3.07016C2.7759 3.07016 2.9575 3.09884 3.12954 3.15618L3.98973 3.52893L5.25134 2.78343L5.42338 1.83722C5.49984 1.49314 5.67188 1.21597 5.9395 1.0057C6.20711 0.776313 6.51296 0.661621 6.85703 0.661621Z" fill="url(#paint-sap-0)"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12.2838 3.32229C12.5353 2.56364 13.2504 2.01636 14.0934 2.01636C15.1461 2.01636 15.9994 2.8697 15.9994 3.92235C15.9994 4.975 15.1461 5.82834 14.0934 5.82834C13.2504 5.82834 12.5352 5.28099 12.2838 4.52228H11.8391L10.5427 5.48815C10.4218 5.57817 10.2752 5.6268 10.1245 5.6268H9.23514C8.90377 5.6268 8.63514 5.35817 8.63514 5.0268C8.63514 4.69543 8.90377 4.4268 9.23514 4.4268H9.95869L11.2552 3.46094C11.376 3.37091 11.5227 3.32229 11.6734 3.32229H12.2838ZM13.3875 3.92235C13.3875 3.53244 13.7035 3.21635 14.0934 3.21635C14.4834 3.21635 14.7994 3.53244 14.7994 3.92235C14.7994 4.31225 14.4834 4.62834 14.0934 4.62834C13.7035 4.62834 13.3875 4.31225 13.3875 3.92235Z" fill="url(#paint-sap-1)"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12.2838 12.8124C12.5353 13.5711 13.2504 14.1184 14.0934 14.1184C15.1461 14.1184 15.9994 13.265 15.9994 12.2124C15.9994 11.1597 15.1461 10.3064 14.0934 10.3064C13.2504 10.3064 12.5352 10.8537 12.2838 11.6124H11.8391L10.5426 10.6466C10.4218 10.5565 10.2751 10.5079 10.1244 10.5079H9.23513C8.90376 10.5079 8.63513 10.7765 8.63513 11.1079C8.63513 11.4393 8.90376 11.7079 9.23513 11.7079H9.95868L11.2552 12.6738C11.376 12.7638 11.5227 12.8124 11.6734 12.8124H12.2838ZM13.3874 12.2124C13.3874 12.6023 13.7035 12.9184 14.0934 12.9184C14.4833 12.9184 14.7994 12.6023 14.7994 12.2124C14.7994 11.8225 14.4833 11.5064 14.0934 11.5064C13.7035 11.5064 13.3874 11.8225 13.3874 12.2124Z" fill="url(#paint-sap-2)"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M11.7664 6.16137C10.9234 6.16137 10.2082 6.70865 9.95677 7.4673H7.69131C7.35994 7.4673 7.09131 7.73592 7.09131 8.06729C7.09131 8.39866 7.35994 8.66729 7.69131 8.66729H9.95673C10.2081 9.426 10.9233 9.97335 11.7664 9.97335C12.819 9.97335 13.6724 9.12 13.6724 8.06736C13.6724 7.01471 12.819 6.16137 11.7664 6.16137ZM11.7664 7.36136C11.3765 7.36136 11.0604 7.67745 11.0604 8.06736C11.0604 8.45726 11.3765 8.77335 11.7664 8.77335C12.1563 8.77335 12.4724 8.45726 12.4724 8.06736C12.4724 7.67745 12.1563 7.36136 11.7664 7.36136Z" fill="url(#paint-sap-3)"/>
+            </g>
+        </g>
+        <text x="80" y="105" text-anchor="middle" fill="#7dd3fc" font-size="11" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">SAP Automation Pilot</text>
+    </g>
+
+    <!-- External Systems -->
+    <!-- External System 1 -->
+    <g transform="translate(1050, 140)">
+        <rect x="0" y="0" width="60" height="60" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="2" />
+        <line x1="10" y1="18" x2="50" y2="18" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="30" x2="50" y2="30" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="42" x2="40" y2="42" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="45" cy="42" r="3" class="server-light" />
+        <text x="30" y="78" text-anchor="middle" fill="#a7f3d0" font-size="12" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Ext Sys 1</text>
+    </g>
+
+    <!-- External System 2 -->
+    <g transform="translate(1050, 260)">
+        <rect x="0" y="0" width="60" height="60" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="2" />
+        <line x1="10" y1="18" x2="50" y2="18" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="30" x2="50" y2="30" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="42" x2="40" y2="42" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="45" cy="42" r="3" class="server-light" />
+        <text x="30" y="78" text-anchor="middle" fill="#a7f3d0" font-size="12" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Ext Sys 2</text>
+    </g>
+
+    <!-- External System N -->
+    <g transform="translate(1050, 380)">
+        <rect x="0" y="0" width="60" height="60" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="2" />
+        <line x1="10" y1="18" x2="50" y2="18" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="30" x2="50" y2="30" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <line x1="10" y1="42" x2="40" y2="42" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="45" cy="42" r="3" class="server-light" />
+        <text x="30" y="78" text-anchor="middle" fill="#a7f3d0" font-size="12" font-weight="bold" font-family="Inter, system-ui, -apple-system, sans-serif">Ext Sys N</text>
+    </g>
+</svg>

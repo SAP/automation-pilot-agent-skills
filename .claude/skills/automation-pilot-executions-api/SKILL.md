@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-executions-api
 description: Monitor and manage SAP Automation Pilot executions via API. Use when triggering commands, checking execution status, retrieving logs, aborting or pausing executions, or troubleshooting failed runs.
-version: 1.0.0
 ---
 
 # SAP Automation Pilot Executions API Management
@@ -19,7 +18,7 @@ export AUTOPI_PASSWORD="your-password"
 export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 ```
 
-2. Ensure `curl` and `jq` are available in your environment.
+2. Ensure `curl` is available in your environment.
 
 ---
 
@@ -27,61 +26,85 @@ export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 
 ## Statuses
 
-| Status | Description |
-|--------|-------------|
-| `RUNNING` | Execution in progress |
-| `FINISHED` | Completed successfully |
-| `FAILED` | Completed with errors |
-| `ABORTED` | Manually aborted |
-| `PAUSED` | Temporarily paused |
-| `SUSPENDED` | Suspended state |
-| `INPUT_REQUIRED` | Waiting for input |
+| Status | Description | Active or Terminal |
+|--------|-------------|-------------------|
+| `RUNNING` | Execution is currently running. During delays (initial delay, retry backoff, repeat interval) the execution stays RUNNING while individual executors show their delay reason. | Active |
+| `PAUSED` | Manually paused — must be resumed to continue. | Active |
+| `INPUT_REQUIRED` | Waiting for a user choice (Confirm action required). | Active |
+| `FAILED` | Failed due to an error or failed validation. Can be retried or reset. | Active |
+| `FINISHED` | Completed successfully. | **Terminal** |
+| `ABORTED` | Canceled by the user. | **Terminal** |
+| `SUSPENDED` | Canceled by Automation Pilot (runtime limit exceeded, tenant execution limit reached, or execution/output size limit exceeded). | **Terminal** |
 
-## Status Flow
+**Terminal** statuses (FINISHED, ABORTED, SUSPENDED) mean the execution is complete and no further actions can be applied. Completed executions can be retriggered and deleted.
 
-```
-        ┌─────────┐
-        │ RUNNING │
-        └────┬────┘
-             │
-    ┌────────┼────────┬──────────┐
-    ▼        ▼        ▼          ▼
-┌────────┐ ┌────┐ ┌───────┐ ┌────────┐
-│FINISHED│ │FAIL│ │ABORTED│ │ PAUSED │
-└────────┘ └────┘ └───────┘ └───┬────┘
-                                │
-                                ▼
-                            ┌───────┐
-                            │RUNNING│ (resume)
-                            └───────┘
+**Active** statuses (RUNNING, PAUSED, INPUT_REQUIRED, FAILED) mean the execution is still live and can be acted upon.
+
+## Actions
+
+Each action is only valid from specific statuses — applying an action from the wrong status returns HTTP 409.
+
+| Action | Valid from | Result |
+|--------|-----------|--------|
+| **PAUSE** | `RUNNING` | → `PAUSED` |
+| **RESUME** | `PAUSED` | → `RUNNING` |
+| **RETRY** | `FAILED` | → `RUNNING`. Re-attempts the execution, preserving progress for provided composite commands. |
+| **RESET** | `FAILED`, `PAUSED`, `INPUT_REQUIRED` | → `RUNNING` from a chosen previous child command. Not available for direct executions of provided commands. For provided composite commands, starts the whole command from the beginning (unlike RETRY which preserves progress). |
+| **ABORT** | `PAUSED`, `FAILED` | → `ABORTED` |
+| **COMMENT** | Any | Adds a comment to the execution's Action Log (max 10 comments per execution). |
+
+```bash
+EXEC_ID="execution-uuid-here"
+
+# Pause
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "PAUSE", "reason": "Blocking on manual verification"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+
+# Resume
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "RESUME", "reason": "Resuming after verification"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+
+# Retry
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "RETRY", "reason": "Retrying after transient failure"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+
+# Abort
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d '{"type": "ABORT", "reason": "Superseded by a newer run"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 ```
 
 ---
 
 # Triggering Executions
 
-**Note:** All executions triggered via the API automatically include the `feature:logs` tag, which enables detailed execution logging.
-
-## Dry Run Mode
-
-Add the `feature:dryRun` tag to execute without making actual changes:
+**Note:** To retrieve logs after execution, include `feature:logs` in the `tags` of the trigger request. This tag is opt-in and cannot be added retroactively — an execution triggered without it will return no logs from `GET /executions/{id}/logs`.
 
 ## Trigger a Command
 
+Add `"feature:dryRun": ""` to the tags to execute without making actual changes.
+
 ```bash
-# Basic trigger (includes feature:logs tag automatically)
+# Basic trigger (opt-in feature:logs tag enables log retrieval)
 curl -s -X POST \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
   -d '{
     "commandId": "my-catalog:MyCommand:1",
-    "input": {
+    "inputValues": {
       "param1": "value1",
       "param2": "value2"
     },
     "tags": {"feature:logs": ""}
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/executions"
 
 # With dry run mode (adds feature:dryRun tag)
 curl -s -X POST \
@@ -89,10 +112,22 @@ curl -s -X POST \
   -H "Content-Type: application/json" \
   -d '{
     "commandId": "my-catalog:MyCommand:1",
-    "input": {"param1": "value1"},
+    "inputValues": {"param1": "value1"},
     "tags": {"feature:logs": "", "feature:dryRun": ""}
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/executions"
+```
+
+**All `inputValues` entries must be strings on the wire**, regardless of the declared parameter type. The runtime converts each value to its declared type inside the executor:
+
+```json
+"inputValues": {
+  "appName": "my-app",
+  "instances": "3",
+  "enabled": "true",
+  "regions": "[\"cf-eu10\",\"cf-us10\"]",
+  "config": "{\"maxRetries\":5}"
+}
 ```
 
 ---
@@ -103,81 +138,64 @@ curl -s -X POST \
 
 ```bash
 # List all (up to limit)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=100" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=100"
 # Filter by status
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&limit=50" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&limit=50"
 # Filter by command
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?commandId=my-catalog:MyCommand:1" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?commandId=my-catalog:MyCommand:1"
 # Filter by time (epoch milliseconds)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?startedAfter=1707000000000" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?startedAfter=1707000000000"
 ```
 
 ## Get Execution Details
 
 ```bash
 EXEC_ID="execution-uuid-here"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
 ```
 
 ## Get Execution Summary
 
 ```bash
 # Get counts by status
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/summary" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/summary"
 ```
 
 ## Get Input/Output
 
 ```bash
 # Get execution input
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
 # Get execution output (only for FINISHED)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/output" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/output"
 ```
 
 ---
 
 # Controlling Executions
 
-## Abort Execution
+All actions use the same endpoint: `POST /api/v1/executions/$EXEC_ID/actions`
+
+See the Actions table in the Execution Lifecycle section for valid statuses and expected outcomes.
 
 ```bash
 EXEC_ID="execution-uuid-here"
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+
+# Reset — resets to a previous child command (provide the executor path via "value")
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "abort"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions" | jq .
-```
+  -d '{"type": "RESET", "value": "stepAlias", "reason": "Retry after fixing the input"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
-## Pause Execution
-
-```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+# Comment — add a note to the Action Log (max 10 per execution)
+curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "pause"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions" | jq .
-```
+  -d '{"type": "COMMENT", "reason": "Escalated to L2 on-call"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
-## Resume Execution
-
-```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"action": "resume"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions" | jq .
-```
-
-## List Actions
-
-```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions" | jq .
+# List action history
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 ```
 
 ---
@@ -190,11 +208,10 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 EXEC_ID="execution-uuid-here"
 
 # Get paginated logs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=20" | jq .
-
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=20"
 # Get logs for specific executor
 EXECUTOR_PATH="step1"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs/$EXECUTOR_PATH" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs/$EXECUTOR_PATH"
 ```
 
 ---
@@ -207,18 +224,17 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 EXEC_ID="your-execution-id"
 
 # 1. Get status and error
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | \
-  jq '{status, error, progressMessage, commandId}'
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
 
 # 2. Check input used
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
 
 # 3. Check recent logs
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=10" | jq '.logs'
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=10"
 
 # 4. Check output (if FINISHED)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/output" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/output"
 ```
 
 ## Common Issues
@@ -231,12 +247,12 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 
 ```bash
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=20" | jq '.logs'
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=20"
 
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "abort"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions" | jq .
+  -d '{"type": "ABORT", "reason": "Aborting stuck execution"}' \
+  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 ```
 
 ### Execution Failed
@@ -246,8 +262,8 @@ curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 3. Review input parameters
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '{status, error}'
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input" | jq .
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
 ```
 
 ### Input Required
@@ -255,18 +271,8 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 The execution is waiting for manual input:
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq '.suspendedStep'
-```
-
-### HTTP 409 on Abort or Pause
-
-**Cause:** The execution is no longer in a state that allows that action — it already finished, failed, or was aborted before your request arrived.
-**Solution:** Check the current status first, then only send the action if the execution is still in a controllable state:
-
-```bash
-STATUS=$(curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID" | jq -r '.status')
-echo "Current status: $STATUS"
-# Only abort if RUNNING or PAUSED
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+# Inspect the response — check the suspendedStep field
 ```
 
 ### No Logs Available
@@ -296,11 +302,10 @@ echo "Current status: $STATUS"
 # Last 24 hours, failed only
 YESTERDAY=$(($(date +%s) * 1000 - 86400000))
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&startedAfter=$YESTERDAY&limit=50" | jq .
-
+  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&startedAfter=$YESTERDAY&limit=50"
 # Multiple statuses
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=RUNNING&status=PAUSED" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=RUNNING&status=PAUSED"
 ```
 
 ---
@@ -331,7 +336,7 @@ curl -s -X POST \
       "message": "High CPU usage detected"
     }
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/triggers/generic-event" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/triggers/generic-event"
 ```
 
 ## Trigger via ANS Event
@@ -344,7 +349,7 @@ curl -s -X POST \
     "commandReference": "my-catalog:MyCommand:1",
     "event": {...ANS event payload...}
   }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/triggers/ans-event" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/triggers/ans-event"
 ```
 
 ---
@@ -363,7 +368,6 @@ curl -s -X POST \
 | `403` | Forbidden |
 | `404` | Not Found |
 | `409` | Conflict (invalid state) |
-| `412` | Precondition Failed (ETag mismatch) |
 | `413` | Payload Too Large |
 | `429` | Rate Limited |
 
@@ -403,5 +407,5 @@ User: "Are there any stuck executions? Abort them."
 
 1. GET `/api/v1/executions?status=RUNNING` to list all currently running executions
 2. For each one, check `startedAt` to identify those running unexpectedly long
-3. For each stuck execution, POST `{"action": "abort"}` to `/api/v1/executions/$EXEC_ID/actions`
+3. For each stuck execution, POST `{"type": "ABORT", "reason": "Stuck execution"}` to `/api/v1/executions/$EXEC_ID/actions`
 4. Confirm each abort returned HTTP 202

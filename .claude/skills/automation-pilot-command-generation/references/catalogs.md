@@ -10,20 +10,20 @@ This reference lists all available built-in catalogs and their key commands.
 
 ## NOTE: This List May Not Be Complete
 
-SAP continuously adds new commands and catalogs to Automation Pilot. If a catalog or command you need is not listed here, use the **[catalog-explorer](../../catalog-explorer/SKILL.md)** skill to search for it via the API:
+SAP continuously adds new commands and catalogs to Automation Pilot. If a catalog or command you need is not listed here, use the **[catalog-explorer](../../automation-pilot-catalog-explorer/SKILL.md)** skill to search for it via the API:
 
 ```bash
 # List all available catalogs
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false" | jq '.data[] | {id, name}'
+  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false"
 
 # Search for commands in a specific catalog
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=<catalog-id>" | jq '.data[] | {id, name, description}'
+  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=<catalog-id>"
 
 # Get full command definition
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/<catalog>:<command>:<version>" | jq .
+  "https://$AUTOPI_HOSTNAME/api/v1/commands/<catalog>:<command>:<version>"
 ```
 
 ## aicore-sapcp (AI Core)
@@ -453,23 +453,22 @@ SAP monitoring operations.
 
 ## scripts-sapcp (Script Execution)
 
-Execute custom scripts.
+Execute custom scripts. See **`automation-pilot-executor-executescript/SKILL.md`** for full parameter reference and examples.
 
 | Command | Description |
 |---------|-------------|
-| `ExecuteNodeJsScript:1` | Execute Node.js script |
-| `ExecutePowerShellScript:1` | Execute PowerShell script |
-| `ExecutePythonScript:1` | Execute Python script |
-| `ExecuteScript:2` | Execute Bash script |
-| `SensitiveExecuteScript:2` | Execute script with sensitive handling |
+| `ExecuteScript:1` | Execute Bash script (legacy — `script` must be Base64 encoded) |
+| `ExecuteScript:2` | Execute Bash script (recommended — plain text `script`) |
+| `ExecutePythonScript:1` | Execute Python script (`script` = plain Python, `packages` = pip deps) |
+| `ExecuteNodeJsScript:1` | Execute Node.js script (`script` = plain JS, `packages` = npm deps, `npmrc` for private registries) |
+| `ExecutePowerShellScript:1` | Execute PowerShell script (`script` = plain PS, `modules` = PS module deps) |
+| `SensitiveExecuteScript:2` | Bash script — output marked sensitive |
+| `SensitiveExecutePythonScript:1` | Python script — output marked sensitive |
+| `SensitiveExecuteNodeJsScript:1` | Node.js script — output marked sensitive |
+| `SensitiveExecutePowerShellScript:1` | PowerShell script — output marked sensitive |
 
-### ExecuteScript Key Options
-
-- `script`: Script content (Base64 encoded for v2)
-- `stdin`: Standard input content
-- `timeout`: Execution timeout (seconds)
-- `env`: Environment variables object
-- `parameters`: Script parameters
+All script commands share these common inputs: `script` (required), `parameters`, `stdin` (sensitive), `environment`, `timeout` (15–600s), `successExitCodes`.  
+Output keys: `exitCode` (number), `result` (array of output lines, last 64 KB).
 
 ## sm-sapcp (Service Manager)
 
@@ -524,6 +523,30 @@ General purpose utilities for flow control.
 | `SensitiveVoid:2` | Void with sensitive data handling |
 | `TriggerExecution:1` | Trigger a command execution |
 | `Void:1` | No-op command for data transformation/validation |
+
+### Delay:1 Usage
+
+Pauses execution for a fixed number of minutes (1–10080). Unlike `initialDelay` or `repeat.delay` (which are executor-level properties), `Delay:1` is a standalone executor step.
+
+```json
+{
+  "execute": "utils-sapcp:Delay:1",
+  "alias": "wait",
+  "input": {
+    "minutes": "5"
+  },
+  "description": null,
+  "progressMessage": "Waiting 5 minutes...",
+  "initialDelay": null,
+  "pause": null,
+  "when": null,
+  "validate": null,
+  "autoRetry": null,
+  "repeat": null,
+  "errorMessages": [],
+  "dryRun": null
+}
+```
 
 ### ForEach:2 Key Options
 

@@ -1,14 +1,11 @@
 ---
 name: automation-pilot-mcp-server-generation
-description: Create and configure SAP Automation Pilot MCP server definitions and tool configurations. Use when building MCP servers, defining tools, or setting up Automation Pilot MCP configs.
-version: 1.0.0
+description: Create, configure, and deploy SAP Automation Pilot MCP server definitions and tool configurations. Use when building MCP servers, defining tools, setting up Automation Pilot MCP configs, or deploying MCP server definitions via API.
 ---
 
 # SAP Automation Pilot MCP Server Definition Generator
 
 This skill guides the creation of MCP server definitions for SAP Automation Pilot. MCP server definitions are JSON files that expose Automation Pilot commands as MCP tools, allowing AI assistants to invoke them directly.
-
-Reference examples are available in `autopi-mcp-servers/` at the project root.
 
 ---
 
@@ -256,19 +253,77 @@ Before finalizing a generated MCP server definition, verify:
 
 ## Reference Examples
 
-The `autopi-mcp-servers/` directory at the project root contains 7 production examples:
+### Minimal single-tool server (read-only)
 
-| File | Tools | Complexity | Good Example Of |
-|------|-------|-----------|-----------------|
-| `ans-event-producer.json` | 1 | Simple | Minimal single-tool server |
-| `btp-resource-discovery.json` | 5 | Simple | All read-only tools, single credential |
-| `incident-management.json` | 3 | Medium | Mixed catalogs, disabled tool |
-| `application-logs-and-metrics.json` | 4 | Medium | Multiple credential types in one server |
-| `cloud-landscape-directory.json` | 6 | Medium | Rich instructions with markdown |
-| `cloud-transport-management.json` | 14 | Complex | Full CRUD + destructive ops, openWorldHint variations |
-| `hana-cloud-lifecycle-management.json` | 14 | Complex | Lifecycle management, idempotent operations, destructive operations |
+```json
+{
+  "name": "ans-event-producer",
+  "enabled": true,
+  "instructions": "Use this server to send Alert Notification Service events. Call send_event when you need to publish an alert.",
+  "mcpTools": [
+    {
+      "commandId": "ans-sapcp:SendEvent:1",
+      "name": "send_event",
+      "enabled": true,
+      "inputReferences": ["ans-<<<TENANT_ID>>>:AnsCredentials:1"],
+      "tags": {},
+      "title": "Send ANS Event",
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    }
+  ]
+}
+```
 
-Always read and reference these examples when generating new definitions. Use them to validate that your output follows the established patterns.
+### Multi-tool read-only server
+
+```json
+{
+  "name": "btp-resource-discovery",
+  "enabled": true,
+  "instructions": "Use this server to discover BTP resources. All tools are read-only — they list or retrieve data and never modify state.",
+  "mcpTools": [
+    {
+      "commandId": "cf-sapcp:ListCfOrgs:1",
+      "name": "list_orgs",
+      "enabled": true,
+      "inputReferences": ["cf-<<<TENANT_ID>>>:CfCredentials:1"],
+      "tags": {},
+      "title": "List CF Organizations",
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true
+    },
+    {
+      "commandId": "cf-sapcp:ListCfSpaces:1",
+      "name": "list_spaces",
+      "enabled": true,
+      "inputReferences": ["cf-<<<TENANT_ID>>>:CfCredentials:1"],
+      "tags": {},
+      "title": "List CF Spaces",
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true
+    },
+    {
+      "commandId": "cf-sapcp:ListCfApps:1",
+      "name": "list_apps",
+      "enabled": true,
+      "inputReferences": ["cf-<<<TENANT_ID>>>:CfCredentials:1"],
+      "tags": {},
+      "title": "List CF Applications",
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true
+    }
+  ]
+}
+```
 
 ---
 
@@ -289,21 +344,124 @@ User: "Create an MCP server for listing Cloud Foundry resources"
 
 User: "Build an MCP server for managing HANA Cloud instances"
 
-1. Read `hana-cloud-lifecycle-management.json` as reference
-2. Create tools: `list_instances`, `get_instance`, `start_instance`, `stop_instance`, `restart_instance`, `delete_instance`
-3. Apply correct hints: `readOnlyHint: true` for list/get, `idempotentHint: true` for start/stop/restart, `destructiveHint: true` for delete
-4. Use `hanalm-<<<TENANT_ID>>>` catalog prefix
-5. Write rich `instructions` with markdown grouping capabilities by category
+1. Create tools: `list_instances`, `get_instance`, `start_instance`, `stop_instance`, `restart_instance`, `delete_instance`
+2. Apply correct hints: `readOnlyHint: true` for list/get, `idempotentHint: true` for start/stop/restart, `destructiveHint: true` for delete
+3. Use `hanalm-<<<TENANT_ID>>>` catalog prefix
+4. Write rich `instructions` with markdown grouping capabilities by category
 
 ### Example 3: Create a minimal single-tool event sender
 
 User: "Create a minimal MCP server with one tool to send ANS alerts"
 
-1. Read `ans-event-producer.json` as reference
-2. Create minimal server with single tool: `send_event`
-3. Set `readOnlyHint: false`, `destructiveHint: false`, `openWorldHint: true`
-4. Add `AnsCredentials` input reference
-5. Write simple one-line `instructions`
+1. Create minimal server with single tool: `send_event`
+2. Set `readOnlyHint: false`, `destructiveHint: false`, `openWorldHint: true`
+3. Add `AnsCredentials` input reference
+4. Write simple one-line `instructions`
+5. Use the "Minimal single-tool server" inline example above as a structural guide
+
+---
+
+# Deploying MCP Servers via API
+
+## Prerequisites
+
+Set the following **required** environment variables:
+
+```bash
+export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
+export AUTOPI_USERNAME="your-username"
+export AUTOPI_PASSWORD="your-password"
+```
+
+For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `../automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
+
+Ensure `curl` is available in your environment.
+
+The API requires the `GenAI` permission for all write operations.
+
+## List MCP Servers
+
+```bash
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+```
+
+## Get MCP Server by ID
+
+MCP servers have a system-generated `id` field (e.g. `T000414R2-0000001779286543418-1-1`) returned in the create/list responses. This is distinct from the human-readable `name` field. Always use the `id` for GET, update, and delete operations.
+
+```bash
+# First, find the ID from the list response
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers" | jq '[.[] | {name, id}]'
+
+# Then fetch by ID
+MCP_SERVER_ID="T000414R2-0000001779286543418-1-1"
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+## Create MCP Server
+
+```bash
+MCP_SERVER_FILE="path/to/my-server.json"
+curl -s -X POST \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d @"$MCP_SERVER_FILE" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+```
+
+## Update MCP Server
+
+Use the system-generated `id` (not the `name`) in the URL.
+
+```bash
+MCP_SERVER_ID="<id-from-list-response>"
+MCP_SERVER_FILE="path/to/updated-server.json"
+
+curl -s -X PUT \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  -H "Content-Type: application/json" \
+  -d @"$MCP_SERVER_FILE" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+## Delete MCP Server
+
+```bash
+MCP_SERVER_ID="<id-from-list-response>"
+
+curl -s -X DELETE \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+```
+
+## Deploy MCP Server (Upsert Pattern)
+
+Check for existence first — create if new, update if already deployed. Use the system-generated `id` returned from a previous create or list call:
+
+```bash
+MCP_SERVER_FILE="my-server.json"
+MCP_SERVER_ID="<id-from-prior-create-or-list>"
+
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID")
+
+if [[ "$STATUS" == "200" ]]; then
+  echo "Updating existing MCP server..."
+  curl -s -X PUT \
+    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+    -H "Content-Type: application/json" \
+    -d @"$MCP_SERVER_FILE" \
+    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+else
+  echo "Creating new MCP server..."
+  curl -s -X POST \
+    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+    -H "Content-Type: application/json" \
+    -d @"$MCP_SERVER_FILE" \
+    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+fi
+```
 
 ---
 

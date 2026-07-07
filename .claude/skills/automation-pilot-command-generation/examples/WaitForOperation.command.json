@@ -2,61 +2,79 @@
   "id": "examples-<<<TENANT_ID>>>:WaitForOperation:1",
   "catalog": "examples-<<<TENANT_ID>>>",
   "name": "WaitForOperation",
-  "description": "Example: Polling pattern - wait for async operation to complete with timeout",
+  "description": "Example: Polling pattern - wait for async operation to complete with unconditional initialDelay",
   "version": 1,
   "inputKeys": {
     "region": {
       "type": "string",
+      "sensitive": false,
       "required": true,
-      "description": "Cloud Foundry region",
-      "allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
     },
     "user": {
       "type": "string",
+      "sensitive": false,
       "required": false,
-      "description": "CF user email"
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'"
     },
     "password": {
       "type": "string",
-      "required": false,
       "sensitive": true,
-      "description": "CF user password"
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
     },
     "refreshToken": {
       "type": "string",
-      "required": false,
       "sensitive": true,
-      "description": "CF refresh token"
+      "required": false,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
+      "description": "An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'"
     },
     "jobId": {
       "type": "string",
+      "sensitive": false,
       "required": true,
+      "minSize": null,
+      "maxSize": null,
+      "minValue": null,
+      "maxValue": null,
+      "defaultValue": null,
+      "defaultValueFromInput": null,
       "description": "ID of the async job to monitor"
-    },
-    "timeoutMinutes": {
-      "type": "number",
-      "required": false,
-      "defaultValue": "10",
-      "minValue": 1,
-      "maxValue": 60,
-      "description": "Maximum time to wait (minutes)"
-    },
-    "pollIntervalSeconds": {
-      "type": "number",
-      "required": false,
-      "defaultValue": "15",
-      "minValue": 5,
-      "maxValue": 120,
-      "description": "Interval between status checks (seconds)"
     }
   },
   "outputKeys": {
     "finalState": {
       "type": "string",
+      "sensitive": false,
       "description": "Final state of the operation"
     },
     "result": {
       "type": "object",
+      "sensitive": false,
       "description": "Full job result object"
     }
   },
@@ -76,26 +94,7 @@
     },
     "executors": [
       {
-        "execute": "utils-sapcp:Void:1",
-        "alias": "recordStartTime",
-        "input": {
-          "message": "$(now)"
-        },
-        "dryRun": {
-          "output": {
-            "message": "1718000000"
-          }
-        },
-        "progressMessage": "Starting to monitor job $(.execution.input.jobId)",
-        "when": null,
-        "validate": null,
-        "autoRetry": null,
-        "repeat": null,
-        "errorMessages": []
-      },
-      {
         "execute": "http-sapcp:HttpRequest:1",
-        "alias": "checkJob",
         "input": {
           "url": "$(.regionData.cfApiUrl)/v3/jobs/$(.execution.input.jobId | toUrlEncoded)",
           "method": "GET",
@@ -107,43 +106,16 @@
           "clientId": "cf",
           "timeout": "20"
         },
-        "dryRun": {
-          "output": {
-            "status": "200",
-            "body": "{\"state\": \"COMPLETE\", \"errors\": []}",
-            "headers": "{\"content-type\": \"application/json\"}",
-            "method": "GET",
-            "url": "https://api.example.com/v3/jobs/mock-job-id",
-            "time": "150",
-            "size": "100"
-          }
+        "alias": "checkJob",
+        "description": null,
+        "progressMessage": "Checking job status...",
+        "initialDelay": {
+          "interval": "30s",
+          "when": null
         },
-        "progressMessage": "Job status: $(.checkJob.output.body | toObject.state // \"checking...\") - Elapsed: $(((now - (.recordStartTime.output.message | toNumber)) / 60 * 10 | floor) / 10) minutes",
-        "initialDelay": null,
         "pause": null,
         "when": null,
-        "validate": {
-          "semantic": "OR",
-          "conditions": [
-            {
-              "semantic": "AND",
-              "cases": [
-                {
-                  "expression": "$(.checkJob.output.body | toObject.state)",
-                  "operator": "NOT_EQUALS",
-                  "semantic": "OR",
-                  "values": ["FAILED"]
-                },
-                {
-                  "expression": "$(.execution.input.timeoutMinutes * 60 - (now - (.recordStartTime.output.message | toNumber)) < .execution.input.pollIntervalSeconds)",
-                  "operator": "NOT_EQUALS",
-                  "semantic": "OR",
-                  "values": ["true"]
-                }
-              ]
-            }
-          ]
-        },
+        "validate": null,
         "autoRetry": {
           "maxCount": 3,
           "delay": "5s",
@@ -167,9 +139,9 @@
           }
         },
         "repeat": {
-          "maxCount": 720,
-          "delay": "$(.execution.input.pollIntervalSeconds)s",
-          "failOnMaxCount": false,
+          "maxCount": 60,
+          "delay": "15s",
+          "failOnMaxCount": true,
           "until": {
             "semantic": "OR",
             "conditions": [
@@ -189,7 +161,7 @@
         },
         "errorMessages": [
           {
-            "message": "Job failed: $(.checkJob.output.body | toObject.errors | map(.detail) | join(\", \"))",
+            "message": "Job failed: $(.checkJob.output.body | toObject.errors[0].detail)",
             "when": {
               "semantic": "OR",
               "conditions": [
@@ -206,38 +178,12 @@
                 }
               ]
             }
-          },
-          {
-            "message": "Timeout exceeded: operation did not complete within $(.execution.input.timeoutMinutes) minutes. Last state: $(.checkJob.output.body | toObject.state)",
-            "when": {
-              "semantic": "OR",
-              "conditions": [
-                {
-                  "semantic": "AND",
-                  "cases": [
-                    {
-                      "expression": "$(.checkJob.output.body | toObject.state)",
-                      "operator": "NOT_EQUALS",
-                      "semantic": "OR",
-                      "values": ["COMPLETE", "SUCCEEDED"]
-                    },
-                    {
-                      "expression": "$(.execution.input.timeoutMinutes * 60 - (now - (.recordStartTime.output.message | toNumber)) < .execution.input.pollIntervalSeconds)",
-                      "operator": "EQUALS",
-                      "semantic": "OR",
-                      "values": ["true"]
-                    }
-                  ]
-                }
-              ]
-            }
           }
-        ]
+        ],
+        "dryRun": null
       }
     ],
     "listeners": []
   },
-  "tags": {
-    "env": "cf"
-  }
+  "tags": {}
 }
