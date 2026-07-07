@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-debugger
 description: Debug and troubleshoot SAP Automation Pilot execution failures. Use when executions fail, need to investigate errors, check execution health (pass/fail summary), or understand error patterns. Provides error pattern matching with suggested fixes.
-version: 1.0.0
 ---
 
 # SAP Automation Pilot Debugging & Troubleshooting
@@ -42,7 +41,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ## Error Pattern Reference
 
-### 🔴 "Parameter 'X' is required but not provided"
+### "Parameter 'X' is required but not provided"
 
 **Error**: API returns 400 with message like `"Parameter 'smtpHost' is required but not provided"` even when the parameter IS provided in the JSON payload.
 
@@ -73,7 +72,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ---
 
-### 🔴 "Missing valid combination of input values for authentication"
+### "Missing valid combination of input values for authentication"
 
 **Full Error**: `"Missing valid combination of input values for authentication. Please select a valid option: 1) 'clientCert' for X509 2) 'user' & 'password' for Basic authentication"`
 
@@ -89,7 +88,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ---
 
-### 🔴 "The following input keys can only have default values from input, because they are marked as sensitive"
+### "The following input keys can only have default values from input, because they are marked as sensitive"
 
 **Context**: Occurs when deploying a command.
 
@@ -102,7 +101,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 "password": {
   "type": "string",
   "sensitive": true,
-  "defaultValue": "secret123"
+  "defaultValue": "<your-password>"
 }
 ```
 
@@ -116,7 +115,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ---
 
-### 🔴 "Command not found" or 404 on execution trigger
+### "Command not found" or 404 on execution trigger
 
 **Root Cause Options**:
 1. Command ID is wrong (check catalog, name, version)
@@ -138,7 +137,7 @@ curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ---
 
-### 🔴 Execution stuck in RUNNING
+### Execution stuck in RUNNING
 
 **Possible Causes**:
 1. `Delay:1` step is waiting (check `progressMessage` for "Waiting X minutes")
@@ -156,13 +155,13 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 ```bash
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "abort"}' \
+  -d '{"type": "ABORT", "reason": "Aborting stuck execution"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 ```
 
 ---
 
-### 🔴 HTTP executor returns unexpected status
+### HTTP executor returns unexpected status
 
 **Common Issues**:
 - 401/403: Authentication failed - check credentials, token expiry
@@ -173,7 +172,7 @@ curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 ---
 
-### 🔴 Expression evaluation errors
+### Expression evaluation errors
 
 **Symptoms**: Error mentions jq, expression, or shows `$(.something.output)` in error.
 
@@ -199,7 +198,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 
 ### Step 2: Check Execution Logs
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?maxPageSize=50"
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?maxPageSize=20"
 ```
 
 ### Step 3: Check Input That Was Used

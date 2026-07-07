@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-executor-executescript
 description: Master the ExecuteScript executor for Automation Pilot commands. Covers script execution parameters, Base64 encoding, timeout/exit code handling, stdin/parameters/environment patterns, and language-specific commands (Python, Node.js, PowerShell). Use when building commands that execute shell scripts or custom code.
-version: 1.1.0
 ---
 
 # Script Execution Guide

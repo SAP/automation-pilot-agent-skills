@@ -1,14 +1,11 @@
 ---
 name: automation-pilot-mcp-server-generation
 description: Create, configure, and deploy SAP Automation Pilot MCP server definitions and tool configurations. Use when building MCP servers, defining tools, setting up Automation Pilot MCP configs, or deploying MCP server definitions via API.
-version: 1.0.0
 ---
 
 # SAP Automation Pilot MCP Server Definition Generator
 
 This skill guides the creation of MCP server definitions for SAP Automation Pilot. MCP server definitions are JSON files that expose Automation Pilot commands as MCP tools, allowing AI assistants to invoke them directly.
-
-Reference examples are available in `autopi-mcp-servers/` at the project root.
 
 ---
 
@@ -256,19 +253,77 @@ Before finalizing a generated MCP server definition, verify:
 
 ## Reference Examples
 
-The `autopi-mcp-servers/` directory at the project root contains 7 production examples:
+### Minimal single-tool server (read-only)
 
-| File | Tools | Complexity | Good Example Of |
-|------|-------|-----------|-----------------|
-| `ans-event-producer.json` | 1 | Simple | Minimal single-tool server |
-| `btp-resource-discovery.json` | 5 | Simple | All read-only tools, single credential |
-| `incident-management.json` | 3 | Medium | Mixed catalogs, disabled tool |
-| `application-logs-and-metrics.json` | 4 | Medium | Multiple credential types in one server |
-| `cloud-landscape-directory.json` | 6 | Medium | Rich instructions with markdown |
-| `cloud-transport-management.json` | 14 | Complex | Full CRUD + destructive ops, openWorldHint variations |
-| `hana-cloud-lifecycle-management.json` | 14 | Complex | Lifecycle management, idempotent operations, destructive operations |
+```json
+{
+  "name": "ans-event-producer",
+  "enabled": true,
+  "instructions": "Use this server to send Alert Notification Service events. Call send_event when you need to publish an alert.",
+  "mcpTools": [
+    {
+      "commandId": "ans-sapcp:SendEvent:1",
+      "name": "send_event",
+      "enabled": true,
+      "inputReferences": ["ans-<<<TENANT_ID>>>:AnsCredentials:1"],
+      "tags": {},
+      "title": "Send ANS Event",
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    }
+  ]
+}
+```
 
-Always read and reference these examples when generating new definitions. Use them to validate that your output follows the established patterns.
+### Multi-tool read-only server
+
+```json
+{
+  "name": "btp-resource-discovery",
+  "enabled": true,
+  "instructions": "Use this server to discover BTP resources. All tools are read-only — they list or retrieve data and never modify state.",
+  "mcpTools": [
+    {
+      "commandId": "cf-sapcp:ListCfOrgs:1",
+      "name": "list_orgs",
+      "enabled": true,
+      "inputReferences": ["cf-<<<TENANT_ID>>>:CfCredentials:1"],
+      "tags": {},
+      "title": "List CF Organizations",
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true
+    },
+    {
+      "commandId": "cf-sapcp:ListCfSpaces:1",
+      "name": "list_spaces",
+      "enabled": true,
+      "inputReferences": ["cf-<<<TENANT_ID>>>:CfCredentials:1"],
+      "tags": {},
+      "title": "List CF Spaces",
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true
+    },
+    {
+      "commandId": "cf-sapcp:ListCfApps:1",
+      "name": "list_apps",
+      "enabled": true,
+      "inputReferences": ["cf-<<<TENANT_ID>>>:CfCredentials:1"],
+      "tags": {},
+      "title": "List CF Applications",
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "readOnlyHint": true
+    }
+  ]
+}
+```
 
 ---
 
@@ -289,21 +344,20 @@ User: "Create an MCP server for listing Cloud Foundry resources"
 
 User: "Build an MCP server for managing HANA Cloud instances"
 
-1. Read `hana-cloud-lifecycle-management.json` as reference
-2. Create tools: `list_instances`, `get_instance`, `start_instance`, `stop_instance`, `restart_instance`, `delete_instance`
-3. Apply correct hints: `readOnlyHint: true` for list/get, `idempotentHint: true` for start/stop/restart, `destructiveHint: true` for delete
-4. Use `hanalm-<<<TENANT_ID>>>` catalog prefix
-5. Write rich `instructions` with markdown grouping capabilities by category
+1. Create tools: `list_instances`, `get_instance`, `start_instance`, `stop_instance`, `restart_instance`, `delete_instance`
+2. Apply correct hints: `readOnlyHint: true` for list/get, `idempotentHint: true` for start/stop/restart, `destructiveHint: true` for delete
+3. Use `hanalm-<<<TENANT_ID>>>` catalog prefix
+4. Write rich `instructions` with markdown grouping capabilities by category
 
 ### Example 3: Create a minimal single-tool event sender
 
 User: "Create a minimal MCP server with one tool to send ANS alerts"
 
-1. Read `ans-event-producer.json` as reference
-2. Create minimal server with single tool: `send_event`
-3. Set `readOnlyHint: false`, `destructiveHint: false`, `openWorldHint: true`
-4. Add `AnsCredentials` input reference
-5. Write simple one-line `instructions`
+1. Create minimal server with single tool: `send_event`
+2. Set `readOnlyHint: false`, `destructiveHint: false`, `openWorldHint: true`
+3. Add `AnsCredentials` input reference
+4. Write simple one-line `instructions`
+5. Use the "Minimal single-tool server" inline example above as a structural guide
 
 ---
 
@@ -319,11 +373,11 @@ export AUTOPI_USERNAME="your-username"
 export AUTOPI_PASSWORD="your-password"
 ```
 
-For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
+For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `../automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
 
 Ensure `curl` is available in your environment.
 
-The API requires the `GenAI` permission for all write operations. Update and delete use ETag-based optimistic concurrency via the `If-Match` header.
+The API requires the `GenAI` permission for all write operations.
 
 ## List MCP Servers
 
@@ -344,8 +398,6 @@ MCP_SERVER_ID="T000414R2-0000001779286543418-1-1"
 curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
 ```
 
-The response includes an `ETag` header required for update and delete operations.
-
 ## Create MCP Server
 
 ```bash
@@ -359,20 +411,15 @@ curl -s -X POST \
 
 ## Update MCP Server
 
-Update requires the `If-Match` header with the current ETag. Use the system-generated `id` (not the `name`) in the URL.
+Use the system-generated `id` (not the `name`) in the URL.
 
 ```bash
 MCP_SERVER_ID="<id-from-list-response>"
 MCP_SERVER_FILE="path/to/updated-server.json"
 
-ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
-  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
-
 curl -s -X PUT \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -H "If-Match: $ETAG" \
   -d @"$MCP_SERVER_FILE" \
   "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
 ```
@@ -382,13 +429,8 @@ curl -s -X PUT \
 ```bash
 MCP_SERVER_ID="<id-from-list-response>"
 
-ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
-  grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
-
 curl -s -X DELETE \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "If-Match: $ETAG" \
   "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
 ```
 
@@ -406,13 +448,9 @@ STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
 
 if [[ "$STATUS" == "200" ]]; then
   echo "Updating existing MCP server..."
-  ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID" | \
-    grep -i "^etag:" | awk '{print $2}' | tr -d '\r\n')
   curl -s -X PUT \
     -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
     -H "Content-Type: application/json" \
-    -H "If-Match: $ETAG" \
     -d @"$MCP_SERVER_FILE" \
     "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
 else
@@ -432,10 +470,6 @@ fi
 **Error:** Duplicate tool names in server
 **Cause:** Two tools have the same `name` field value.
 **Solution:** Each tool name must be unique within a server. Use verb prefixes (`list_`, `get_`, `create_`) to differentiate tools that operate on the same resource type.
-
-**Error:** HTTP 412 Precondition Failed on update or delete
-**Cause:** The `If-Match` ETag doesn't match — the server was modified since you last fetched it.
-**Solution:** Fetch the current ETag with `curl -s -I ... | grep -i "^etag:"`, then retry the PUT/DELETE with the fresh value.
 
 **Error:** Conflicting hint booleans
 **Cause:** `readOnlyHint: true` and `destructiveHint: true` set on the same tool.

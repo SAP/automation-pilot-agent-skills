@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-catalog-explorer
 description: Discover available commands and catalogs in SAP Automation Pilot via API. Use when you need to find what executors/commands exist, get command definitions, or explore a catalog before generating new commands. Essential for complex command generation involving multiple services.
-version: 1.0.0
 ---
 
 # Catalog Explorer

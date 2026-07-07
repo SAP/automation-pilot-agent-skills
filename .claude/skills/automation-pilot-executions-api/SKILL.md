@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-executions-api
 description: Monitor and manage SAP Automation Pilot executions via API. Use when triggering commands, checking execution status, retrieving logs, aborting or pausing executions, or troubleshooting failed runs.
-version: 1.0.0
 ---
 
 # SAP Automation Pilot Executions API Management
@@ -49,7 +48,6 @@ Each action is only valid from specific statuses — applying an action from the
 |--------|-----------|--------|
 | **PAUSE** | `RUNNING` | → `PAUSED` |
 | **RESUME** | `PAUSED` | → `RUNNING` |
-| **CONFIRM** | `INPUT_REQUIRED` | → `RUNNING` (requires selecting one of the available user choice values) |
 | **RETRY** | `FAILED` | → `RUNNING`. Re-attempts the execution, preserving progress for provided composite commands. |
 | **RESET** | `FAILED`, `PAUSED`, `INPUT_REQUIRED` | → `RUNNING` from a chosen previous child command. Not available for direct executions of provided commands. For provided composite commands, starts the whole command from the beginning (unlike RETRY which preserves progress). |
 | **ABORT** | `PAUSED`, `FAILED` | → `ABORTED` |
@@ -61,25 +59,25 @@ EXEC_ID="execution-uuid-here"
 # Pause
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "pause"}' \
+  -d '{"type": "PAUSE", "reason": "Blocking on manual verification"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
 # Resume
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "resume"}' \
+  -d '{"type": "RESUME", "reason": "Resuming after verification"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
 # Retry
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "retry"}' \
+  -d '{"type": "RETRY", "reason": "Retrying after transient failure"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
 # Abort
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "abort"}' \
+  -d '{"type": "ABORT", "reason": "Superseded by a newer run"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 ```
 
@@ -87,14 +85,14 @@ curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 # Triggering Executions
 
-**Note:** All executions triggered via the API automatically include the `feature:logs` tag, which enables detailed execution logging.
+**Note:** To retrieve logs after execution, include `feature:logs` in the `tags` of the trigger request. This tag is opt-in and cannot be added retroactively — an execution triggered without it will return no logs from `GET /executions/{id}/logs`.
 
 ## Trigger a Command
 
 Add `"feature:dryRun": ""` to the tags to execute without making actual changes.
 
 ```bash
-# Basic trigger (includes feature:logs tag automatically)
+# Basic trigger (opt-in feature:logs tag enables log retrieval)
 curl -s -X POST \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
@@ -118,6 +116,18 @@ curl -s -X POST \
     "tags": {"feature:logs": "", "feature:dryRun": ""}
   }' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions"
+```
+
+**All `inputValues` entries must be strings on the wire**, regardless of the declared parameter type. The runtime converts each value to its declared type inside the executor:
+
+```json
+"inputValues": {
+  "appName": "my-app",
+  "instances": "3",
+  "enabled": "true",
+  "regions": "[\"cf-eu10\",\"cf-us10\"]",
+  "config": "{\"maxRetries\":5}"
+}
 ```
 
 ---
@@ -171,22 +181,16 @@ See the Actions table in the Execution Lifecycle section for valid statuses and 
 ```bash
 EXEC_ID="execution-uuid-here"
 
-# Confirm (INPUT_REQUIRED → RUNNING) — requires a userChoice value
+# Reset — resets to a previous child command (provide the executor path via "value")
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "confirm", "userChoice": "value"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
-
-# Reset — resets to a previous child command (provide the executor path)
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"action": "reset", "executorPath": "stepAlias"}' \
+  -d '{"type": "RESET", "value": "stepAlias", "reason": "Retry after fixing the input"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
 # Comment — add a note to the Action Log (max 10 per execution)
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "comment", "comment": "Your comment here"}' \
+  -d '{"type": "COMMENT", "reason": "Escalated to L2 on-call"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 
 # List action history
@@ -247,7 +251,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 
 curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -d '{"action": "abort"}' \
+  -d '{"type": "ABORT", "reason": "Aborting stuck execution"}' \
   "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
 ```
 
@@ -364,7 +368,6 @@ curl -s -X POST \
 | `403` | Forbidden |
 | `404` | Not Found |
 | `409` | Conflict (invalid state) |
-| `412` | Precondition Failed (ETag mismatch) |
 | `413` | Payload Too Large |
 | `429` | Rate Limited |
 
@@ -404,5 +407,5 @@ User: "Are there any stuck executions? Abort them."
 
 1. GET `/api/v1/executions?status=RUNNING` to list all currently running executions
 2. For each one, check `startedAt` to identify those running unexpectedly long
-3. For each stuck execution, POST `{"action": "abort"}` to `/api/v1/executions/$EXEC_ID/actions`
+3. For each stuck execution, POST `{"type": "ABORT", "reason": "Stuck execution"}` to `/api/v1/executions/$EXEC_ID/actions`
 4. Confirm each abort returned HTTP 202

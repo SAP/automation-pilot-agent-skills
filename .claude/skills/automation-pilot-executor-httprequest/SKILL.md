@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-executor-httprequest
 description: Master the HTTP executor for Automation Pilot commands. Covers HTTP executor parameters, expression sanitization, timeout/retry configuration, response transformers, and HTTP-specific error handling. Use when building commands that make HTTP/REST API calls.
-version: 1.0.0
 ---
 
 # HTTP Executor Guide
@@ -40,7 +39,7 @@ The HTTP executor (`http-sapcp:HttpRequest:1`) is the most commonly used executo
 
 **Do not** invent functions like `type`, `isBool`, `isString` - they don't exist in Automation Pilot.
 
-Only use functions listed in `references/expressions.md` or the official SAP documentation.
+Only use functions listed in `../automation-pilot-command-generation/references/expressions.md` or the official SAP documentation.
 
 ---
 

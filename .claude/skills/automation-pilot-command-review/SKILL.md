@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-command-review
 description: Review production commands, inputs, and catalogs for Automation Pilot. Validates file structure, naming conventions, security requirements, mandatory patterns, and best practices. Use when reviewing .command.json, .input.json, or .catalog.json files.
-version: 1.0.0
 ---
 
 # Code Review
@@ -64,16 +63,6 @@ JSON: "name": "CreateDir"
 - Commands: `.command.json`
 - Inputs: `.input.json`
 - Catalogs: `.catalog.json`
-
-**File Placement:**
-
-| Type | Location | Example |
-|------|----------|---------|
-| Production command | `content/public/catalogs/[catalog]/` | `catalogs/http/HttpRequest.command.json` |
-| Canary command | `content/canary/` | `canary/SensitiveHttpRequest.command.json` |
-| Internal command | `content/internal/catalogs/[catalog]/` | `internal/catalogs/cld/GetCldSystem.command.json` |
-
-**Critical:** ALL files (.command.json, .input.json, .catalog.json) MUST be inside `content/` folder.
 
 ### Naming Conventions
 
@@ -193,7 +182,7 @@ Sensitive data should be stored in Input definitions and referenced:
 
 ⚠️ **All descriptions of the following parameters must be one of these exact sentences or start with them.** No variations, alternatives, or creative rewording allowed for these Input and Output keys!
 
-See the complete authoritative list in **`automation-pilot-command-generation/SKILL.md`** → "Mandatory Description Patterns" section.
+See the complete authoritative list in **[`../automation-pilot-command-generation/references/description-patterns.md`](../automation-pilot-command-generation/references/description-patterns.md)**.
 
 ## Expression Sanitization (CRITICAL)
 
@@ -359,9 +348,7 @@ Validate in this order:
 ### 1. File Structure (CRITICAL - Build Fails)
 - File name matches `"name"` field exactly (PascalCase for commands/inputs)
 - File extension: `.command.json`, `.input.json`, or `.catalog.json`
-- File location: `content/public/catalogs/[catalog]/` (production)
 - All names ≤ 32 characters
-- Files inside `content/` folder (build fails if outside)
 
 ### 2. Naming Conventions (CRITICAL)
 - Commands/Inputs: PascalCase (CreateDirectory, HttpRequest)

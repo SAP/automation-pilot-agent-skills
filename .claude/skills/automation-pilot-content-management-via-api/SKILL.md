@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-content-management-via-api
 description: Manage SAP Automation Pilot content (commands, catalogs, inputs) via Content API. Use when importing or exporting commands, listing catalogs, or managing automation content programmatically.
-version: 1.2.0
 ---
 
 # SAP Automation Pilot Content API Management
@@ -10,7 +9,7 @@ This skill manages catalogs, commands, and inputs in SAP Automation Pilot using 
 
 ## Command Release Policy
 
-⚠️ Commands deploy in DRAFT state. **Never release automatically** — only when the user explicitly requests it and the command has been tested. See `automation-pilot-command-generation/SKILL.md` for the full policy.
+⚠️ Commands deploy in DRAFT state. **Never release automatically** — only when the user explicitly requests it and the command has been tested. See `../automation-pilot-command-generation/SKILL.md` for the full policy.
 
 ## Naming Conventions
 
@@ -41,6 +40,22 @@ export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 - `ksa.autopilot.cloud.sap` (Saudi Arabia)
 
 2. Ensure `curl` is available in your environment.
+
+---
+
+## Values Are Always Strings on the Wire
+
+When creating or updating inputs via the API, every entry in `values` and `defaultValue` must be a **JSON string**, regardless of the declared `type` in `keys`.
+
+| Declared `type` | Wire representation |
+|-----------------|---------------------|
+| `string` | `"my-app"` |
+| `number` | `"42"` |
+| `boolean` | `"true"` |
+| `array` | `"[\"a\",\"b\"]"` |
+| `object` | `"{\"url\":\"...\",\"user\":\"...\"}"` |
+
+This also applies to `inputValues` on trigger and schedule endpoints — every value must be a string on the wire. The runtime converts it to the declared type inside the executor.
 
 ---
 
@@ -201,7 +216,7 @@ curl -s -X DELETE -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNA
 
 ## Release Command
 
-!!! USE ONLY IF THE USER EXPLICITLY REQUESTED IT 
+⚠️ **USE ONLY IF THE USER EXPLICITLY REQUESTED IT**
 
 Release a draft command:
 
@@ -292,8 +307,8 @@ curl -s -X POST \
       }
     },
     "values": {
-      "username": "admin",
-      "password": "secret123"
+      "username": "<your-username>",
+      "password": "<your-password>"
     },
     "tags": {
       "type": "credentials"
@@ -331,7 +346,7 @@ curl -s -X PATCH \
   -H "Content-Type: application/merge-patch+json" \
   -d '{
     "values": {
-      "password": "newSecret456"
+      "password": "<your-new-password>"
     }
   }' \
   "https://$AUTOPI_HOSTNAME/api/v1/inputs/$INPUT_ID"
@@ -346,7 +361,7 @@ curl -s -X DELETE -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNA
 
 ## Release Input
 
-!!! USE ONLY IF THE USER EXPLICITLY REQUESTED IT 
+⚠️ **USE ONLY IF THE USER EXPLICITLY REQUESTED IT**
 
 ```bash
 INPUT_ID="mycatalog-xxx:MyInput:1"
@@ -404,7 +419,7 @@ Inputs are **reusable parameter sets** stored in Automation Pilot. They allow yo
   "values": {
     "region": "cf-eu10",
     "user": "technical-user",
-    "password": "secret-value"
+    "password": "<your-password>"
   },
   "tags": {}
 }
@@ -449,12 +464,7 @@ Inputs are **reusable parameter sets** stored in Automation Pilot. They allow yo
     "serviceKey": { "type": "object", "sensitive": true }
   },
   "values": {
-    "serviceKey": {
-      "url": "https://hana-instance.hana.cloud.sap",
-      "user": "DBADMIN",
-      "password": "secret",
-      "certificate": "..."
-    }
+    "serviceKey": "{\"url\":\"https://hana-instance.hana.cloud.sap\",\"user\":\"DBADMIN\",\"password\":\"<your-password>\",\"certificate\":\"...\"}"
   }
 }
 ```
@@ -492,13 +502,7 @@ Inputs are **reusable parameter sets** stored in Automation Pilot. They allow yo
     "kubeconfig": { "type": "object", "sensitive": true }
   },
   "values": {
-    "kubeconfig": {
-      "apiVersion": "v1",
-      "kind": "Config",
-      "clusters": [...],
-      "users": [...],
-      "contexts": [...]
-    }
+    "kubeconfig": "{\"apiVersion\":\"v1\",\"kind\":\"Config\",\"clusters\":[...],\"users\":[...],\"contexts\":[...]}"
   }
 }
 ```
@@ -508,7 +512,7 @@ Inputs are **reusable parameter sets** stored in Automation Pilot. They allow yo
 1. **Separate inputs by environment** - Create distinct inputs for dev/staging/prod
 2. **Mark sensitive values** - Always set `"sensitive": true` for passwords, tokens, and keys
 3. **Use descriptive names** - Include region/environment in the name (e.g., `CfCredentials-EU10-Prod`)
-4. **Keep inputs minimal** - Store only reusable values; command-specific values go in `additionalValues`
+4. **Keep inputs minimal** - Store only reusable values; command-specific values go in `inputValues` at trigger time
 
 ---
 
@@ -636,7 +640,7 @@ echo "$BODY"
 
 ⚠️ **When creating or updating commands/inputs, use these exact description patterns for standard parameters.**
 
-See the complete authoritative list in **`automation-pilot-command-generation/SKILL.md`** → "Mandatory Description Patterns" section.
+See the complete authoritative list in **[`../automation-pilot-command-generation/references/description-patterns.md`](../automation-pilot-command-generation/references/description-patterns.md)**.
 
 ---
 
@@ -692,4 +696,4 @@ User: "Update the password in my JiraCredentials input"
 
 ---
 
-!!! CAUTION: DO NOT RELEASE COMMANDS & INPUTS IF NOT EXPLICITLY REQUESTED BY THE USER
+⚠️ **CAUTION: DO NOT RELEASE COMMANDS & INPUTS IF NOT EXPLICITLY REQUESTED BY THE USER**

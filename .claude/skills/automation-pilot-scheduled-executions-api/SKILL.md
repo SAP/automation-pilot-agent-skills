@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-scheduled-executions-api
 description: Manage SAP Automation Pilot scheduled executions via API. Use when creating, listing, updating, or deleting schedules for recurring or one-time command execution.
-version: 1.0.0
 ---
 
 # SAP Automation Pilot Scheduled Executions API Management
@@ -19,7 +18,7 @@ export AUTOPI_PASSWORD="your-password"
 export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 ```
 
-For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
+For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `../automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
 
 2. Ensure `curl` is available in your environment.
 
@@ -31,6 +30,9 @@ SAP Automation Pilot supports the following schedule types:
 
 ## Once (One-time)
 Execute once at a specific date/time.
+```json
+"once": { "month": 12, "day": 31, "hour": 23, "minute": 30 }
+```
 
 ## Hourly
 Execute at specified minutes within each hour.
@@ -51,10 +53,9 @@ Execute at specified time each day.
 
 ## Weekly
 Execute on specified days of the week at a specific time.
-Days: 1=Monday, 2=Tuesday, ..., 7=Sunday
 ```json
 "weekly": {
-  "days": [1, 3, 5],
+  "days": ["MONDAY", "WEDNESDAY", "FRIDAY"],
   "hours": [9],
   "minutes": [0]
 }
@@ -93,7 +94,6 @@ curl -s -X POST \
     "commandId": "my-catalog:MyCommand:1",
     "schedule": {
       "timeZone": "Europe/Berlin",
-      "deadlineInMinutes": 5,
       "daily": {
         "hours": [9],
         "minutes": [0]
@@ -107,6 +107,8 @@ curl -s -X POST \
   }' \
   "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions"
 ```
+
+**All `inputValues` entries must be strings on the wire**, regardless of the declared parameter type — see `../automation-pilot-content-management-via-api/SKILL.md` → "Values Are Always Strings on the Wire".
 
 ---
 
@@ -124,26 +126,17 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 ```bash
 SCHEDULE_ID="your-schedule-id"
 
-# Fetch details and capture ETag for updates
-curl -s -i -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
+curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
 ```
 
 ## Enable/Disable Schedule
 
-Fetch the current schedule body and ETag, then PUT the full body back with the `enabled` flag changed:
-
 ```bash
-# 1. Fetch current schedule (note the ETag from the response headers)
-curl -s -i -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
-
-# 2. PUT with the full updated body (set "enabled": true or false) and the captured ETag
-ETAG="<etag-from-response-header>"
+# PUT the full schedule body with "enabled" set to true or false
 curl -s -X PUT \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -H "If-Match: $ETAG" \
   -d '<full schedule body with enabled changed>' \
   "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
 ```
@@ -151,13 +144,8 @@ curl -s -X PUT \
 ## Delete Schedule
 
 ```bash
-ETAG=$(curl -s -I -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID" | \
-  grep -i "etag:" | awk '{print $2}' | tr -d '\r')
-
 curl -s -X DELETE \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "If-Match: $ETAG" \
   "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
 ```
 
@@ -165,25 +153,14 @@ curl -s -X DELETE \
 
 # Updating Scheduled Executions
 
-Updates require an ETag header for optimistic concurrency control.
-
 ```bash
-# Get current schedule and ETag
-RESPONSE=$(curl -s -i -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID")
-
-ETAG=$(echo "$RESPONSE" | grep -i "etag:" | awk '{print $2}' | tr -d '\r')
-
-# Update with If-Match header
 curl -s -X PUT \
   -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   -H "Content-Type: application/json" \
-  -H "If-Match: $ETAG" \
   -d '{
     "commandId": "my-catalog:MyCommand:1",
     "schedule": {
       "timeZone": "Europe/Berlin",
-      "deadlineInMinutes": 5,
       "daily": {
         "hours": [10],
         "minutes": [0]
@@ -237,7 +214,6 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
   "inputReferences": [],
   "schedule": {
     "timeZone": "Europe/Berlin",
-    "deadlineInMinutes": 5,
     "daily": {
       "hours": [9],
       "minutes": [0]
@@ -263,7 +239,6 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 | `403` | Forbidden - insufficient permissions |
 | `404` | Not Found - schedule doesn't exist |
 | `409` | Conflict - invalid state |
-| `412` | Precondition Failed - ETag mismatch |
 | `429` | Rate Limited |
 
 ## Permissions Required
@@ -274,13 +249,6 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 | Create/Update/Delete | `Execute` |
 
 ## Common Errors
-
-### ETag Mismatch (412)
-
-```
-Error: Precondition Failed - ETag mismatch
-```
-The schedule was modified by another user. Fetch the latest version and retry.
 
 ### Command Not Found (409)
 
@@ -298,8 +266,8 @@ Ensure only one schedule type is set (hourly, daily, weekly, monthly, or yearly)
 
 ### Schedule Not Firing
 
-**Cause:** Schedule is disabled, the time zone is misconfigured, or the `deadlineInMinutes` window is too short for the command to complete.
-**Solution:** GET the schedule and verify `"enabled": true`. Confirm the `timeZone` matches the intended region — a schedule set for `Europe/Berlin` at 09:00 fires at a different UTC time than one set for `Etc/UTC`. If the command regularly exceeds `deadlineInMinutes`, increase it.
+**Cause:** Schedule is disabled or the time zone is misconfigured.
+**Solution:** GET the schedule and verify `"enabled": true`. Confirm the `timeZone` matches the intended region — a schedule set for `Europe/Berlin` at 09:00 fires at a different UTC time than one set for `Etc/UTC`.
 
 ---
 
@@ -310,7 +278,7 @@ Ensure only one schedule type is set (hourly, daily, weekly, monthly, or yearly)
 User: "Schedule my health check command to run every day at 9 AM Berlin time"
 
 1. POST to `/api/v1/scheduled-executions` with `commandId`, `enabled: true`, and `"daily": {"hours": [9], "minutes": [0]}`
-2. Set `"timeZone": "Europe/Berlin"` and a `deadlineInMinutes` appropriate for the command's expected duration
+2. Set `"timeZone": "Europe/Berlin"`
 3. Capture the schedule ID from the response
 4. Confirm with a GET that the schedule is enabled and the time is correct
 
@@ -318,9 +286,9 @@ User: "Schedule my health check command to run every day at 9 AM Berlin time"
 
 User: "Change my schedule to run at 10 AM instead of 9 AM"
 
-1. GET `/api/v1/scheduled-executions/$SCHEDULE_ID` with `-i` to capture the ETag header
+1. GET `/api/v1/scheduled-executions/$SCHEDULE_ID` to fetch the current body
 2. Modify the `hours` value in the response body to `[10]`
-3. PUT the full updated body back with `If-Match: $ETAG`
+3. PUT the full updated body back
 4. Confirm the response shows the new time
 
 ## Example 3: Create an every-15-minutes monitoring schedule
@@ -328,5 +296,5 @@ User: "Change my schedule to run at 10 AM instead of 9 AM"
 User: "Run my monitoring command every 15 minutes"
 
 1. POST to `/api/v1/scheduled-executions` with `"hourly": {"minutes": [0, 15, 30, 45]}`
-2. Set `"timeZone": "Etc/UTC"` and a short `deadlineInMinutes` (e.g., 5)
+2. Set `"timeZone": "Etc/UTC"`
 3. Verify the schedule is created and enabled

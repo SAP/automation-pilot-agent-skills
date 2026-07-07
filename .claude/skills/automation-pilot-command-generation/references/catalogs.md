@@ -10,7 +10,7 @@ This reference lists all available built-in catalogs and their key commands.
 
 ## NOTE: This List May Not Be Complete
 
-SAP continuously adds new commands and catalogs to Automation Pilot. If a catalog or command you need is not listed here, use the **[catalog-explorer](../../catalog-explorer/SKILL.md)** skill to search for it via the API:
+SAP continuously adds new commands and catalogs to Automation Pilot. If a catalog or command you need is not listed here, use the **[catalog-explorer](../../automation-pilot-catalog-explorer/SKILL.md)** skill to search for it via the API:
 
 ```bash
 # List all available catalogs

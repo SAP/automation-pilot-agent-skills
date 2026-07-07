@@ -1,7 +1,6 @@
 ---
 name: automation-pilot-command-generation
 description: Generate SAP Automation Pilot commands with dynamic expressions, jq transformations, and composite workflows. Use when creating commands, building orchestration flows, or working with Automation Pilot expressions and script execution (Bash, Python, Node.js, PowerShell).
-version: 1.2.0
 ---
 
 # SAP Automation Pilot Command Development
@@ -116,6 +115,8 @@ Define command parameters:
 
 Additional optional fields exist: `allowedValues` (fixed set of valid options), `suggestedValues` (hints shown in UI), `allowedValuesFromInputKeys` and `suggestedValuesFromInputKeys` (dynamic lists from an input reference). Omit them when not needed.
 
+**`defaultValue` is always a JSON string on the wire** regardless of the declared `type`. For non-string types, stringify the JSON: `"defaultValue": "5"` for a number, `"defaultValue": "true"` for a boolean, `"defaultValue": "[\"a\",\"b\"]"` for an array, `"defaultValue": "{\"key\":\"val\"}"` for an object.
+
 **Region inputs** must always use `allowedValuesFromInputKeys` to constrain the value to the SAP-provided region list:
 - Cloud Foundry: `"allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]`
 - Neo: `"allowedValuesFromInputKeys": ["metadata-sapcp:NeoRegionData:1"]`
@@ -221,46 +222,7 @@ Expressions use jq 1.6 syntax wrapped in `$()`. Access data with:
 - `.regionData.field` - Values from input references
 - `$` - Global scope (use inside pipes)
 
-### Essential Expressions
-
-| Pattern | Description |
-|---------|-------------|
-| `$(.execution.input.name)` | Access input |
-| `$(.step.output.body \| toObject)` | Parse JSON response |
-| `$(.step.output.body \| toObject.items[0].id)` | Extract nested value |
-| `$(if .cond then "a" else "b" end)` | Conditional |
-| `$(.arr \| map(.field))` | Transform array |
-| `$(.str \| toUrlEncoded)` | URL encode |
-| `$(.obj \| toObject.key // "default")` | Fallback value |
-
-### String Operations
-
-- `toUpperCase`, `toLowerCase`, `strip`
-- `split(".")`, `join(",")`
-- `gsub("old"; "new")` - Replace all
-- `"\(.var) text"` - Interpolation
-
-### Array/Object Operations
-
-- `filter(condition)`, `select(condition)`
-- `map(transform)`, `sort`, `sortBy(.field)`
-- `unique`, `uniqueBy(.field)`
-- `keys`, `values`, `length`
-- `toEntries`, `fromEntries`
-
-### Type Conversions
-
-- `toObject`, `toArray`, `toString`, `toNumber`, `toBoolean`
-- `toBase64`, `fromBase64`
-- `toUrlEncoded`, `fromUrlEncoded`
-- `toMd5`, `toSha256`
-- `fromYaml`, `toYaml`
-
-### Utilities
-
-- `now` - Unix timestamp
-- `guid`, `guidShort` - Generate UUIDs
-- `isGuid` - Validate GUID format
+See **[`references/expressions.md`](references/expressions.md)** for the full expression reference — patterns, string/array/object operations, type conversions, and utilities.
 
 ## IMPORTANT: Expression Complexity Limits
 
@@ -439,95 +401,7 @@ Provide custom error messages:
 
 ⚠️ **When creating commands, use these exact description patterns for standard parameters.** No variations or creative rewording allowed!
 
-### 📥 Input Parameters
-
-**Authentication:**
-- **password**
-  - description
-    - The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'
-    - The password of a service account with [permissions]. Related input keys: 'user'
-    - The password of the provided user
-  - type - string | sensitive 🔒
-- **user**
-  - description
-    - The name of a technical user or an OAuth 2.0 client ID to be used for authentication. Related input keys: 'password' or 'tokenUrl'
-    - The ID (username) of a service account with [permissions]. Related input keys: 'password'
-    - The user ID or the email of a Cloud Foundry user to be used for authentication
-    - The username of the [service/system]
-  - type - string
-- **refreshToken**
-  - description
-    - An OAuth 2.0 refresh token to be used for authentication. If 'refreshToken' is passed, 'user' and 'password' will be ignored. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-    - An OAuth 2.0 refresh token which will be used to get a new access token via the Refresh Token grant type. Related input keys: 'clientId', 'clientSecret', 'tokenUrl'
-  - type - string | sensitive 🔒
-
-**Region & Organization:**
-- **region**
-  - description
-    - The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002
-    - The technical name of the Neo region. Example: neo-eu1, neo-us1
-  - type - string
-  - Allowed values should be used
-- **subAccount**
-  - description
-    - The name or the ID of the Cloud Foundry organization. Examples: my-org-name-1, 0ffeb410-5f78-0000-af5c-5b26baf46623
-  - type - string
-
-**Resources & Services:**
-- **resourceName**
-  - description
-    - The technical name of the [resource type]. Example: [examples]
-  - type - string
-- **serviceKey**
-  - description
-    - A service key for [service]
-  - type - object | sensitive 🔒
-- **name**
-  - description
-    - The name of the [object]
-  - type - string
-
-### 📤 Output Parameters
-
-**Status & Response:**
-- **status**
-  - description
-    - The status of the [object]
-    - The status code of the response. Examples: 200, 301, 404, 503
-    - The status code of the response. Examples: 200, 301, 404, 503. In case of no response or a timeout, the status codes may be 0 and -1.
-  - types - number, string, object
-- **responseCode**
-  - description
-    - The HTTP response code
-  - type - number
-- **state**
-  - description
-    - The state of the [object/entity]. Examples: [examples]
-  - type - string
-
-**Data Collections:**
-- **resourceInstancesStates**
-  - description
-    - An array of all application instances after command execution
-  - type - array
-- **output**
-  - description
-    - The original response from [service/API]
-  - types - array, string, object
-- **result**
-  - description
-    - The result of the [operation]
-  - types - array, string, object
-
-**System Operations:**
-- **exitCode**
-  - description
-    - The exit code returned by the script execution
-  - type - number
-- **instanceId**
-  - description
-    - The ID of the [instance/object]
-  - type - string
+See the complete authoritative list in **[`references/description-patterns.md`](references/description-patterns.md)**.
 
 ## Examples
 
