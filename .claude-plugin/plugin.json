@@ -1,0 +1,54 @@
+{
+  "name": "automation-pilot-skills",
+  "displayName": "SAP Automation Pilot",
+  "description": "Build, operate, and manage cloud operations with SAP Automation Pilot, from your coding agent in plain language.",
+  "version": "1.0.0",
+  "author": {
+    "name": "SAP"
+  },
+  "homepage": "https://github.com/SAP/automation-pilot-agent-skills",
+  "repository": "https://github.com/SAP/automation-pilot-agent-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "sap",
+    "automation-pilot",
+    "cloud-operations",
+    "automation",
+    "workflow",
+    "commands",
+    "executions",
+    "scheduling",
+    "mcp"
+  ],
+  "userConfig": {
+    "hostname": {
+      "type": "string",
+      "title": "Automation Pilot hostname",
+      "description": "Host name of your Automation Pilot tenant, e.g., emea.autopilot.cloud.sap.",
+      "required": true
+    },
+    "token": {
+      "type": "string",
+      "title": "Automation Pilot API token",
+      "description": "API token for the service account used to access your Automation Pilot tenant.",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "mcpServers": {
+    "automation-pilot": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--locked",
+        "--directory",
+        "${CLAUDE_PLUGIN_ROOT}/mcp",
+        "server.py"
+      ],
+      "env": {
+        "AUTOMATION_PILOT_HOSTNAME": "${user_config.hostname}",
+        "AUTOMATION_PILOT_TOKEN": "${user_config.token}"
+      }
+    }
+  }
+}

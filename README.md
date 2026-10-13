@@ -2,220 +2,174 @@
 
 # <img src="sap-automation-pilot.svg" width="32" height="32" alt="SAP Automation Pilot" valign="middle"> SAP Automation Pilot Agent Skills
 
-### The fastest way to build SAP BTP automations — describe what you want, deploy in minutes.
+### Build and operate SAP BTP automations from your coding agent.
 
-This repository brings **AI-powered development** to [SAP Automation Pilot](https://help.sap.com/docs/automation-pilot). Using [Claude Code](https://claude.ai/code), you can generate production-ready Commands through natural conversation — the AI handles JSON schemas, jq expressions, and best practices while you focus on what to automate. Review code, deploy to your tenant, trigger Executions, and troubleshoot failures — all without leaving your IDE or terminal.
+A plugin for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It gives your agent **10 skills** that encode SAP [Automation Pilot](https://help.sap.com/docs/automation-pilot) patterns and uses MCP to connect to your tenant. You describe the automation you want; the agent builds, deploys, runs, and monitors it without leaving your editor.
 
-![Overview](overview.svg)
-
-**What makes the difference:**
-
-- **Instant expertise** — SAP's proven patterns and best practices guide every Command you create
-- **End-to-end workflow** — From "I need an automation that..." to deployed and running
-- **Production quality by default** — Error handling, retry logic, security flags, and validation included automatically
-- **Zero context switching** — Generate, review, deploy, trigger, monitor, and troubleshoot in one place
+Review and test generated content against the target tenant before you rely on it.
 
 ## Table of contents
 
-- [About SAP Automation Pilot](#about-sap-automation-pilot)
-- [Why this repository](#why-this-repository)
-- [What's included](#whats-included)
-- [Getting started](#getting-started)
+- [What you get](#what-you-get)
+- [Skills](#skills)
+- [Installation](#installation)
+- [Updating](#updating)
 - [How to use](#how-to-use)
+- [About SAP Automation Pilot](#about-sap-automation-pilot)
 - [Resources](#resources)
 - [Support and contributing](#support-and-contributing)
 - [License](#license)
 
-## About SAP Automation Pilot
+## What you get
 
-<img src="sap-automation-pilot.svg" width="16" height="16" alt="SAP Automation Pilot icon"> [SAP Automation Pilot](https://help.sap.com/docs/automation-pilot) is SAP's native automation engine for Business Technology Platform — the control plane for your BTP operations. From routine maintenance to complex incident response, it handles the workflows that keep your landscape running.
+Full control over your Automation Pilot resources from your favorite coding agent — **build new automations, debug and extend existing ones, run and troubleshoot executions, and manage schedules**, all from plain-language requests.
 
-Think of it as Infrastructure-as-Code meets workflow automation, purpose-built for SAP BTP. **Commands** define your automations, **Inputs** store credentials and configuration, and **Executions** are running instances you can monitor and troubleshoot.
+- **Build:** Author Commands and multi-step automations — HTTP calls, scripts, polling loops, sequential and parallel batch operations — and deploy them straight to your tenant.
+- **Debug and extend:** Pull an existing Command down, understand it, fix a broken dynamic expression, add a step, or harden its error handling, then push it back.
+- **Manage Inputs:** Create reusable configuration and credential sets, rotate values safely, and update their definitions.
+- **Operate:** Trigger Commands, follow Executions live, read logs and outputs, and troubleshoot failures without leaving your editor.
+- **Schedule:** Create, inspect, change, enable, disable, and delete scheduled Executions.
+- **Embedded expertise:** The skills carry Command structure, expression syntax, security requirements, and error-handling patterns. You describe *what* to automate; the agent handles the *how*.
+- **Built-in checks:** The skills verify contracts, retries, sensitivity flags, and read-back before anything touches your tenant.
 
-**What you can automate:**
+## Skills
 
-| Category | Services & Capabilities |
-|----------|------------------------|
-| **SAP HANA Cloud** | Lifecycle management, updates, mass operations, backups, audit logs, credential rotation |
-| **BTP Management** | Subaccount creation, environment setup, entitlements, identity provider configuration |
-| **Cloud Foundry** | Apps, services, spaces, routes, mass restart/stop/start, quota notifications, certificate checks |
-| **Kubernetes/Kyma** | Deployments, pods, services, jobs, config maps, secrets, script execution via K8s |
-| **Neo** | Application lifecycle, auto-scaling, process management |
-| **Service Manager** | Instances, bindings, plans, platforms, service keys |
-| **SAP Cloud ALM** | Health monitoring, Cloud Connector status, metrics collection |
-| **AI Core** | GPT completions, AI model orchestration |
-| **Monitoring** | Dynatrace integration, availability checks, alert correlation |
-| **DevOps** | GitHub workflows, Jenkins pipelines, JIRA issue management |
-| **Notifications** | Email/SMTP, Alert Notification Service (ANS), Slack via webhooks |
-| **Security** | XSUAA token management, destination service, credential rotation |
-| **Database** | SQL operations, database lifecycle management |
-| **Transport** | Cloud Transport Management System (cTMS) operations |
-| **HTTP/REST** | Any API with OAuth, basic auth, certificates, Cloud Connector |
-| **Scripting** | Bash, Python, Node.js, PowerShell, Terraform with BTP Provider |
-| **Utilities** | Data transformation, JSON-to-HTML, parallel execution (ForEach), delays |
+| Skill | What it does |
+|-------|--------------|
+| [**Planning**](skills/automation-pilot-plan/SKILL.md) | Explicitly invoked interview that produces an implementation-ready automation spec |
+| [**Command Authoring**](skills/automation-pilot-command-authoring/SKILL.md) | Author Commands and composite automations (HTTP, scripts, polling, batching) and deploy them |
+| [**Executions**](skills/automation-pilot-executions/SKILL.md) | Trigger Commands, monitor and troubleshoot Executions, and browse execution history |
+| [**Dynamic Expressions**](skills/automation-pilot-dynamic-expressions/SKILL.md) | Craft and debug Automation Pilot dynamic expressions against representative data |
+| [**Discovery**](skills/automation-pilot-discovery/SKILL.md) | Find and inspect catalogs, Commands, and reusable Inputs; judge reuse fit before building |
+| [**Inputs**](skills/automation-pilot-inputs/SKILL.md) | Create and maintain reusable configuration and credential Inputs without exposing stored values |
+| [**Scheduling**](skills/automation-pilot-scheduling/SKILL.md) | Create, inspect, change, enable, disable, and delete scheduled Executions |
+| [**MCP Server Management**](skills/automation-pilot-mcp-servers/SKILL.md) | Create and maintain Automation Pilot MCP server definitions that expose Commands as tools |
+| [**Tags**](skills/automation-pilot-tags/SKILL.md) | Apply and interpret regular, feature, and service tags, including inheritance and execution lineage |
+| [**Connection**](skills/automation-pilot-connection/SKILL.md) | Validate the configured connection and summarize tenant, identity, permissions, and service plan |
 
-## Why this repository
+## Installation
 
-SAP Automation Pilot provides a powerful automation engine with hundreds of built-in Commands and a rich expression language. **This repository amplifies that power with AI-assisted development.**
+**Prerequisite:** Install [`uv`](https://docs.astral.sh/uv/getting-started/installation/). The plugin needs it at runtime.
 
-Think of it as a force multiplier: these skills encode expert-level patterns — Command structures, expression syntax, security requirements, error handling strategies — and apply them automatically as you work. You focus on *what* you want to automate; the AI handles the implementation details.
+Install the plugin from inside Claude Code using slash commands.
 
-**Who benefits:**
-
-| You are... | How AI skills help |
-|------------|-------------------|
-| **Getting started** | Generate your first Command in minutes through natural conversation |
-| **Building complex workflows** | Get production-quality Commands with error handling and validation built in |
-| **Reviewing team code** | Automated checks for security, naming conventions, and best practices |
-| **Operating at scale** | Trigger, monitor, and troubleshoot Executions — all via CLI |
-| **Integrating with CI/CD** | API skills plug directly into your automation pipelines |
-
-## What's included
-
-| Skill | Description |
-|-------|-------------|
-| [**Command Generation**](.claude/skills/automation-pilot-command-generation/SKILL.md) | Create Commands from natural language descriptions using patterns and best practices |
-| [**Catalog Explorer**](.claude/skills/automation-pilot-catalog-explorer/SKILL.md) | Discover available Commands and executors in your tenant via API |
-| [**Code Review**](.claude/skills/automation-pilot-command-review/SKILL.md) | Validate security, naming conventions, expression sanitization, and best practices |
-| [**Content Management API**](.claude/skills/automation-pilot-content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands, Inputs, and MCP servers via API |
-| [**Executions API**](.claude/skills/automation-pilot-executions-api/SKILL.md) | Trigger Commands, monitor status, view logs |
-| [**Execution Debugger**](.claude/skills/automation-pilot-debugger/SKILL.md) | Debug failed Executions, error pattern matching, troubleshooting workflows |
-| [**Scheduled Executions API**](.claude/skills/automation-pilot-scheduled-executions-api/SKILL.md) | Create and manage recurring Command schedules |
-| [**MCP Server Generation**](.claude/skills/automation-pilot-mcp-server-generation/SKILL.md) | Create MCP server definitions to expose Commands as AI assistant tools |
-| [**HTTP Executor**](.claude/skills/automation-pilot-executor-httprequest/SKILL.md) | Guidance for HTTP requests with retry, timeout, and error handling |
-| [**Script Executor**](.claude/skills/automation-pilot-executor-executescript/SKILL.md) | Guidance for ExecuteScript with Base64 encoding and language wrappers |
-
-## Getting started
-
-### Prerequisites
-
-| Tool | Purpose |
-|------|---------|
-| [Claude Code](https://claude.ai/code) | Required to use the skills (VS Code extension, CLI, or desktop app) |
-| `curl` | API calls to SAP Automation Pilot |
-| `jq` | JSON parsing and transformation |
-
-You'll also need an SAP Automation Pilot tenant with API credentials.
-
-### 1. Clone the repository
+**1. Start Claude Code.** Open your terminal and run:
 
 ```bash
-git clone https://github.com/SAP/automation-pilot-agent-skills.git
-cd automation-pilot-agent-skills
+claude
 ```
 
-### 2. Configure authentication
+**2. Add the plugin marketplace.** Inside Claude Code, run:
 
-Create a `.env` file in the repository root:
+```text
+/plugin marketplace add SAP/automation-pilot-agent-skills#development
+```
+
+**3. Install the plugin.** Still inside Claude Code, run:
+
+```text
+/plugin install automation-pilot-skills@automation-pilot
+```
+
+**4. Configure the connection.** On install, Claude Code prompts for the `hostname` and `token` settings. Enter your tenant values, for example:
+
+| Setting | Example value |
+|---------|---------------|
+| `hostname` | `emea.autopilot.cloud.sap` (tenant host, no `https://`) |
+| `token` | `ap_T000000R4-claude-1_EHOA...` (service account bearer token) |
+
+That's it — Autopilot Skills is ready to use.
+
+## Updating
+
+To update the plugin manually, run this command in your terminal:
 
 ```bash
-# SAP Automation Pilot credentials
-export AUTOPI_HOSTNAME='emea.autopilot.cloud.sap'
-export AUTOPI_USERNAME='your-tenant-technical-user'
-export AUTOPI_PASSWORD='your-password-here'
-export AUTOPI_DEFAULT_CATALOG='your-catalog-id'
+claude plugin update automation-pilot-skills@automation-pilot
 ```
 
-**Important notes:**
+Claude Code updates the plugin from the `development` branch configured when you added the
+marketplace.
 
-- **Use single quotes** for `AUTOPI_PASSWORD` if it contains special characters (`$`, `!`, etc.) to prevent shell expansion
-- **Supported hostnames:**
-  - `emea.autopilot.cloud.sap` (Europe)
-  - `amer.autopilot.cloud.sap` (Americas)
-  - `apac.autopilot.cloud.sap` (Asia Pacific)
-  - `aus.autopilot.cloud.sap` (Australia)
-  - `ksa.autopilot.cloud.sap` (Saudi Arabia)
-- The `.env` file is gitignored — your credentials stay local
-
-### 3. Load environment variables
-
-Before using the API skills, load your credentials:
-
-```bash
-source .env
-```
-
-### 4. Verify connection
-
-Test your setup by listing your Catalogs:
-
-```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true" | jq .
-```
+To enable automatic updates, run `/plugin` in a Claude Code session and open the
+**Marketplaces** tab. Select the marketplace, then choose **Enable auto-update**. You can
+turn automatic updates off from the same menu by choosing **Disable auto-update**.
 
 ## How to use
 
-Open this repository in Claude Code and start a conversation. The skills are automatically available.
+Describe your Automation Pilot task in plain language and the matching skill engages. Some examples:
 
-#### Generate a Command
+**Generate a Command**
 
-```
-Create an Automation Pilot Command that restarts a Cloud Foundry app 
+```text
+Create an Automation Pilot Command that restarts a Cloud Foundry app
 and waits for it to become healthy, with proper error handling.
 ```
 
-#### Review a Command
+**Craft a dynamic expression**
 
-```
-Review MyCommand.command.json for production readiness
-```
-
-#### Deploy to Automation Pilot
-
-```
-Upload MyCommand.command.json to my Automation Pilot tenant
+```text
+Write an Automation Pilot expression that filters this execution data to
+enabled resources and returns their IDs.
 ```
 
-#### Trigger and monitor an Execution
+**Deploy, trigger, and monitor**
 
-```
-Trigger the Command my-catalog:MyCommand:1 with Input {"appName": "my-app"}
-and show me the results when it finishes
-```
-
-#### Troubleshoot a failed Execution
-
-```
-The Execution abc123 failed — show me the logs and help me understand what went wrong
+```text
+Upload MyCommand.command.json to my tenant, trigger it with Input
+{"appName": "my-app"}, and show me the results when it finishes.
 ```
 
-#### Check recent Execution health
+**Troubleshoot a failure**
 
-```
-Show me my last 15 executions — how many passed and how many failed?
+```text
+Execution abc123 failed — show me the logs and help me understand what went wrong.
 ```
 
-#### Manage scheduled Executions
+**Manage schedules**
 
+```text
+List my enabled scheduled executions and disable the active ones.
 ```
-Do I have any enabled scheduled executions? List them and disable the ones that are active.
+
+**Plan an automation.** The planning skill never auto-invokes. Call it by name:
+
+```text
+/automation-pilot-skills:automation-pilot-plan
 ```
+
+## About SAP Automation Pilot
+
+[SAP Automation Pilot](https://help.sap.com/docs/automation-pilot) is SAP's native engine for automating cloud operations on Business Technology Platform. It turns the manual, repetitive, and error-prone tasks of running SAP landscapes — provisioning, scaling, patching, health checks, backups, incident response, housekeeping — into reusable automations you can trigger on demand, run on a schedule, or wire into your own tools and agents.
+
+**The building blocks:**
+
+- **Commands** define automations. A Command can be a single action or a composite that chains many steps together.
+- **Inputs** store the credentials, endpoints, and configuration your Commands consume, with sensitive values kept out of logs.
+- **Executions** are running instances of a Command — you trigger them, watch them progress, and inspect their logs, inputs, and outputs.
+- **Schedules** run Commands automatically on a recurring cadence.
+
+**Built for complex, agentic automation.** Automation Pilot is more than a script runner. Commands compose into real workflows: run a sub-command once per resource, **fan out across many resources in parallel**, poll an asynchronous operation until it completes, retry transient failures with backoff, branch on conditions, validate postconditions, and surface meaningful errors. A dynamic-expression language lets each step shape and route data to the next, so an automation can make decisions mid-flight instead of running a fixed path. The result is production-grade orchestration — the kind of durable, long-running, parallel work that a coding agent can design but shouldn't babysit by hand.
+
+**A broad, ready-made catalog.** Automation Pilot ships with hundreds of built-in Commands across SAP HANA Cloud, BTP management, Cloud Foundry, Kubernetes/Kyma, Neo, Service Manager, SAP Cloud ALM, AI Core, monitoring (Dynatrace, ANS), DevOps (GitHub, Jenkins, JIRA), notifications, security, databases, transport (cTMS), generic HTTP/REST, and scripting (Bash, Python, Node.js, PowerShell, Terraform). You compose these into your own automations rather than building everything from scratch.
+
+**Exposed as tools.** Automation Pilot can publish your Commands as MCP servers, turning any automation into a tool other agents can call — so the automations you build here become capabilities your wider agent fleet can use.
+
+This plugin puts all of it in your coding agent: the catalog to reuse, the composition patterns to build on, and live access to run and operate it.
 
 ## Resources
 
-**SAP Automation Pilot:**
-- [Official Documentation](https://help.sap.com/docs/automation-pilot) — Complete guides, API reference, expression language
-- [SAP Automation Pilot Examples](https://github.com/SAP-samples/automation-pilot-examples) — Ready-to-import examples for HANA Cloud, BTP, Cloud Foundry, Kubernetes, and more
-- [SAP Community](https://community.sap.com/t5/technology-blogs-by-sap/bg-p/technology-blog-sap) — Blog posts, tips, and community discussions
-
-**Claude Code:**
-- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code) — Installation, configuration, and usage guides
-- [Claude Code GitHub](https://github.com/anthropics/claude-code) — Report issues, request features
+- [SAP Automation Pilot documentation](https://help.sap.com/docs/automation-pilot): guides, API reference, expression language
+- [SAP Automation Pilot examples](https://github.com/SAP-samples/automation-pilot-examples): ready-to-import examples for HANA Cloud, BTP, Cloud Foundry, Kubernetes, and more
+- [Claude Code plugins](https://code.claude.com/docs/en/plugins)
 
 ## Support and contributing
 
-This project is open to feature requests, bug reports, and contributions via [GitHub Issues](https://github.com/SAP/automation-pilot-agent-skills/issues).
+Feature requests, bug reports, and contributions are welcome via [GitHub Issues](https://github.com/SAP/automation-pilot-agent-skills/issues). See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+**Security:** if you discover a vulnerability, follow our [security policy](https://github.com/SAP/automation-pilot-agent-skills/security/policy). Do not open GitHub issues for security concerns.
 
-### Security
-
-If you discover a security vulnerability, please follow our [security policy](https://github.com/SAP/automation-pilot-agent-skills/security/policy) on how to report it. Please do not create GitHub issues for security-related doubts or problems.
-
-### Code of conduct
-
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone. By participating in this project, you agree to abide by its [Code of Conduct](https://github.com/SAP/.github/blob/main/CODE_OF_CONDUCT.md) at all times.
+**Code of conduct:** by participating in this project you agree to abide by its [Code of Conduct](https://github.com/SAP/.github/blob/main/CODE_OF_CONDUCT.md).
 
 ## License
 
