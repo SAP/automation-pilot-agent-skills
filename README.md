@@ -74,16 +74,18 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 
 | Skill | Description |
 |-------|-------------|
-| [**Command Generation**](.claude/skills/automation-pilot-command-generation/SKILL.md) | Create Commands from natural language descriptions using patterns and best practices |
-| [**Catalog Explorer**](.claude/skills/automation-pilot-catalog-explorer/SKILL.md) | Discover available Commands and executors in your tenant via API |
-| [**Code Review**](.claude/skills/automation-pilot-command-review/SKILL.md) | Validate security, naming conventions, expression sanitization, and best practices |
-| [**Content Management API**](.claude/skills/automation-pilot-content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands, Inputs, and MCP servers via API |
-| [**Executions API**](.claude/skills/automation-pilot-executions-api/SKILL.md) | Trigger Commands, monitor status, view logs |
-| [**Execution Debugger**](.claude/skills/automation-pilot-debugger/SKILL.md) | Debug failed Executions, error pattern matching, troubleshooting workflows |
-| [**Scheduled Executions API**](.claude/skills/automation-pilot-scheduled-executions-api/SKILL.md) | Create and manage recurring Command schedules |
-| [**MCP Server Generation**](.claude/skills/automation-pilot-mcp-server-generation/SKILL.md) | Create MCP server definitions to expose Commands as AI assistant tools |
-| [**HTTP Executor**](.claude/skills/automation-pilot-executor-httprequest/SKILL.md) | Guidance for HTTP requests with retry, timeout, and error handling |
-| [**Script Executor**](.claude/skills/automation-pilot-executor-executescript/SKILL.md) | Guidance for ExecuteScript with Base64 encoding and language wrappers |
+| [**Automation Pilot CLI**](skills/automation-pilot-cli/SKILL.md) | The `autopi` CLI — the single, dependency-free tool every skill uses to call the API (replaces `curl`); also runs `autopi lint` |
+| [**Command Generation**](skills/automation-pilot-command-generation/SKILL.md) | Create Commands from natural language descriptions using patterns and best practices |
+| [**Catalog Explorer**](skills/automation-pilot-catalog-explorer/SKILL.md) | Discover available Commands and executors in your tenant via API |
+| [**Code Review**](skills/automation-pilot-command-review/SKILL.md) | Validate security, naming conventions, expression sanitization, and best practices |
+| [**Content Management API**](skills/automation-pilot-content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands, Inputs, and MCP servers via API |
+| [**Executions API**](skills/automation-pilot-executions-api/SKILL.md) | Trigger Commands, monitor status, view logs |
+| [**Execution Debugger**](skills/automation-pilot-debugger/SKILL.md) | Debug failed Executions, error pattern matching, troubleshooting workflows |
+| [**Scheduled Executions API**](skills/automation-pilot-scheduled-executions-api/SKILL.md) | Create and manage recurring Command schedules |
+| [**MCP Server Generation**](skills/automation-pilot-mcp-server-generation/SKILL.md) | Create MCP server definitions to expose Commands as AI assistant tools |
+| [**A2A Adapter Generation**](skills/automation-pilot-a2a-server-generation/SKILL.md) | Create A2A adapter (agent) definitions to expose Commands as skills for external AI agents |
+| [**HTTP Executor**](skills/automation-pilot-executor-httprequest/SKILL.md) | Guidance for HTTP requests with retry, timeout, and error handling |
+| [**Script Executor**](skills/automation-pilot-executor-executescript/SKILL.md) | Guidance for ExecuteScript with Base64 encoding and language wrappers |
 
 ## Getting started
 
@@ -92,10 +94,13 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 | Tool | Purpose |
 |------|---------|
 | [Claude Code](https://claude.ai/code) | Required to use the skills (VS Code extension, CLI, or desktop app) |
-| `curl` | API calls to SAP Automation Pilot |
-| `jq` | JSON parsing and transformation |
+| `autopi` CLI | All API calls to SAP Automation Pilot — bundled, prebuilt, zero runtime dependencies (see the [`automation-pilot-cli`](skills/automation-pilot-cli/SKILL.md) skill) |
+| `jq` | Optional — JSON shaping when piping CLI output |
 
-You'll also need an SAP Automation Pilot tenant with API credentials.
+You'll also need an SAP Automation Pilot tenant with API credentials. The `autopi` CLI
+ships as committed static binaries for macOS, Linux, and Windows — no `curl` or build
+step required. Add `skills/automation-pilot-cli/scripts` to your `PATH` to run `autopi`
+directly.
 
 ### 1. Clone the repository
 
@@ -140,8 +145,9 @@ source .env
 Test your setup by listing your Catalogs:
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true" | jq .
+# add the CLI to your PATH (or call scripts/autopi directly)
+export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
+autopi catalogs list --own
 ```
 
 ## How to use

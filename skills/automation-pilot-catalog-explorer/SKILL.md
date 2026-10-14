@@ -7,15 +7,9 @@ description: Discover available commands and catalogs in SAP Automation Pilot vi
 
 Discover available commands in SAP Automation Pilot dynamically via API.
 
-## Prerequisites
+## API access
 
-Environment variables must be set:
-
-```bash
-export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
-export AUTOPI_USERNAME="your-username"
-export AUTOPI_PASSWORD="your-password"
-```
+All calls use the `autopi` CLI — see [`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for setup (the `AUTOPI_*` environment variables, supported regional hosts, install, and the full command surface). Add the CLI's `scripts/` to your `PATH` so `autopi` runs directly.
 
 ## API Operations
 
@@ -25,32 +19,31 @@ Discover what catalogs are available in the tenant.
 
 ```bash
 # List all catalogs (SAP-provided + custom)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs"
+autopi catalogs list
 
 # List only SAP-provided catalogs (built-in)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?provided=true"
+autopi catalogs list --provided
 
 # List only custom/tenant catalogs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true"
+autopi catalogs list --own
 ```
 
 ### List Commands in a Catalog
 
+Lists return lightweight metadata (name, id, catalog, description, tags, …) — ideal for
+discovery. Use `commands get` (always full) for a command's executors/inputs/outputs, or
+`commands list --full` for complete objects.
+
 ```bash
 CATALOG="applm-sapcp"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$CATALOG"
+autopi commands list --catalog $CATALOG
 ```
 
 ### Get Command Definition
 
 ```bash
 COMMAND_ID="applm-sapcp:RestartCfApp:1"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
+autopi commands get $COMMAND_ID
 ```
 
 ### Search Across Catalogs
@@ -59,14 +52,12 @@ Find commands matching a pattern.
 
 ```bash
 # List all SAP-provided catalog IDs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false"
+autopi catalogs list --provided
 
 # Search specific catalogs for commands matching a keyword
 for catalog in applm-sapcp sm-sapcp cf-sapcp; do
   echo "=== $catalog ==="
-  curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=$catalog"
+  autopi commands list --catalog "$catalog"
 done
 ```
 

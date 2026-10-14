@@ -14,16 +14,13 @@ SAP continuously adds new commands and catalogs to Automation Pilot. If a catalo
 
 ```bash
 # List all available catalogs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false"
+autopi catalogs list --provided
 
 # Search for commands in a specific catalog
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=<catalog-id>"
+autopi commands list --catalog <catalog-id>
 
 # Get full command definition
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/<catalog>:<command>:<version>"
+autopi commands get <catalog>:<command>:<version>
 ```
 
 ## aicore-sapcp (AI Core)

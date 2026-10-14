@@ -7,6 +7,25 @@ description: Review production commands, inputs, and catalogs for Automation Pil
 
 Validate production commands meet structural, security, and quality standards.
 
+## Mechanical checks first: `autopi lint`
+
+Run `autopi lint` for the mechanical, non-judgment checks before reviewing by hand — it
+catches the deterministic violations (filename ≠ `name`, non-PascalCase/camelCase names,
+length limits, missing `sensitive` flags on credential keys, hardcoded defaults on
+sensitive keys, non-existent expression functions, URL interpolation without
+`toUrlEncoded`, off-enum `delay`/`interval` durations) so your review can focus on
+judgment. See
+[`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md).
+
+```bash
+autopi lint ./*.command.json ./*.input.json
+autopi lint --output json ./MyCommand.command.json   # machine-readable findings
+```
+
+It exits `6` when anything is reported. Use the sections below for everything `autopi
+lint` cannot judge mechanically (description-pattern correctness, retry-code
+appropriateness, error-message quality, deprecation substitutes).
+
 ## AI Assistant Guidelines
 
 ⚠️ **CRITICAL - When reviewing as an AI assistant:**
@@ -209,6 +228,7 @@ See the complete authoritative list in **[`../automation-pilot-command-generatio
 | Element | Rule | Check |
 |---------|------|-------|
 | **Timeout** | ≤ 10 seconds | Flag timeout > 10 (unless justified) |
+| **Delay/Interval** | `autoRetry.delay`, `repeat.delay`, `initialDelay.interval` ∈ {5s, 10s, 15s, 30s, 1m, 2m, 3m} | Flag any off-enum value (deploy 400) |
 | **Retry (GET/DELETE)** | Status codes: 408, 429, 500, 502, 503, 504, -1 | Verify autoRetry present for idempotent ops |
 | **Retry (POST/PATCH)** | Status codes: 429, 502, 503, 504 only | Flag 500 in POST retry (non-idempotent) |
 | **Error Messages** | Dynamic values in single quotes | Flag static messages like "Resource not found" |

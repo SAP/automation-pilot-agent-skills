@@ -7,22 +7,24 @@ description: Debug and troubleshoot SAP Automation Pilot execution failures. Use
 
 Debug failed Executions, check recent execution health, and investigate error patterns. Use this skill when things go wrong — not for normal operations.
 
+**API access:** all calls use the `autopi` CLI — see
+[`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for setup and the
+command surface. Lists return metadata only; add `--full` for complete objects, and use
+`executions get`/`commands get` (always full) when you need the whole record.
+
 ## Quick Diagnostics
 
 ### Check Recent Executions Summary
 
 ```bash
 # Last 10 executions summary
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=10"
+autopi executions list --limit 10
 
 # Last 5 failed executions
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&limit=5"
+autopi executions list --status FAILED --limit 5
 
 # Last 5 successful executions
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FINISHED&limit=5"
+autopi executions list --status FINISHED --limit 5
 ```
 
 ### Investigate a Specific Execution
@@ -30,11 +32,9 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 ```bash
 EXEC_ID="your-execution-id"
 
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions get $EXEC_ID
 
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs"
+autopi executions logs $EXEC_ID
 ```
 
 ---
@@ -125,14 +125,12 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 **Fix**: 
 ```bash
 # Check if command exists
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/catalog:CommandName:1"
+autopi commands get catalog:CommandName:1
 ```
 
 ⚠️ If the command is in draft state, release it only after verifying it works correctly and only if the user explicitly requests it:
 ```bash
-curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/catalog:CommandName:1/release"
+autopi commands release catalog:CommandName:1
 ```
 
 ---
@@ -146,17 +144,14 @@ curl -s -X PUT -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 4. Execution is paused or waiting for user input
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions get $EXEC_ID
 ```
 
 **Fix Options**:
 1. Wait for delay/polling to complete
 2. Abort if stuck:
 ```bash
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "ABORT", "reason": "Aborting stuck execution"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type ABORT --reason 'Aborting stuck execution'
 ```
 
 ---
@@ -193,17 +188,17 @@ $(.step.output.body | toObject.field // "default")
 
 ### Step 1: Get Execution Status and Error Details
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions get $EXEC_ID
 ```
 
 ### Step 2: Check Execution Logs
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?maxPageSize=20"
+autopi executions logs $EXEC_ID --max-page-size 20
 ```
 
 ### Step 3: Check Input That Was Used
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
+autopi executions input $EXEC_ID
 ```
 
 ### Step 4: Match Error to Pattern
@@ -211,6 +206,6 @@ Look up the error message in the Error Pattern Reference above.
 
 ### Step 5: Verify Command Definition
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/commands/$COMMAND_ID"
+autopi commands get $COMMAND_ID
 ```
 
