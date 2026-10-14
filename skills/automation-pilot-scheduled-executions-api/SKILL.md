@@ -7,20 +7,9 @@ description: Manage SAP Automation Pilot scheduled executions via API. Use when 
 
 This skill manages scheduled command executions in SAP Automation Pilot - creating, listing, updating, and deleting scheduled executions with flexible scheduling options and time zone support.
 
-## Prerequisites
+## API access
 
-1. Set the following **required** environment variables:
-
-```bash
-export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
-export AUTOPI_USERNAME="your-username"
-export AUTOPI_PASSWORD="your-password"
-export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
-```
-
-For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `../automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
-
-2. Ensure `curl` is available in your environment.
+All calls use the `autopi` CLI — see [`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for setup (the `AUTOPI_*` environment variables, supported regional hosts, install, and the full command surface). Add the CLI's `scripts/` to your `PATH` so `autopi` runs directly.
 
 ---
 
@@ -87,10 +76,7 @@ Execute on specific date each year.
 # Creating Scheduled Executions
 
 ```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
+autopi scheduled-executions create --data '{
     "commandId": "my-catalog:MyCommand:1",
     "schedule": {
       "timeZone": "Europe/Berlin",
@@ -104,8 +90,7 @@ curl -s -X POST \
       "param1": "value1"
     },
     "description": "Daily morning check"
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions"
+  }'
 ```
 
 **All `inputValues` entries must be strings on the wire**, regardless of the declared parameter type — see `../automation-pilot-content-management-via-api/SKILL.md` → "Values Are Always Strings on the Wire".
@@ -116,9 +101,11 @@ curl -s -X POST \
 
 ## List All Schedules
 
+Lists return metadata only; add `--full` for complete objects including the `schedule`
+and `inputValues`.
+
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions"
+autopi scheduled-executions list
 ```
 
 ## Get Schedule Details
@@ -126,27 +113,20 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 ```bash
 SCHEDULE_ID="your-schedule-id"
 
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
+autopi scheduled-executions get $SCHEDULE_ID
 ```
 
 ## Enable/Disable Schedule
 
 ```bash
-# PUT the full schedule body with "enabled" set to true or false
-curl -s -X PUT \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '<full schedule body with enabled changed>' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
+# Update the full schedule body with "enabled" set to true or false
+autopi scheduled-executions update $SCHEDULE_ID --data '<full schedule body with enabled changed>'
 ```
 
 ## Delete Schedule
 
 ```bash
-curl -s -X DELETE \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
+autopi scheduled-executions delete $SCHEDULE_ID
 ```
 
 ---
@@ -154,10 +134,7 @@ curl -s -X DELETE \
 # Updating Scheduled Executions
 
 ```bash
-curl -s -X PUT \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
+autopi scheduled-executions update $SCHEDULE_ID --data '{
     "commandId": "my-catalog:MyCommand:1",
     "schedule": {
       "timeZone": "Europe/Berlin",
@@ -168,8 +145,7 @@ curl -s -X PUT \
     },
     "enabled": true,
     "inputValues": {}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/$SCHEDULE_ID"
+  }'
 ```
 
 ---
@@ -179,8 +155,7 @@ curl -s -X PUT \
 ## List Available Time Zones
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/scheduled-executions/time-zones"
+autopi scheduled-executions time-zones
 ```
 
 ## Common Time Zones

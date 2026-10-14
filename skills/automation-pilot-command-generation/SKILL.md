@@ -29,20 +29,21 @@ SAP Automation Pilot commands are JSON definitions that automate operations on S
 
 ### Discovering Available Executors
 
-Use the **catalog-explorer** skill to discover available executors via API:
+Use the **catalog-explorer** skill to discover available executors via API. All calls use
+the `autopi` CLI — see
+[`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for setup and the
+command surface. Lists return metadata only; use `commands get` (always full) for a
+command's executors/inputs/outputs:
 
 ```bash
 # List available catalogs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=false"
+autopi catalogs list --provided
 
 # Find commands in a catalog
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands?catalog=applm-sapcp"
+autopi commands list --catalog applm-sapcp
 
 # Get full command definition (inputs, outputs, executors)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/commands/applm-sapcp:RestartCfApp:1"
+autopi commands get applm-sapcp:RestartCfApp:1
 ```
 
 This ensures you always use valid executor names and correct parameters, even for newly added catalogs.
@@ -115,7 +116,7 @@ Define command parameters:
 
 Additional optional fields exist: `allowedValues` (fixed set of valid options), `suggestedValues` (hints shown in UI), `allowedValuesFromInputKeys` and `suggestedValuesFromInputKeys` (dynamic lists from an input reference). Omit them when not needed.
 
-**`defaultValue` is always a JSON string on the wire** regardless of the declared `type`. For non-string types, stringify the JSON: `"defaultValue": "5"` for a number, `"defaultValue": "true"` for a boolean, `"defaultValue": "[\"a\",\"b\"]"` for an array, `"defaultValue": "{\"key\":\"val\"}"` for an object.
+**`defaultValue` is always a JSON string on the wire** regardless of the declared `type`. For non-string types, stringify the JSON: `"defaultValue": "5"` for a number, `"defaultValue": "true"` for a boolean, `"defaultValue": "[\"a\",\"b\"]"` for an array, `"defaultValue": "{\"key\":\"val\"}"` for an object. This is the same API-wide rule described in [`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md#values-are-always-strings-on-the-wire).
 
 **Region inputs** must always use `allowedValuesFromInputKeys` to constrain the value to the SAP-provided region list:
 - Cloud Foundry: `"allowedValuesFromInputKeys": ["metadata-sapcp:CfRegionData:1"]`
@@ -306,6 +307,10 @@ Assert conditions on step output:
 ## Auto Retry
 
 Retry on transient failures. Valid `logic` values: `FIXED` (constant delay) or `INCREMENTAL` (increasing delay).
+
+⚠️ `delay` (and `repeat.delay` / `initialDelay.interval`) must be one of the server's
+allowed intervals: **`5s`, `10s`, `15s`, `30s`, `1m`, `2m`, `3m`**. Any other value (e.g.
+`"3s"`) is rejected at deploy with HTTP 400. `autopi lint` flags off-enum literals.
 
 ```json
 "autoRetry": {

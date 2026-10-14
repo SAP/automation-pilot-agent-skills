@@ -9,3 +9,10 @@ path = "**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 SAP SE or an SAP affiliate company and automation-pilot-agent-skills contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "skills/automation-pilot-cli/scripts/bin/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 SAP SE or an SAP affiliate company and automation-pilot-agent-skills contributors"
+SPDX-License-Identifier = "Apache-2.0"
+SPDX-FileComment = "Prebuilt static binaries of the autopi CLI (source under cli/, Apache-2.0). Statically link the Go standard library and runtime, which are licensed BSD-3-Clause (https://go.dev/LICENSE)."

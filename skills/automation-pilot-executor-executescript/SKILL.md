@@ -9,13 +9,20 @@ SAP Automation Pilot provides dedicated commands for each script language. Choos
 
 ## Command Overview
 
-| Command | ID | Use for |
-|---------|-----|---------|
-| `ExecuteScript:1` | `scripts-sapcp:ExecuteScript:1` | Bash (legacy, Base64 script) |
-| `ExecuteScript:2` | `scripts-sapcp:ExecuteScript:2` | Bash (recommended, plain text) |
-| `ExecutePythonScript:1` | `scripts-sapcp:ExecutePythonScript:1` | Python scripts |
-| `ExecuteNodeJsScript:1` | `scripts-sapcp:ExecuteNodeJsScript:1` | Node.js scripts |
-| `ExecutePowerShellScript:1` | `scripts-sapcp:ExecutePowerShellScript:1` | PowerShell scripts |
+| Command | ID | Use for | Output key |
+|---------|-----|---------|-----------|
+| `ExecuteScript:1` | `scripts-sapcp:ExecuteScript:1` | Bash (legacy, Base64 script) | **`output`** |
+| `ExecuteScript:2` | `scripts-sapcp:ExecuteScript:2` | Bash (recommended, plain text) | **`output`** |
+| `ExecutePythonScript:1` | `scripts-sapcp:ExecutePythonScript:1` | Python scripts | `result` |
+| `ExecuteNodeJsScript:1` | `scripts-sapcp:ExecuteNodeJsScript:1` | Node.js scripts | `result` |
+| `ExecutePowerShellScript:1` | `scripts-sapcp:ExecutePowerShellScript:1` | PowerShell scripts | `result` |
+
+⚠️ **The script-output key differs by language.** Bash `ExecuteScript` emits the captured
+lines under **`output`**; Python/Node.js/PowerShell emit them under **`result`**. Both are
+arrays of output lines, alongside `exitCode`. Mapping the wrong key (e.g.
+`$(.alias.output.result)` on a Bash command) silently yields `null` while the execution
+still reports FINISHED — a quiet correctness trap. Always match the key to the command.
+
 
 Each command also has a `Sensitive*` variant (e.g. `SensitiveExecutePythonScript:1`) that marks the output as sensitive so it is never logged.
 
@@ -37,7 +44,8 @@ Each command also has a `Sensitive*` variant (e.g. `SensitiveExecutePythonScript
 | `timeout` | number | ❌ | `30` | Range: 15–600s |
 | `successExitCodes` | array | ❌ | `["0"]` | Use `["x"]` to accept any exit code |
 
-**Output keys:** `exitCode` (number), `result` (array of output lines, last 64 KB)
+**Output keys:** `exitCode` (number), `output` (array of output lines, last 64 KB) — note
+Bash uses `output`, not `result`.
 
 ### Example
 
@@ -253,5 +261,5 @@ Note: `ExecuteScript` returns exit code `124` on timeout. The dedicated language
 | V2: `"script": "$(.execution.input.script \| toBase64)"` | V2: `"script": "$(.execution.input.script)"` |
 | `"timeout": 5` (below minimum of 15) | `"timeout": "30"` |
 | `"successExitCodes": "0"` (string, not array) | `"successExitCodes": "[\"0\"]"` |
-| Using `output` key on script result | Use `result` key — script commands output to `result`, not `output` |
+| Mapping `$(.alias.output.result)` on a **Bash** `ExecuteScript` command | Bash outputs to `output` — use `$(.alias.output.output)`; `result` is for Python/Node.js/PowerShell |
 | Standard command when output contains secrets | Use the `Sensitive*` variant |

@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Go CLI local build scratch (committed binaries live under skills/automation-pilot-cli/scripts/bin/)
+cli/dist/
+
 # Credentials and secrets
 .env
 .env.local

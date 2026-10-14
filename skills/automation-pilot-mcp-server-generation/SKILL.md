@@ -363,26 +363,19 @@ User: "Create a minimal MCP server with one tool to send ANS alerts"
 
 # Deploying MCP Servers via API
 
-## Prerequisites
+## API access
 
-Set the following **required** environment variables:
-
-```bash
-export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
-export AUTOPI_USERNAME="your-username"
-export AUTOPI_PASSWORD="your-password"
-```
-
-For the full list of supported hostnames (emea, aus, apac, amer, ksa), see `../automation-pilot-content-management-via-api/SKILL.md` → Prerequisites.
-
-Ensure `curl` is available in your environment.
+All calls use the `autopi` CLI — see [`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for setup (the `AUTOPI_*` environment variables, supported regional hosts, install, and the full command surface). Add the CLI's `scripts/` to your `PATH` so `autopi` runs directly.
 
 The API requires the `GenAI` permission for all write operations.
 
 ## List MCP Servers
 
+Lists return metadata only (name, id, enabled, tags, …); add `--full` for complete
+definitions including `mcpTools`.
+
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+autopi mcp-servers list
 ```
 
 ## Get MCP Server by ID
@@ -391,22 +384,18 @@ MCP servers have a system-generated `id` field (e.g. `T000414R2-0000001779286543
 
 ```bash
 # First, find the ID from the list response
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers" | jq '[.[] | {name, id}]'
+autopi mcp-servers list --output raw | jq '[.[] | {name, id}]'
 
 # Then fetch by ID
 MCP_SERVER_ID="T000414R2-0000001779286543418-1-1"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+autopi mcp-servers get $MCP_SERVER_ID
 ```
 
 ## Create MCP Server
 
 ```bash
 MCP_SERVER_FILE="path/to/my-server.json"
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d @"$MCP_SERVER_FILE" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
+autopi mcp-servers create -f "$MCP_SERVER_FILE"
 ```
 
 ## Update MCP Server
@@ -417,11 +406,7 @@ Use the system-generated `id` (not the `name`) in the URL.
 MCP_SERVER_ID="<id-from-list-response>"
 MCP_SERVER_FILE="path/to/updated-server.json"
 
-curl -s -X PUT \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d @"$MCP_SERVER_FILE" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+autopi mcp-servers update $MCP_SERVER_ID -f "$MCP_SERVER_FILE"
 ```
 
 ## Delete MCP Server
@@ -429,38 +414,23 @@ curl -s -X PUT \
 ```bash
 MCP_SERVER_ID="<id-from-list-response>"
 
-curl -s -X DELETE \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
+autopi mcp-servers delete $MCP_SERVER_ID
 ```
 
 ## Deploy MCP Server (Upsert Pattern)
 
-Check for existence first — create if new, update if already deployed. Use the system-generated `id` returned from a previous create or list call:
+`deploy` upserts (create-or-update) in one command — see
+[`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for the mechanics.
+
+MCP server files have no top-level `id` (identity is system-generated), so the
+**first** `deploy` creates (POST). To update an existing server, pass its
+system-generated `--id` so `deploy` targets the update (PUT) path:
 
 ```bash
 MCP_SERVER_FILE="my-server.json"
-MCP_SERVER_ID="<id-from-prior-create-or-list>"
 
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID")
-
-if [[ "$STATUS" == "200" ]]; then
-  echo "Updating existing MCP server..."
-  curl -s -X PUT \
-    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    -H "Content-Type: application/json" \
-    -d @"$MCP_SERVER_FILE" \
-    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers/$MCP_SERVER_ID"
-else
-  echo "Creating new MCP server..."
-  curl -s -X POST \
-    -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-    -H "Content-Type: application/json" \
-    -d @"$MCP_SERVER_FILE" \
-    "https://$AUTOPI_HOSTNAME/api/v1/mcp-servers"
-fi
+autopi mcp-servers deploy -f "$MCP_SERVER_FILE"                 # first deploy = create
+autopi mcp-servers deploy -f "$MCP_SERVER_FILE" --id "$MCP_SERVER_ID"   # re-deploy = update
 ```
 
 ---

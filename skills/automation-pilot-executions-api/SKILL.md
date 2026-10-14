@@ -7,18 +7,9 @@ description: Monitor and manage SAP Automation Pilot executions via API. Use whe
 
 This skill manages command executions in SAP Automation Pilot - triggering, monitoring, controlling, and troubleshooting executions.
 
-## Prerequisites
+## API access
 
-1. Set the following **required** environment variables:
-
-```bash
-export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
-export AUTOPI_USERNAME="your-username"
-export AUTOPI_PASSWORD="your-password"
-export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
-```
-
-2. Ensure `curl` is available in your environment.
+All calls use the `autopi` CLI — see [`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md) for setup (the `AUTOPI_*` environment variables, supported regional hosts, install, and the full command surface). Add the CLI's `scripts/` to your `PATH` so `autopi` runs directly.
 
 ---
 
@@ -42,6 +33,10 @@ export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"
 
 ## Actions
 
+All lifecycle operations go through the single `executions action <id> --type <TYPE>`
+verb — there is **no** standalone `executions abort` / `pause` / `resume` subcommand.
+To abort, use `executions action <id> --type ABORT` (not `executions abort`).
+
 Each action is only valid from specific statuses — applying an action from the wrong status returns HTTP 409.
 
 | Action | Valid from | Result |
@@ -57,28 +52,16 @@ Each action is only valid from specific statuses — applying an action from the
 EXEC_ID="execution-uuid-here"
 
 # Pause
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "PAUSE", "reason": "Blocking on manual verification"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type PAUSE --reason 'Blocking on manual verification'
 
 # Resume
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "RESUME", "reason": "Resuming after verification"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type RESUME --reason 'Resuming after verification'
 
 # Retry
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "RETRY", "reason": "Retrying after transient failure"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type RETRY --reason 'Retrying after transient failure'
 
 # Abort
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "ABORT", "reason": "Superseded by a newer run"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type ABORT --reason 'Superseded by a newer run'
 ```
 
 ---
@@ -93,32 +76,22 @@ Add `"feature:dryRun": ""` to the tags to execute without making actual changes.
 
 ```bash
 # Basic trigger (opt-in feature:logs tag enables log retrieval)
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandId": "my-catalog:MyCommand:1",
-    "inputValues": {
-      "param1": "value1",
-      "param2": "value2"
-    },
-    "tags": {"feature:logs": ""}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions"
+autopi executions trigger --command-id my-catalog:MyCommand:1 \
+  --input param1=value1 \
+  --input param2=value2 \
+  --logs
 
 # With dry run mode (adds feature:dryRun tag)
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandId": "my-catalog:MyCommand:1",
-    "inputValues": {"param1": "value1"},
-    "tags": {"feature:logs": "", "feature:dryRun": ""}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions"
+autopi executions trigger --command-id my-catalog:MyCommand:1 \
+  --input param1=value1 \
+  --logs \
+  --dry-run
 ```
 
-**All `inputValues` entries must be strings on the wire**, regardless of the declared parameter type. The runtime converts each value to its declared type inside the executor:
+**All `inputValues` entries must be strings on the wire**, regardless of the declared
+parameter type — see
+[`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md#values-are-always-strings-on-the-wire)
+for the canonical rule and type→wire table. For example:
 
 ```json
 "inputValues": {
@@ -136,38 +109,40 @@ curl -s -X POST \
 
 ## List Executions
 
+Lists return metadata only; add `--full` for complete execution objects.
+
 ```bash
 # List all (up to limit)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?limit=100"
+autopi executions list --limit 100
 # Filter by status
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&limit=50"
+autopi executions list --status FAILED --limit 50
 # Filter by command
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?commandId=my-catalog:MyCommand:1"
+autopi executions list --command-id my-catalog:MyCommand:1
 # Filter by time (epoch milliseconds)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions?startedAfter=1707000000000"
+autopi executions list --started-after 1707000000000
 ```
 
 ## Get Execution Details
 
 ```bash
 EXEC_ID="execution-uuid-here"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions get $EXEC_ID
 ```
 
 ## Get Execution Summary
 
 ```bash
 # Get counts by status
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/summary"
+autopi executions summary
 ```
 
 ## Get Input/Output
 
 ```bash
 # Get execution input
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
+autopi executions input $EXEC_ID
 # Get execution output (only for FINISHED)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/output"
+autopi executions output $EXEC_ID
 ```
 
 ---
@@ -181,21 +156,14 @@ See the Actions table in the Execution Lifecycle section for valid statuses and 
 ```bash
 EXEC_ID="execution-uuid-here"
 
-# Reset — resets to a previous child command (provide the executor path via "value")
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "RESET", "value": "stepAlias", "reason": "Retry after fixing the input"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+# Reset — resets to a previous child command (provide the executor path via --value)
+autopi executions action $EXEC_ID --type RESET --value stepAlias --reason 'Retry after fixing the input'
 
 # Comment — add a note to the Action Log (max 10 per execution)
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "COMMENT", "reason": "Escalated to L2 on-call"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type COMMENT --reason 'Escalated to L2 on-call'
 
 # List action history
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions actions $EXEC_ID
 ```
 
 ---
@@ -208,10 +176,10 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 EXEC_ID="execution-uuid-here"
 
 # Get paginated logs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=20"
+autopi executions logs $EXEC_ID --page 0 --max-page-size 20
 # Get logs for specific executor
 EXECUTOR_PATH="step1"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs/$EXECUTOR_PATH"
+autopi executions logs $EXEC_ID --executor $EXECUTOR_PATH
 ```
 
 ---
@@ -224,17 +192,16 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 EXEC_ID="your-execution-id"
 
 # 1. Get status and error
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions get $EXEC_ID
 
 # 2. Check input used
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
+autopi executions input $EXEC_ID
 
 # 3. Check recent logs
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=10"
+autopi executions logs $EXEC_ID --page 0 --max-page-size 10
 
 # 4. Check output (if FINISHED)
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/output"
+autopi executions output $EXEC_ID
 ```
 
 ## Common Issues
@@ -246,13 +213,9 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 3. Consider aborting and retrying
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/logs?page=0&maxPageSize=20"
+autopi executions logs $EXEC_ID --page 0 --max-page-size 20
 
-curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"type": "ABORT", "reason": "Aborting stuck execution"}' \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/actions"
+autopi executions action $EXEC_ID --type ABORT --reason 'Aborting stuck execution'
 ```
 
 ### Execution Failed
@@ -262,8 +225,8 @@ curl -s -X POST -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
 3. Review input parameters
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID/input"
+autopi executions get $EXEC_ID
+autopi executions input $EXEC_ID
 ```
 
 ### Input Required
@@ -271,7 +234,7 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 The execution is waiting for manual input:
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions get $EXEC_ID
 # Inspect the response — check the suspendedStep field
 ```
 
@@ -300,12 +263,9 @@ curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/
 
 ```bash
 # Last 24 hours, failed only
-YESTERDAY=$(($(date +%s) * 1000 - 86400000))
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=FAILED&startedAfter=$YESTERDAY&limit=50"
+autopi executions list --status FAILED --started-after 24h --limit 50
 # Multiple statuses
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/executions?status=RUNNING&status=PAUSED"
+autopi executions list --status RUNNING --status PAUSED
 ```
 
 ---
@@ -316,40 +276,34 @@ Only completed executions can be deleted (not RUNNING).
 
 ```bash
 EXEC_ID="execution-uuid-here"
-curl -s -X DELETE -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" "https://$AUTOPI_HOSTNAME/api/v1/executions/$EXEC_ID"
+autopi executions delete $EXEC_ID
 ```
 
 ---
 
 # Event Triggers
 
+The command to run is passed as `--command-reference <id>` (sent as a query
+parameter — the API rejects it inside the body). The file/`--data` payload is the
+**event object only**, not a wrapper containing `commandReference`.
+
 ## Trigger via Generic Event
 
 ```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandReference": "my-catalog:MyCommand:1",
-    "event": {
-      "type": "alert",
-      "message": "High CPU usage detected"
-    }
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/triggers/generic-event"
+# event.json is the event payload itself, e.g.:
+# { "type": "alert", "message": "High CPU usage detected" }
+autopi triggers generic-event --command-reference my-catalog:MyCommand:1 -f event.json
+
+# or inline:
+autopi triggers generic-event --command-reference my-catalog:MyCommand:1 \
+  --data '{"type":"alert","message":"High CPU usage detected"}'
 ```
 
 ## Trigger via ANS Event
 
 ```bash
-curl -s -X POST \
-  -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "commandReference": "my-catalog:MyCommand:1",
-    "event": {...ANS event payload...}
-  }' \
-  "https://$AUTOPI_HOSTNAME/api/v1/triggers/ans-event"
+# ans-event.json is the ANS event payload itself (no commandReference wrapper):
+autopi triggers ans-event --command-reference my-catalog:MyCommand:1 -f ans-event.json
 ```
 
 ---
