@@ -1,0 +1,236 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:ResolveAndGetResource:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "ResolveAndGetResource",
+    "description": "Resolves a Cloud Foundry space by name to its GUID, then reads the applications in that space, passing the resolved GUID from the first step into the second",
+    "version": 1,
+    "inputKeys": {
+        "user": {
+            "type": "string",
+            "sensitive": false,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The user ID or the email of a Cloud Foundry user to be used for authentication"
+        },
+        "password": {
+            "type": "string",
+            "sensitive": true,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
+        },
+        "region": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": [
+                "metadata-sapcp:CfRegionData:1"
+            ],
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
+        },
+        "space": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The name of the Cloud Foundry space"
+        }
+    },
+    "outputKeys": {
+        "spaceId": {
+            "type": "string",
+            "sensitive": false,
+            "description": "The ID of the resolved Cloud Foundry space"
+        },
+        "apps": {
+            "type": "array",
+            "sensitive": false,
+            "description": "The applications found in the resolved space"
+        }
+    },
+    "configuration": {
+        "values": [
+            {
+                "alias": "regionData",
+                "valueFrom": {
+                    "inputReference": "metadata-sapcp:CfRegionData:1",
+                    "inputKey": "$(.execution.input.region)"
+                }
+            }
+        ],
+        "output": {
+            "spaceId": "$(.resolveSpace.output.body | toObject.resources[0].guid)",
+            "apps": "$(.getApps.output.body | toObject.resources // [])"
+        },
+        "executors": [
+            {
+                "execute": "http-sapcp:HttpRequest:1",
+                "alias": "resolveSpace",
+                "input": {
+                    "url": "$(.regionData.cfApiUrl)/v3/spaces?names=$(.execution.input.space | toUrlEncoded)",
+                    "method": "GET",
+                    "headers": "{\"Accept\":\"application/json\"}",
+                    "user": "$(.execution.input.user)",
+                    "password": "$(.execution.input.password)",
+                    "tokenUrl": "$(.regionData.uaaTokenUrl)",
+                    "clientId": "cf",
+                    "timeout": "20"
+                },
+                "description": "Resolve the space name to its GUID",
+                "progressMessage": "Resolving space '$(.execution.input.space)'...",
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": {
+                    "semantic": "OR",
+                    "conditions": [
+                        {
+                            "semantic": "OR",
+                            "cases": [
+                                {
+                                    "expression": "$(.resolveSpace.output.body | toObject.pagination.total_results)",
+                                    "operator": "EQUALS",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "1"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": [
+                    {
+                        "message": "No single Cloud Foundry space named '$(.execution.input.space)' was found.",
+                        "when": {
+                            "semantic": "OR",
+                            "conditions": [
+                                {
+                                    "semantic": "OR",
+                                    "cases": [
+                                        {
+                                            "expression": "$(.resolveSpace.output.body | toObject.pagination.total_results)",
+                                            "operator": "NOT_EQUALS",
+                                            "semantic": "OR",
+                                            "values": [
+                                                "1"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "execute": "http-sapcp:HttpRequest:1",
+                "alias": "getApps",
+                "input": {
+                    "url": "$(.regionData.cfApiUrl)/v3/apps?space_guids=$(.resolveSpace.output.body | toObject.resources[0].guid | toUrlEncoded)",
+                    "method": "GET",
+                    "headers": "{\"Accept\":\"application/json\"}",
+                    "user": "$(.execution.input.user)",
+                    "password": "$(.execution.input.password)",
+                    "tokenUrl": "$(.regionData.uaaTokenUrl)",
+                    "clientId": "cf",
+                    "timeout": "20",
+                    "succeedOnTimeout": "true",
+                    "successResponseCodes": "[\"2xx\",\"408\",\"429\",\"500\",\"502\",\"503\",\"504\"]",
+                    "responseBodyTransformer": "toObject | {resources: (.resources | map({name, guid, state}))}"
+                },
+                "description": "List the applications in the resolved space",
+                "progressMessage": "Listing applications...",
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": {
+                    "semantic": "OR",
+                    "conditions": [
+                        {
+                            "semantic": "OR",
+                            "cases": [
+                                {
+                                    "expression": "$(.getApps.output.status)",
+                                    "operator": "EQUALS",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "200"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "autoRetry": {
+                    "maxCount": 3,
+                    "delay": "5s",
+                    "logic": "INCREMENTAL",
+                    "applyOnValidation": false,
+                    "when": {
+                        "semantic": "OR",
+                        "conditions": [
+                            {
+                                "semantic": "OR",
+                                "cases": [
+                                    {
+                                        "expression": "$(.getApps.output.status | valueIn([408, 429, 500, 502, 503, 504, -1]))",
+                                        "operator": "EQUALS",
+                                        "semantic": "OR",
+                                        "values": [
+                                            "true"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "repeat": null,
+                "errorMessages": []
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {
+        "env": "cf"
+    }
+}

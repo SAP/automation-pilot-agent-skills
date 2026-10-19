@@ -1,5 +1,7 @@
 package cmd
 
+import "github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
+
 func inputsResource() *resource {
 	return &resource{
 		name:    "inputs",
@@ -25,9 +27,48 @@ func inputsList(c *cmdContext, args []string) error {
 		"autopi inputs list --catalog my-cat --tag type:credentials", "inputs", false, true)
 }
 
+// inputsGet mirrors the MCP get_input tool: the secret-bearing values block is
+// stripped by default so credentials stay out of the response. Pass --full to
+// include it (the API returns it; stored secrets still cannot be read back).
 func inputsGet(c *cmdContext, args []string) error {
-	return getVerb(c, args, "inputs get", "GET /inputs/{id}",
-		"autopi inputs get my-cat:BtpCredentials:1", "input id", "inputs")
+	fs, g := newFlagSet(c, "inputs get")
+	var statusOnly, full bool
+	fs.BoolVar(&statusOnly, "status-only", false, "print only the HTTP status code")
+	fs.BoolVar(&full, "full", false, "include the values block (omitted by default to keep secrets out of the view)")
+	setUsage(fs, "GET /inputs/{id}", "autopi inputs get <id> [--full]",
+		"autopi inputs get my-cat:BtpCredentials:1")
+	pos, err := parseArgs(fs, args)
+	if err != nil {
+		return err
+	}
+	id, err := requireID(pos, "input id")
+	if err != nil {
+		return err
+	}
+	cfg, err := g.config()
+	if err != nil {
+		return err
+	}
+	req := client.Request{Method: "GET", Path: client.JoinPath("inputs", id)}
+	// --full / --status-only / --print-request need no projection; delegate to
+	// the shared path. Only the default view strips values.
+	if full || statusOnly || cfg.PrintRequest {
+		return execute(c, cfg, req, statusOnly)
+	}
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+	cl := client.New(cfg, c.stdout)
+	res, err := cl.Do(req)
+	if err != nil {
+		if res != nil {
+			cl.Render(c.stdout, res)
+		}
+		return err
+	}
+	res.Body = client.StripKeys(res.Body, "values")
+	cl.Render(c.stdout, res)
+	return nil
 }
 
 func inputsCreate(c *cmdContext, args []string) error {

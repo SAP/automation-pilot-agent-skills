@@ -75,17 +75,17 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 | Skill | Description |
 |-------|-------------|
 | [**Automation Pilot CLI**](skills/automation-pilot-cli/SKILL.md) | The `autopi` CLI — the single, dependency-free tool every skill uses to call the API (replaces `curl`); also runs `autopi lint` |
-| [**Command Generation**](skills/automation-pilot-command-generation/SKILL.md) | Create Commands from natural language descriptions using patterns and best practices |
-| [**Catalog Explorer**](skills/automation-pilot-catalog-explorer/SKILL.md) | Discover available Commands and executors in your tenant via API |
-| [**Code Review**](skills/automation-pilot-command-review/SKILL.md) | Validate security, naming conventions, expression sanitization, and best practices |
-| [**Content Management API**](skills/automation-pilot-content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands, Inputs, and MCP servers via API |
-| [**Executions API**](skills/automation-pilot-executions-api/SKILL.md) | Trigger Commands, monitor status, view logs |
-| [**Execution Debugger**](skills/automation-pilot-debugger/SKILL.md) | Debug failed Executions, error pattern matching, troubleshooting workflows |
-| [**Scheduled Executions API**](skills/automation-pilot-scheduled-executions-api/SKILL.md) | Create and manage recurring Command schedules |
-| [**MCP Server Generation**](skills/automation-pilot-mcp-server-generation/SKILL.md) | Create MCP server definitions to expose Commands as AI assistant tools |
-| [**A2A Adapter Generation**](skills/automation-pilot-a2a-server-generation/SKILL.md) | Create A2A adapter (agent) definitions to expose Commands as skills for external AI agents |
-| [**HTTP Executor**](skills/automation-pilot-executor-httprequest/SKILL.md) | Guidance for HTTP requests with retry, timeout, and error handling |
-| [**Script Executor**](skills/automation-pilot-executor-executescript/SKILL.md) | Guidance for ExecuteScript with Base64 encoding and language wrappers |
+| [**Plan**](skills/automation-pilot-plan/SKILL.md) | Interview-driven design of an automation before any content is written — the design tree, rounds, and spec |
+| [**Connection**](skills/automation-pilot-connection/SKILL.md) | Validate the configured connection and report the non-secret account summary (tenant, permissions, plan) |
+| [**Discovery**](skills/automation-pilot-discovery/SKILL.md) | Find and evaluate existing Catalogs, Commands, child dependencies, and reusable Inputs before building |
+| [**Command Authoring**](skills/automation-pilot-command-authoring/SKILL.md) | Author and maintain Commands and composite automations — contracts, executor flows, expressions, error handling |
+| [**Inputs**](skills/automation-pilot-inputs/SKILL.md) | Create, rotate, explain, and delete reusable Inputs that store configuration and credentials |
+| [**Executions**](skills/automation-pilot-executions/SKILL.md) | Trigger Commands, monitor status, inspect input/output/logs, diagnose failures, analyze history |
+| [**Scheduling**](skills/automation-pilot-scheduling/SKILL.md) | Create and manage one-time and recurring Command schedules |
+| [**MCP Servers**](skills/automation-pilot-mcp-servers/SKILL.md) | Create MCP server definitions that expose Commands as MCP tools for AI assistants |
+| [**A2A Servers**](skills/automation-pilot-a2a-servers/SKILL.md) | Create A2A adapter (agent) definitions to expose Commands as skills for external AI agents |
+| [**Tags**](skills/automation-pilot-tags/SKILL.md) | Validate, apply, and interpret regular, feature, and service tags (priority, retention, auto-abort, logging, lineage) |
+| [**Dynamic Expressions**](skills/automation-pilot-dynamic-expressions/SKILL.md) | The expression engine reference — functions, elements, and engine gotchas |
 
 ## Getting started
 

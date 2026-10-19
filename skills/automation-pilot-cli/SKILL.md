@@ -69,8 +69,9 @@ autopi lint <files...>                           # validate command/input JSON
 
 | Resource | Verbs | Endpoint family |
 |----------|-------|-----------------|
+| `connection` | info | `/server-info`, `/user-information`, `/tenant` |
 | `catalogs` | list / get / create / update / delete | `/catalogs` |
-| `commands` | list / ids / get / create / update / delete / release / deprecate / restore / bulk-create / export / deploy | `/commands`, `/bulk/commands` |
+| `commands` | list / ids / get / **contract** / create / update / delete / release / deprecate / restore / bulk-create / export / deploy | `/commands`, `/bulk/commands` |
 | `inputs` | list / get / create / update / **patch** / delete / release / deprecate / restore / bulk-create / deploy | `/inputs`, `/bulk/inputs` |
 | `mcp-servers` | list / get / create / update / delete / deploy | `/mcp-servers` |
 | `a2a-adapters` | list / get / create / update / delete / deploy | `/a2a-adapters` |
@@ -89,10 +90,14 @@ autopi <resource> <verb> --help   # the exact flags, the endpoint it calls, an e
 ### Common examples
 
 ```bash
+# Verify connectivity and permissions (no secrets printed)
+autopi connection info
+
 # Discover
 autopi catalogs list --provided
 autopi commands list --catalog applm-sapcp --include-issues
 autopi commands get applm-sapcp:RestartCfApp:1
+autopi commands contract applm-sapcp:RestartCfApp:1   # contract only (no configuration)
 
 # Deploy content (upsert = GET then PUT or POST; stays in DRAFT)
 autopi commands deploy -f MyCommand.command.json
@@ -129,9 +134,11 @@ autopi commands list --catalog applm-sapcp --full       # complete objects
 autopi commands list --catalog applm-sapcp --full --output raw | jq '.[].executors'
 ```
 
-`get <id>` is **always** full — the summary applies to list views only. `commands ids`
-is already minimal (IDs only) and has no `--full`. This is purely a view concern:
-`--full` changes *which fields* come back, orthogonal to `--output json|raw` formatting.
+`get <id>` is **always** full — the summary applies to list views only — **except
+`inputs get`, which omits the secret `values` block unless you pass `--full`** (stored
+secrets can never be read back regardless). `commands ids` is already minimal (IDs only)
+and has no `--full`. This is purely a view concern: `--full` changes *which fields* come
+back, orthogonal to `--output json|raw` formatting.
 
 ## Values Are Always Strings on the Wire
 
@@ -196,7 +203,7 @@ Full table and troubleshooting: [`references/exit-codes.md`](references/exit-cod
 Mechanical checks on command/input/catalog JSON before deploying — naming conventions,
 the `sensitive` flag on credential keys, and expression-safety heuristics. `--output json`
 for machine consumption. Exits 6 when anything is reported. Used by the
-`automation-pilot-command-review` skill.
+`automation-pilot-command-authoring` skill before deploying.
 
 ```bash
 autopi lint ./commands/*.command.json

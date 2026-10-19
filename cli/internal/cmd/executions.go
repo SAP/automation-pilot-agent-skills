@@ -65,9 +65,7 @@ func execList(c *cmdContext, args []string) error {
 	for _, id := range execID {
 		q.Add("executionId", id)
 	}
-	for _, t := range tag {
-		q.Add("tag", t)
-	}
+	addTagFilters(q, tag)
 	if startedAfter != "" {
 		ms, err := epochMillis(startedAfter)
 		if err != nil {

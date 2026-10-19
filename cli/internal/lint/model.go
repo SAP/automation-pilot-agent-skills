@@ -43,11 +43,12 @@ const (
 // arrays, so they unmarshal into maps. The map key is the authoritative key
 // name; InputKey carries only the per-key attributes.
 type Doc struct {
-	Name      string              `json:"name"`
-	Keys      map[string]InputKey `json:"keys"`      // input-definition keys
-	InputKeys map[string]InputKey `json:"inputKeys"` // command input schema
-	Raw       json.RawMessage     `json:"-"`
-	Fields    map[string]any      `json:"-"`
+	Name      string                     `json:"name"`
+	Keys      map[string]InputKey        `json:"keys"`      // input-definition keys
+	InputKeys map[string]InputKey        `json:"inputKeys"` // command input schema
+	Tags      map[string]json.RawMessage `json:"tags"`      // flat tag map (keys are all we lint)
+	Raw       json.RawMessage            `json:"-"`
+	Fields    map[string]any             `json:"-"`
 }
 
 // InputKey is one key of an input definition or command input schema. The key

@@ -1,0 +1,44 @@
+{
+  "name": "automation-pilot-skills",
+  "displayName": "SAP Automation Pilot",
+  "description": "Build, operate, and manage cloud operations with SAP Automation Pilot, from your coding agent in plain language.",
+  "version": "1.0.0",
+  "author": {
+    "name": "SAP"
+  },
+  "homepage": "https://github.com/SAP/automation-pilot-agent-skills",
+  "repository": "https://github.com/SAP/automation-pilot-agent-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "sap",
+    "automation-pilot",
+    "cloud-operations",
+    "automation",
+    "workflow",
+    "commands",
+    "executions",
+    "scheduling",
+    "cli"
+  ],
+  "userConfig": {
+    "hostname": {
+      "type": "string",
+      "title": "Automation Pilot hostname",
+      "description": "Regional host of your Automation Pilot tenant, e.g. emea.autopilot.cloud.sap. Exposed to the autopi CLI as AUTOPI_HOSTNAME.",
+      "required": true
+    },
+    "username": {
+      "type": "string",
+      "title": "Automation Pilot username",
+      "description": "Technical-user name for HTTP Basic auth against your tenant. Exposed to the autopi CLI as AUTOPI_USERNAME.",
+      "required": true
+    },
+    "password": {
+      "type": "string",
+      "title": "Automation Pilot password",
+      "description": "Password for the technical user. Exposed to the autopi CLI as AUTOPI_PASSWORD; never logged or embedded in URLs.",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

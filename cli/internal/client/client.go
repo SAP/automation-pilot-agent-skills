@@ -254,6 +254,74 @@ func stripHeavy(m map[string]any) {
 	}
 }
 
+// contractKeys are the fields kept when projecting a command down to its
+// contract (the caller-facing shape). It is a keep-list, not a delete-list, so
+// large or unknown blocks (configuration/executors/steps/...) can never leak
+// into a contract view. This is distinct from Summarize/heavyKeys, which also
+// strips inputKeys/outputKeys — the contract must keep them.
+var contractKeys = []string{
+	"id", "catalog", "name", "description", "version",
+	"inputKeys", "outputKeys", "tags",
+}
+
+// Contract projects a single command object down to its contract fields (see
+// contractKeys), dropping configuration and other heavy blocks. A non-JSON or
+// non-object body is returned unchanged, matching Summarize's fail-safe rule.
+func Contract(body []byte) []byte {
+	var v any
+	if json.Unmarshal(body, &v) != nil {
+		return body
+	}
+	m, ok := v.(map[string]any)
+	if !ok {
+		return body
+	}
+	kept := make(map[string]any, len(contractKeys))
+	for _, k := range contractKeys {
+		if val, present := m[k]; present {
+			kept[k] = val
+		}
+	}
+	out, err := json.Marshal(kept)
+	if err != nil {
+		return body
+	}
+	return out
+}
+
+// StripKeys removes the named keys from a top-level JSON object (or from each
+// object in a top-level array). Used to keep secret material (e.g. an Input's
+// values block) out of a get response. Non-JSON or an unexpected shape passes
+// through unchanged, so arbitrary bodies are safe.
+func StripKeys(body []byte, keys ...string) []byte {
+	var v any
+	if json.Unmarshal(body, &v) != nil {
+		return body
+	}
+	strip := func(m map[string]any) {
+		for _, k := range keys {
+			delete(m, k)
+		}
+	}
+	switch t := v.(type) {
+	case []any:
+		for _, el := range t {
+			if m, ok := el.(map[string]any); ok {
+				strip(m)
+			}
+		}
+	case map[string]any:
+		strip(t)
+	default:
+		return body
+	}
+	out, err := json.Marshal(v)
+	if err != nil {
+		return body
+	}
+	return out
+}
+
 // FilterIDPrefix keeps only the string elements of a top-level JSON array that
 // start with prefix. A non-array body, or any non-string element, passes
 // through unchanged so arbitrary bodies are safe.

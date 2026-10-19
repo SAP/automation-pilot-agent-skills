@@ -43,9 +43,7 @@ func catalogsList(c *cmdContext, args []string) error {
 	if provided {
 		q.Set("provided", "true")
 	}
-	for _, t := range tag {
-		q.Add("tag", t)
-	}
+	addTagFilters(q, tag)
 	return execute(c, cfg, client.Request{Method: "GET", Path: "catalogs", Query: q, Summarize: !full}, false)
 }
 

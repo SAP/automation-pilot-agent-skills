@@ -1,6 +1,7 @@
 package lint
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -26,6 +27,17 @@ var (
 var allowedDurations = map[string]bool{
 	"5s": true, "10s": true, "15s": true, "30s": true,
 	"1m": true, "2m": true, "3m": true,
+}
+
+// allowedFeatureTags is the server's fixed allow-list for feature: tags. A
+// feature tag outside this set is rejected at deploy with HTTP 400 ("tags are
+// invalid"). Keys are the canonical lowercase form.
+var allowedFeatureTags = map[string]bool{
+	"feature:priority":        true,
+	"feature:autoabort":       true,
+	"feature:retentionpolicy": true,
+	"feature:retentionperiod": true,
+	"feature:logs":            true,
 }
 
 // CheckFile lints one file's bytes. name is the display path.
@@ -75,6 +87,7 @@ func CheckFile(name string, b []byte) []Finding {
 		out = append(out, checkDurations(name, b)...)
 	}
 
+	out = append(out, checkTags(name, doc.Tags)...)
 	out = append(out, checkExpressions(name, b)...)
 	return out
 }
@@ -182,6 +195,36 @@ func checkDurations(name string, b []byte) []Finding {
 		seen[key] = true
 		out = append(out, Finding{High, name, field,
 			field + " " + q(val) + " is not an allowed interval (use 5s, 10s, 15s, 30s, 1m, 2m, 3m)"})
+	}
+	return out
+}
+
+// checkTags mirrors the server's tag validation. The "autopi:" prefix is
+// reserved for platform-managed service tags and must not appear in authored
+// content; "feature:" tags must match a fixed allow-list. Either violation is
+// rejected at deploy with HTTP 400 ("tags are invalid"), which no other check
+// would catch. Prefix matching is case-insensitive, mirroring the server, so a
+// case variation does not bypass the rule. Keys are visited in sorted order so
+// findings are deterministic.
+func checkTags(name string, tags map[string]json.RawMessage) []Finding {
+	var out []Finding
+	keys := make([]string, 0, len(tags))
+	for k := range tags {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		lower := strings.ToLower(k)
+		switch {
+		case strings.HasPrefix(lower, "autopi:"):
+			out = append(out, Finding{Critical, name, "tags." + k,
+				"tag " + q(k) + " uses the reserved \"autopi:\" service prefix (platform-managed, not user-writable)"})
+		case strings.HasPrefix(lower, "feature:"):
+			if !allowedFeatureTags[lower] {
+				out = append(out, Finding{High, name, "tags." + k,
+					"feature tag " + q(k) + " is not in the allow-list (feature:priority, feature:autoAbort, feature:retentionPolicy, feature:retentionPeriod, feature:logs)"})
+			}
+		}
 	}
 	return out
 }

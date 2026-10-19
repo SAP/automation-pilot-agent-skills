@@ -21,3 +21,6 @@ cli/dist/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Local convenience symlinks / Claude workspace scratch
+.claude/skills

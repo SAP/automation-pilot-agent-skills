@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -164,6 +165,21 @@ func (s *stringList) String() string { return strings.Join(*s, ",") }
 func (s *stringList) Set(v string) error {
 	*s = append(*s, v)
 	return nil
+}
+
+// addTagFilters serializes repeatable --tag filters as the server expects them:
+// a tag query is `key=value`, while the CLI accepts the `key:value` convention
+// used everywhere else. A key-only filter (no colon) matches any value and is
+// forwarded as the bare key. Without this translation the raw colon string is
+// sent verbatim and the server silently matches nothing.
+func addTagFilters(q url.Values, tags stringList) {
+	for _, t := range tags {
+		if k, v, ok := strings.Cut(t, ":"); ok {
+			q.Add("tag", k+"="+v)
+		} else {
+			q.Add("tag", t)
+		}
+	}
 }
 
 // resolveBody returns the request body from either -f/--file (a path) or --data

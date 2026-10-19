@@ -26,7 +26,18 @@ Every `list` verb (and `executions list`) defaults to a **metadata summary** —
 blocks (`configuration`/`executors`/`inputKeys`/`outputKeys`/`keys`/`values`/`mcpTools`/
 `skills`/`schedule`/…) are stripped, leaving `id`/`name`/`catalog`/`description`/`version`/
 `tags`/`enabled`/`commandId`. Pass `--full` for complete objects. `get <id>` is always
-full; `commands ids` is already minimal and has no `--full`.
+full — **except `inputs get`, which omits the secret `values` block unless `--full`** —
+and `commands ids` is already minimal and has no `--full`.
+
+## connection
+
+| Verb | Endpoint | Returns |
+|------|----------|---------|
+| `info` | `GET /server-info` + `GET /user-information` + `GET /tenant` | non-secret `{connected, url, tenantId, username, permissions, plan}` |
+
+`connection info` is the connectivity/identity check: it composes the three reads into one
+summary and never prints the credential. Use it to confirm the configured tenant and that
+`permissions` include `Read`/`Write`/`Execute` (and `GenAI` for mcp-servers/a2a-adapters).
 
 ## catalogs
 
@@ -45,6 +56,7 @@ full; `commands ids` is already minimal and has no `--full`.
 | `list` | `GET /commands` | `--catalog`, `--tag k:v`, `--include-issues`, `--full` |
 | `ids` | `GET /commands/ids` | `--catalog`, `--tag k:v` |
 | `get <id>` | `GET /commands/{id}` | `--status-only` |
+| `contract <id>` | `GET /commands/{id}` | projects to `id`/`catalog`/`name`/`description`/`version`/`inputKeys`/`outputKeys`/`tags` (strips `configuration`) |
 | `create` | `POST /commands` | `-f` / `--data` |
 | `update <id>` | `PUT /commands/{id}` | `-f` / `--data` |
 | `delete <id>` | `DELETE /commands/{id}` | — |
@@ -65,8 +77,11 @@ Same verbs as `commands` (`list`/`get`/`create`/`update`/`delete`/`release`/`dep
 
 | Verb | Endpoint | Key flags |
 |------|----------|-----------|
+| `get <id>` | `GET /inputs/{id}` | `--full` (include the secret `values` block; omitted by default), `--status-only` |
 | `patch <id>` | `PATCH /inputs/{id}` | `-f` / `--data` — sends `Content-Type: application/merge-patch+json` |
 
+`inputs get` omits the `values` block by default so stored credentials stay out of the
+view (stored secrets cannot be read back regardless); pass `--full` to include it.
 `patch` is for rotating individual values without replacing the whole input — e.g.
 `autopi inputs patch my-cat:JiraCredentials:1 --data '{"values":{"password":"<new>"}}'`.
 `bulk-create` body is `{"inputs":[...]}`.
@@ -154,10 +169,12 @@ autopi lint [--output text|json] <files...>
 ```
 
 Validates command/input/catalog JSON. Exits 6 when any finding is reported. See the
-`automation-pilot-command-review` skill.
+`automation-pilot-command-authoring` skill.
 
 Checks include: filename ≠ `name`, non-PascalCase/kebab-case names, length limits,
 missing `sensitive` flags on credential keys, hardcoded defaults on sensitive keys,
-non-existent expression functions, URL interpolation without `toUrlEncoded`, and
+non-existent expression functions, URL interpolation without `toUrlEncoded`,
 `autoRetry.delay` / `repeat.delay` / `initialDelay.interval` values outside the server
-enum (`5s`, `10s`, `15s`, `30s`, `1m`, `2m`, `3m`).
+enum (`5s`, `10s`, `15s`, `30s`, `1m`, `2m`, `3m`), and invalid tags — a `feature:` tag
+outside the allow-list or a reserved `autopi:` service tag in authored content (both
+rejected by the server at deploy with `400 tags are invalid`).

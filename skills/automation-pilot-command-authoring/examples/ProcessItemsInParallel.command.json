@@ -1,0 +1,193 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:ProcessItemsInParallel:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "ProcessItemsInParallel",
+    "description": "Lists the applications in a Cloud Foundry space and passes each name to Void as a separate parallel child execution, returning each child's result and execution metadata",
+    "version": 1,
+    "inputKeys": {
+        "user": {
+            "type": "string",
+            "sensitive": false,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The user ID or the email of a Cloud Foundry user to be used for authentication"
+        },
+        "password": {
+            "type": "string",
+            "sensitive": true,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
+        },
+        "subAccount": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The name or the ID of the Cloud Foundry organization. Examples: my-org-name-1, 0ffeb410-5f78-0000-af5c-5b26baf46623"
+        },
+        "space": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The name of the Cloud Foundry space"
+        },
+        "region": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": [
+                "metadata-sapcp:CfRegionData:1"
+            ],
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
+        },
+        "batchSize": {
+            "type": "number",
+            "sensitive": false,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": 1,
+            "maxValue": 25,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": "5",
+            "defaultValueFromInput": null,
+            "description": "The number of child executions to trigger in each parallel batch"
+        }
+    },
+    "outputKeys": {
+        "results": {
+            "type": "array",
+            "sensitive": false,
+            "description": "The result of processing each application, in input order"
+        },
+        "executions": {
+            "type": "array",
+            "sensitive": false,
+            "description": "The execution metadata for each processed application, including the child execution ID"
+        }
+    },
+    "configuration": {
+        "values": [],
+        "output": {
+            "results": "$(.processApps.output.outputs // [])",
+            "executions": "$(.processApps.output.executionsMetadata // [])"
+        },
+        "executors": [
+            {
+                "execute": "applm-sapcp:ListCfApps:1",
+                "alias": "listApps",
+                "input": {
+                    "resourceGroup": "$(.execution.input.space)",
+                    "subAccount": "$(.execution.input.subAccount)",
+                    "region": "$(.execution.input.region)",
+                    "user": "$(.execution.input.user)",
+                    "password": "$(.execution.input.password)",
+                    "pageSize": "100"
+                },
+                "description": "List applications in the space",
+                "progressMessage": null,
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": null,
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            },
+            {
+                "execute": "utils-sapcp:ParallelForEach:1",
+                "alias": "processApps",
+                "input": {
+                    "command": "utils-sapcp:Void:1",
+                    "inputs": "$(.listApps.output.resourceNames)",
+                    "inputMapping": "{\"message\":\"$(.processApps.current.item)\"}",
+                    "batchSize": "$(.execution.input.batchSize)",
+                    "mode": "trigger, poll, and collect",
+                    "statuses": "[\"FINISHED\"]",
+                    "deadline": "30",
+                    "tags": "{\"workflow\":\"process-apps\",\"space\":\"$(.execution.input.space)\"}"
+                },
+                "description": "Pass each application name to Void as a separate parallel child execution",
+                "progressMessage": "Processing apps in parallel batches of $(.execution.input.batchSize)...",
+                "initialDelay": null,
+                "pause": null,
+                "when": {
+                    "semantic": "OR",
+                    "conditions": [
+                        {
+                            "semantic": "OR",
+                            "cases": [
+                                {
+                                    "expression": "$(.listApps.output.resourceNames | length)",
+                                    "operator": "GREATER_THAN",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "0"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "validate": null,
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {
+        "env": "cf"
+    }
+}

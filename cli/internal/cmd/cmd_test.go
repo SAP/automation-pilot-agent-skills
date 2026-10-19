@@ -66,6 +66,24 @@ func TestRepeatableStatusQuery(t *testing.T) {
 	}
 }
 
+// TestTagFilterUsesEquals verifies the --tag list filter is forwarded as the
+// server's key=value form, not the raw key:value the CLI accepts. A key-only
+// filter passes through unchanged. (Regression: the colon form silently
+// matched nothing server-side.)
+func TestTagFilterUsesEquals(t *testing.T) {
+	t.Setenv("AUTOPI_HOSTNAME", "h")
+	out, _, code := runCmd("executions", "list", "--tag", "skilltest:1019", "--tag", "keyonly", "--print-request")
+	if code != 0 {
+		t.Fatalf("exit = %d", code)
+	}
+	if !strings.Contains(out, "tag=skilltest%3D1019") {
+		t.Fatalf("want tag=skilltest=1019 (encoded), got:\n%s", out)
+	}
+	if !strings.Contains(out, "tag=keyonly") || strings.Contains(out, "keyonly%3D") {
+		t.Fatalf("key-only tag should pass through unchanged, got:\n%s", out)
+	}
+}
+
 func TestMergePatchContentType(t *testing.T) {
 	t.Setenv("AUTOPI_HOSTNAME", "h")
 	out, _, _ := runCmd("inputs", "patch", "cat:Cred:1", "--data", `{"values":{"p":"x"}}`, "--print-request")
@@ -303,5 +321,83 @@ func TestDeployCreatesWithoutID(t *testing.T) {
 	}
 	if gotMethod != "POST" || gotPath != "/api/v1/mcp-servers" {
 		t.Fatalf("id-less deploy should POST /mcp-servers, got %s %s", gotMethod, gotPath)
+	}
+}
+
+// TestConnectionInfoComposesSummary verifies `connection info` makes the three
+// GETs and composes a non-secret summary (mirroring MCP get_connection_info).
+func TestConnectionInfoComposesSummary(t *testing.T) {
+	newServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/server-info"):
+			w.Write([]byte(`{"autoPiTenantUrl":"https://t.example"}`))
+		case strings.HasSuffix(r.URL.Path, "/user-information"):
+			w.Write([]byte(`{"username":"svc","permissions":["Read","Write","Execute"],"appPlan":"STANDARD"}`))
+		case strings.HasSuffix(r.URL.Path, "/tenant"):
+			w.Write([]byte(`{"id":"T001"}`))
+		default:
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+	})
+	out, _, code := runCmd("connection", "info", "--insecure")
+	if code != 0 {
+		t.Fatalf("exit=%d", code)
+	}
+	for _, want := range []string{`"connected": true`, `"url": "https://t.example"`,
+		`"tenantId": "T001"`, `"username": "svc"`, `"Execute"`, `"plan": "STANDARD"`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
+// TestCommandContractStripsConfiguration verifies `commands contract` keeps the
+// contract fields (inputKeys/outputKeys) but drops configuration/executors.
+func TestCommandContractStripsConfiguration(t *testing.T) {
+	newServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte(`{"id":"c:A:1","name":"A","catalog":"c","description":"d","version":1,"tags":{},"inputKeys":{"x":{"type":"string"}},"outputKeys":{},"configuration":{"a":1},"executors":[{"id":"e"}]}`))
+	})
+	out, _, code := runCmd("commands", "contract", "c:A:1", "--insecure")
+	if code != 0 {
+		t.Fatalf("exit=%d", code)
+	}
+	for _, keep := range []string{"inputKeys", "outputKeys", `"id"`, `"name"`} {
+		if !strings.Contains(out, keep) {
+			t.Errorf("contract dropped %q:\n%s", keep, out)
+		}
+	}
+	for _, drop := range []string{"configuration", "executors"} {
+		if strings.Contains(out, drop) {
+			t.Errorf("contract leaked %q:\n%s", drop, out)
+		}
+	}
+}
+
+// TestInputGetStripsValues verifies `inputs get` omits the secret values block
+// by default, and includes it under --full (mirroring MCP get_input).
+func TestInputGetStripsValues(t *testing.T) {
+	const body = `{"id":"c:Cred:1","name":"Cred","keys":{"password":{"type":"string","sensitive":true}},"values":{"password":"s3cret"}}`
+	newServer(t, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte(body))
+	})
+	out, _, code := runCmd("inputs", "get", "c:Cred:1", "--insecure")
+	if code != 0 {
+		t.Fatalf("exit=%d", code)
+	}
+	if strings.Contains(out, "values") || strings.Contains(out, "s3cret") {
+		t.Errorf("default inputs get leaked values:\n%s", out)
+	}
+	if !strings.Contains(out, `"keys"`) {
+		t.Errorf("default inputs get should keep non-secret keys block:\n%s", out)
+	}
+	outFull, _, code := runCmd("inputs", "get", "c:Cred:1", "--full", "--insecure")
+	if code != 0 {
+		t.Fatalf("exit=%d (--full)", code)
+	}
+	if !strings.Contains(outFull, "values") {
+		t.Errorf("--full should include values:\n%s", outFull)
 	}
 }

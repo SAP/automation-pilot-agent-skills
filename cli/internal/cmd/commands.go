@@ -16,6 +16,7 @@ func commandsResource() *resource {
 			{"list", "list commands in a catalog", "GET /commands", commandsList},
 			{"ids", "list command IDs in a catalog", "GET /commands/ids", commandsIDs},
 			{"get", "get one command", "GET /commands/{id}", commandsGet},
+			{"contract", "get a command's contract (strips configuration)", "GET /commands/{id}", commandsContract},
 			{"create", "create a command (DRAFT)", "POST /commands", commandsCreate},
 			{"update", "update a command", "PUT /commands/{id}", commandsUpdate},
 			{"delete", "delete a command", "DELETE /commands/{id}", commandsDelete},
@@ -56,9 +57,7 @@ func catalogListVerb(c *cmdContext, args []string, name, endpoint, example, coll
 	if cfg.Catalog != "" {
 		q.Set("catalog", cfg.Catalog)
 	}
-	for _, t := range tag {
-		q.Add("tag", t)
-	}
+	addTagFilters(q, tag)
 	if includeIssues && issues {
 		q.Set("includeIssues", "true")
 	}
@@ -83,6 +82,46 @@ func commandsIDs(c *cmdContext, args []string) error {
 func commandsGet(c *cmdContext, args []string) error {
 	return getVerb(c, args, "commands get", "GET /commands/{id}",
 		"autopi commands get applm-sapcp:RestartCfApp:1", "command id", "commands")
+}
+
+// commandsContract mirrors the MCP get_command_contract tool: GET the command,
+// then project it to its caller-facing contract (strips configuration while
+// keeping inputKeys/outputKeys). The list summarize path is unusable here
+// because it also strips inputKeys/outputKeys, so projection runs on the body.
+func commandsContract(c *cmdContext, args []string) error {
+	fs, g := newFlagSet(c, "commands contract")
+	setUsage(fs, "GET /commands/{id}", "autopi commands contract <id>",
+		"autopi commands contract applm-sapcp:RestartCfApp:1")
+	pos, err := parseArgs(fs, args)
+	if err != nil {
+		return err
+	}
+	id, err := requireID(pos, "command id")
+	if err != nil {
+		return err
+	}
+	cfg, err := g.config()
+	if err != nil {
+		return err
+	}
+	req := client.Request{Method: "GET", Path: client.JoinPath("commands", id)}
+	if cfg.PrintRequest {
+		return execute(c, cfg, req, false)
+	}
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+	cl := client.New(cfg, c.stdout)
+	res, err := cl.Do(req)
+	if err != nil {
+		if res != nil {
+			cl.Render(c.stdout, res)
+		}
+		return err
+	}
+	res.Body = client.Contract(res.Body)
+	cl.Render(c.stdout, res)
+	return nil
 }
 
 func commandsCreate(c *cmdContext, args []string) error {

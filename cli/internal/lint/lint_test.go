@@ -123,6 +123,33 @@ func TestExpressionDelayNotFlagged(t *testing.T) {
 	}
 }
 
+func TestFeatureTagNotInAllowList(t *testing.T) {
+	js := []byte(`{"name":"Tagged","executors":[{"id":"x"}],"tags":{"feature:bogus":"x"}}`)
+	findings := CheckFile("Tagged.command.json", js)
+	if !hasMessage(findings, High, "not in the allow-list") {
+		t.Fatalf("want feature allow-list finding, got %+v", findings)
+	}
+}
+
+func TestReservedServiceTagFlagged(t *testing.T) {
+	// The autopi: prefix is platform-managed; a case variant must not bypass it.
+	js := []byte(`{"name":"Tagged","executors":[{"id":"x"}],"tags":{"AUTOPI:status":"done"}}`)
+	findings := CheckFile("Tagged.command.json", js)
+	if !hasMessage(findings, Critical, "reserved") {
+		t.Fatalf("want reserved service-tag finding, got %+v", findings)
+	}
+}
+
+func TestValidTagsNotFlagged(t *testing.T) {
+	js := []byte(`{"name":"Tagged","executors":[{"id":"x"}],"tags":{"feature:priority":"high","feature:logs":"","team":"sre"}}`)
+	findings := CheckFile("Tagged.command.json", js)
+	for _, f := range findings {
+		if contains(f.Message, "allow-list") || contains(f.Message, "reserved") {
+			t.Fatalf("valid tags wrongly flagged: %+v", f)
+		}
+	}
+}
+
 func hasMessage(fs []Finding, sev Severity, substr string) bool {
 	for _, f := range fs {
 		if f.Severity == sev && contains(f.Message, substr) {

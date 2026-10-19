@@ -9,6 +9,7 @@ import (
 // are handled directly in Run.
 func registry() []*resource {
 	return []*resource{
+		connectionResource(),
 		catalogsResource(),
 		commandsResource(),
 		inputsResource(),
