@@ -4,9 +4,6 @@ Call a REST/HTTP endpoint from a command step. This is the most common executor 
 authored commands: it reaches any SAP or third-party API that the pattern cookbook's
 patterns (create-and-poll, chaining, retry) build on.
 
-Resolve the executor contract live before use (`automation-pilot:get_command_contract`). Field tables are
-a 2026-10-14 snapshot, not proof of the target tenant's contract.
-
 ## Contents
 
 - [When to use](#when-to-use)
@@ -20,13 +17,13 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## When to use
 
-- Call an API directly with credentials you pass at execution time → `HttpRequest:1`.
-- Call a target the operator already manages as an **SAP BTP destination** (URL + auth
-  resolved from the destination, no credential fields) → `HttpRequestViaDestination:1`.
-- The response body can contain secrets (tokens, keys) → use the **`Sensitive*`** variant so
-  the body is masked in logs/UI.
-- A fitting higher-level catalog command already wraps the call (e.g. a `cf-sapcp:*` command).
-  Prefer it over rebuilding the request by hand; the discovery skill finds it.
+- To call an API directly with credentials you pass at execution time, use `HttpRequest:1`.
+- To call a target the operator already manages as an SAP BTP destination (URL and auth
+  resolved from the destination, no credential fields), use `HttpRequestViaDestination:1`.
+- When the response body can contain secrets (tokens, keys), use the `Sensitive*` variant so
+  the body is masked in logs and UI.
+- When a fitting higher-level catalog command already wraps the call (e.g. a `cf-sapcp:*`
+  command), prefer it over rebuilding the request by hand. The discovery skill finds it.
 
 ## Executor IDs & variants
 
@@ -39,16 +36,16 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## Key inputs: `HttpRequest:1`
 
-Required: **`url`**, **`method`** (`GET`/`POST`/`PUT`/`DELETE`/`PATCH`).
+Required: `url`, `method` (`GET`/`POST`/`PUT`/`DELETE`/`PATCH`).
 
 | Field | Default | Notes |
 |-------|---------|-------|
 | `body` | — | Request payload (string). Build JSON as a literal envelope with per-field `$()`. |
 | `headers` | — | Object. An `Authorization` header here overrides `user`/`password`. |
-| `timeout` | `3` | **1–90 seconds.** Out-of-range is rejected. |
-| `successResponseCodes` | `["2xx"]` | Non-matching status **fails the executor**. Widen to read a non-2xx status in a later condition. |
-| `succeedOnTimeout` | `false` | `true` → a timeout yields status `-1`, body `null`, headers `{}` instead of failing. |
-| `responseBodyTransformer` | — | Dynamic-expression syntax **without** an outer `$()`; trims the body before it crosses the step boundary. See "Response body transformation" below. |
+| `timeout` | `3` | 1–90 seconds. Out-of-range is rejected. |
+| `successResponseCodes` | `["2xx"]` | A non-matching status fails the executor. Widen to read a non-2xx status in a later condition. |
+| `succeedOnTimeout` | `false` | `true` makes a timeout yield status `-1`, body `null`, headers `{}` instead of failing. |
+| `responseBodyTransformer` | — | Dynamic-expression syntax without an outer `$()`; trims the body before it crosses the step boundary. See "Response body transformation" below. |
 | `csrfUrl` | — | GET this URL first to obtain an `X-CSRF-TOKEN`. |
 | `omitBodyInErrorMessage` | `false` | `true` keeps a secret-bearing body out of the error message. |
 | `sccEnabled` / `sccLocationId` / `sccTechnicalUserPropagation` | `false` | Route via SAP Cloud Connector to private endpoints. |
@@ -69,7 +66,7 @@ Required: **`url`**, **`method`** (`GET`/`POST`/`PUT`/`DELETE`/`PATCH`).
 `tokenType` (`ACCESS` default / `ID`) selects the OAuth token type. Set only the fields the
 chosen method needs; the executor fetches OAuth tokens itself.
 
-For any OAuth flow, **Automation Pilot fetches, caches, and rotates the access token for you**: it
+For any OAuth flow, Automation Pilot fetches, caches, and rotates the access token for you. It
 obtains a token from `tokenUrl` and refreshes it when it expires. You supply only the credentials
 (`clientId`/`clientSecret`, `user`/`password`, or `refreshToken`). You never pre-fetch a token,
 track its lifetime, or renew it by hand.
@@ -126,7 +123,7 @@ over `user`/`password`:
 
 ## Key inputs: `HttpRequestViaDestination:1`
 
-Required: **`destinationName`**, **`method`**. No credential fields; the destination supplies
+Required: `destinationName`, `method`. No credential fields; the destination supplies
 URL and auth.
 
 | Field | Default | Notes |
@@ -139,18 +136,18 @@ URL and auth.
 
 ## Outputs & how to read them
 
-Both executors output: `status` (number), `body` (**string**), `headers` (object), `url`,
+Both executors output: `status` (number), `body` (string), `headers` (object), `url`,
 `method`, `size`, `time`.
 
-- The **body is a string.** Parse before reading a field: `$(.alias.output.body | toObject.key)`
-  (arrays: `| toArray`). This boundary rule is the #1 source of null reads.
+- The body is a string. Parse before reading a field: `$(.alias.output.body | toObject.key)`
+  (arrays: `| toArray`). This boundary rule is the most common source of null reads.
 - Read a response header case-insensitively:
   `$(.alias.output.headers | getCaseInsensitive("location"))`.
 - `status` is `-1` on timeout/no-response (with `succeedOnTimeout:"true"`), `0` on no response.
 
 ## Response body transformation
 
-`responseBodyTransformer` runs dynamic-expression syntax on the response body **without** the
+`responseBodyTransformer` runs dynamic-expression syntax on the response body without the
 outer `$()` wrapper. The transformer field is a normal string, so it can still contain `$()`
 substitutions resolved from execution data before the response-body expression runs. The body
 arrives as a string, so start with `toObject` when the response is a JSON object. Use it to drop
@@ -197,5 +194,5 @@ toObject.resources | map(.relationships.service_instance.data.guid) | join(",")
   `successResponseCodes` to include those codes and set `succeedOnTimeout:"true"`. This is the
   single most common HTTP authoring mistake. See the create-and-poll / retry patterns in the cookbook.
 - `timeout` outside 1–90 is rejected.
-- A sensitive input alone (e.g. `password`) does **not** require the `Sensitive*` variant. Use it
-  only when the **output** (response body) can contain secrets.
+- A sensitive input alone (e.g. `password`) does not require the `Sensitive*` variant. Use it
+  only when the output (response body) can contain secrets.

@@ -1,4 +1,4 @@
-# Monitoring and Inspecting Executions
+# Monitoring and inspecting executions
 
 Read this when following a run, interpreting its state, or inspecting its input, output, or executor logs.
 

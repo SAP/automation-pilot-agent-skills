@@ -1,6 +1,6 @@
-# Pattern Cookbook
+# Pattern cookbook
 
-Patterns for **composing** Automation Pilot commands: how steps chain, branch,
+Patterns for composing Automation Pilot commands: how steps chain, branch,
 loop, and recover. For a single executor's full contract (IDs, variants, every input/output,
 gotchas), read the matching core command reference listed in the skill (HTTP, scripting, SQL,
 iteration); this cookbook shows composition rather than restating each contract.
@@ -12,7 +12,7 @@ are selected from the skill's example index; substitute the tenant ID and verify
 executor contract before deployment.
 
 Accessors used throughout: an earlier step's output is `$(.alias.output.key)`; an HTTP
-body is a **string**, so cross a step boundary with `| toObject` / `| toArray`
+body is a string, so cross a step boundary with `| toObject` / `| toArray`
 before reading a field. Condition blocks (`when`, `validate`, `repeat.until`,
 `autoRetry.when`, `errorMessages[].when`) use the composition-control shape loaded by the skill
 workflow.
@@ -32,7 +32,7 @@ workflow.
 ## 1. Create and poll
 
 POST to create, then poll a status URL with `repeat.until` until it reaches a terminal
-state. Two refinements make it robust: a `validate` that **fails fast** on a terminal
+state. Two refinements make it robust: a `validate` that fails fast on a terminal
 error state (so the loop stops instead of spinning to `maxCount`), and `errorMessages`
 that surface the API's own failure text. (To branch an HTTP step on a non-2xx or timeout
 status, widen `successResponseCodes` / set `succeedOnTimeout` as the HTTP reference describes.)
@@ -75,8 +75,8 @@ selected directly from the skill's example index for the complete definition.
 
 ## 2. Hide configuration behind an enum
 
-A `values` entry loads a reusable Input by alias. Make `inputKey` a **dynamic
-expression** keyed off a simple enum input. The config object for that choice
+A `values` entry loads a reusable Input by alias. Make `inputKey` a dynamic
+expression keyed off a simple enum input. The config object for that choice
 loads under the alias, so the caller picks one `region` enum instead of supplying a URL,
 token endpoint, etc. This is the standard CF idiom (used by ~100 catalog commands):
 
@@ -88,7 +88,7 @@ token endpoint, etc. This is the standard CF idiom (used by ~100 catalog command
 ]
 ```
 
-The `inputReference` is a reusable **Input**, not a command. Select and verify the current region
+The `inputReference` is a reusable Input, not a command. Select and verify the current region
 Input through `automation-pilot:get_input`, then read its live keys downstream by alias:
 
 ```json
@@ -102,8 +102,8 @@ gets the available keys as an enum.
 
 A later step reads an earlier step's output. The source determines the access form:
 
-- A **sub-command's declared output** (from its `outputKeys`) is a scalar. Use `$(.getIds.output.spaceId)`.
-- An **HTTP body** is a string. Re-parse it to read a field: `$(.getOrg.output.body | toObject.resources[0].guid)`.
+- A sub-command's declared output (from its `outputKeys`) is a scalar. Use `$(.getIds.output.spaceId)`.
+- An HTTP body is a string. Re-parse it to read a field: `$(.getOrg.output.body | toObject.resources[0].guid)`.
 
 In `cf-sapcp:GetCfOrgAndSpaceIds:1`, step 2 reads the org GUID from step 1:
 
@@ -128,7 +128,7 @@ Skip a resolve step when the input is already a GUID (from `cf-sapcp:GetCfOrgAnd
 ```
 
 Combine conditions with `AND` and reference an earlier output in the test. In
-`sm-sapcp:GetPlanId:1`, step 3 runs when the new plan value is a name **and** differs
+`sm-sapcp:GetPlanId:1`, step 3 runs when the new plan value is a name and differs
 from the current plan's name. A `values` entry can itself be an expression:
 
 ```json
@@ -149,8 +149,8 @@ match on a name lookup (from `cf-sapcp:GetCfOrgAndSpaceIds:1`):
   { "expression": "$(.getOrg.output.body | toObject.pagination.total_results)", "operator": "EQUALS", "semantic": "OR", "values": ["1"] } ] } ] }
 ```
 
-"Contains none of these failure strings" uses `DOES_NOT_CONTAIN` with the **inner**
-`semantic: "AND"` (must avoid *every* value) (from `cf-sapcp:AssignCfSpaceRole:1`):
+"Contains none of these failure strings" uses `DOES_NOT_CONTAIN` with the inner
+`semantic: "AND"` (must avoid every value) (from `cf-sapcp:AssignCfSpaceRole:1`):
 
 ```json
 "validate": { "semantic": "OR", "conditions": [ { "semantic": "OR", "cases": [
@@ -176,7 +176,7 @@ Surface the API's own error text, gated on a condition (from
 
 ## 7. Status listeners
 
-A listener runs a command when the **whole execution** reaches a status, outside the
+A listener runs a command when the whole execution reaches a status, outside the
 normal step sequence. Define it in `configuration.listeners`; use `[]` when the command
 needs no listeners. A listener entry mirrors an executor with `execute` (command ID), `input` (value
 map), optional `when`, and a `status`:
@@ -193,7 +193,9 @@ map), optional `when`, and a `status`:
 `status` is one of `PAUSED`, `INPUT_REQUIRED`, `FINISHED`, `ABORTED`, `SUSPENDED`,
 `FAILED` (no `RUNNING`). Key facts:
 
-- A listener **triggers a separate child execution**. The child runs outside the parent sequence and carries the service tag `autopi:statusListenerOf = <firing execution ID>`.
+- A listener triggers a separate child execution. That child runs outside the parent sequence and carries three service tags: `autopi:statusListenerOf = <firing execution ID>`, `autopi:rootExecutionId`, and `autopi:rootCommandId`. Find a command's listener children by filtering executions on `autopi:statusListenerOf = <execution ID>`.
 - A listener can read anywhere in the execution context because it sits outside the sequence. Some data may not exist when it fires; provide a default with `//`.
-- A **FAILED** listener can read the original error via `$(.execution.error.originalMessage)` (before any custom error message overrides it).
-- **Top-level placement:** listeners on a command used as a sub-command inside a composite do **not** fire. Define them on the command the user triggers.
+- A `FAILED` listener can read the original error via `$(.execution.error.originalMessage)` (before any custom error message overrides it).
+- Listeners on a command used as a sub-command inside a composite do not fire. Define them on the top-level command the user triggers.
+- A listener's `when` is unconditional as `null` (unlike `errorMessages[].when`, which rejects `null` and an empty-conditions block — see the composition-controls warning). Give a listener a condition block only to gate it; otherwise leave `when: null`.
+- Listeners can be added only to a non-released, non-deprecated command. Add them before releasing the command.

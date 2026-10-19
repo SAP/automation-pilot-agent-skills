@@ -3,9 +3,6 @@
 Run a sub-command once per item of a list. Use when a step must repeat over a resolved set
 (apps in a space, rows from a query, IDs from an API) rather than once.
 
-Resolve the executor contract live before use (`automation-pilot:get_command_contract`). Field tables are
-a 2026-10-14 snapshot, not proof of the target tenant's contract.
-
 ## Contents
 
 - [When to use](#when-to-use)
@@ -18,30 +15,30 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## When to use
 
-- **Order matters, or later items depend on earlier side effects, or you want one execution** →
-  `utils-sapcp:ForEach:2` (runs the sub-command sequentially, inside the current execution).
-- **Independent items, throughput, and per-child execution IDs** → `utils-sapcp:ParallelForEach:1`
-  (triggers separate child executions in batches and polls them).
+- When order matters, later items depend on earlier side effects, or you want one execution, use
+  `utils-sapcp:ForEach:2`. It runs the sub-command sequentially, inside the current execution.
+- When items are independent and you need throughput and per-child execution IDs, use
+  `utils-sapcp:ParallelForEach:1`. It triggers separate child executions in batches and polls them.
 
 ## Executor IDs & variants
 
 | Executor | Model |
 |----------|-------|
-| `utils-sapcp:ForEach:2` | Sequential, in-execution. **Use `:2`, not the deprecated `:1`.** |
+| `utils-sapcp:ForEach:2` | Sequential, in-execution. Use `:2`, not the deprecated `:1`. |
 | `utils-sapcp:ParallelForEach:1` | Parallel child executions, batched + polled |
 
 ## Shared inputs
 
-Required: **`command`** and **`inputs`**.
+Required: `command` and `inputs`.
 
 | Field | Notes |
 |-------|-------|
-| `command` | ID of the sub-command. **Must be a literal, not a dynamic expression.** |
-| `inputs` | Expression resolving to an **array** — one entry per iteration. |
-| `inputMapping` | **Stringified JSON object; every value must be a quoted string** (`"key":"$(expr)"`). An unquoted value is rejected at deploy (`"must be a valid JSON object with static keys"`). A quoted `$(expr)` resolving to an object or array is passed to the sub-command **typed**, so no `toEscapedJson` is needed. Default `{}`. |
+| `command` | ID of the sub-command. Must be a literal, not a dynamic expression. |
+| `inputs` | Expression resolving to an array, one entry per iteration. |
+| `inputMapping` | Stringified JSON object; every value must be a quoted string (`"key":"$(expr)"`). An unquoted value is rejected at deploy (`"must be a valid JSON object with static keys"`). A quoted `$(expr)` resolving to an object or array is passed to the sub-command typed, so no `toEscapedJson` is needed. Default `{}`. |
 
-Reach the current element with the ForEach step's **own alias**:
-`$(.<thisAlias>.current.item)` (object items: `$(.<thisAlias>.current.item.name)`). Do **not**
+Reach the current element with the ForEach step's own alias:
+`$(.<thisAlias>.current.item)` (object items: `$(.<thisAlias>.current.item.name)`). Do not
 use the list step's alias.
 
 ## `ParallelForEach:1`-only inputs
@@ -56,9 +53,9 @@ use the list step's alias.
 
 ## Outputs & how to read them
 
-- `ForEach:2` → `outputs`: array of each run's output, in input order. Collect with `$(.<alias>.output.outputs)`.
-- `ParallelForEach:1` → `outputs` (per-item results, in order; `null` when `mode` does not collect)
-  and `executionsMetadata`: array of `{execution, status, batchIndex}` giving each child's ID.
+- `ForEach:2` outputs `outputs`: an array of each run's output, in input order. Collect it with `$(.<alias>.output.outputs)`.
+- `ParallelForEach:1` outputs `outputs` (per-item results, in order; `null` when `mode` does not collect)
+  and `executionsMetadata`: an array of `{execution, status, batchIndex}` giving each child's ID.
 
 ## Minimal snippets
 
@@ -102,10 +99,10 @@ Parallel (`ParallelForEach:1`):
 
 ## Gotchas
 
-- **`command` cannot be a dynamic expression.** It is a fixed command ID.
-- `inputMapping` is a **stringified** JSON object, and `inputs` must resolve to an **array**.
-- **Quote every mapping value, including object and array ones.** `"payload":"$(.<thisAlias>.current.item.payload)"` delivers the object to the sub-command typed. Writing it unquoted (`"payload":$(...)`) breaks static-JSON validity and is rejected at deploy. Do not reach for `toEscapedJson` here — the quotes alone are enough.
-- Reach the element with the ForEach's **own** alias (`$(.<thisAlias>.current.item)`), never the
+- `command` cannot be a dynamic expression. It is a fixed command ID.
+- `inputMapping` is a stringified JSON object, and `inputs` must resolve to an array.
+- Quote every mapping value, including object and array ones. `"payload":"$(.<thisAlias>.current.item.payload)"` delivers the object to the sub-command typed. Writing it unquoted (`"payload":$(...)`) breaks static-JSON validity and is rejected at deploy. Do not reach for `toEscapedJson` here; the quotes alone are enough.
+- Reach the element with the ForEach's own alias (`$(.<thisAlias>.current.item)`), never the
   list step's alias. This is a frequent copy-paste error.
 - Guard the step with `when` on `$(.listStep.output.X | length) GREATER_THAN "0"` so an empty
   list is skipped rather than erroring. If the parent exposes iterator results, map skipped output

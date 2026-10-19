@@ -171,6 +171,10 @@ Messages should help the caller act without exposing credentials or secret-beari
 For HTTP calls that may echo secrets, use the executor's body-omission control and an appropriate
 sensitive-output variant.
 
+`errorMessages[].when` must carry a real condition block: the engine rejects both `null` and an
+empty-conditions block (`{"semantic":"OR","conditions":[]}`) with `when ... is null`. This differs
+from a listener's `when`, which treats `null` as unconditional.
+
 ## Initial delay
 
 `{"interval":"30s","when":null}` delays an executor unconditionally. Add a condition block to

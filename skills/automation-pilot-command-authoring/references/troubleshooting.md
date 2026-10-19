@@ -1,7 +1,7 @@
 # Command-authoring troubleshooting
 
 Read this after deployment validation or a runtime failure identifies an authoring symptom. Each
-next action names the owning material; load it directly from the skill's reference table rather
+next action names the owning material. Load it directly from the skill's reference table rather
 than treating this table as another copy of its contract.
 
 | Symptom | Likely cause | Next action |

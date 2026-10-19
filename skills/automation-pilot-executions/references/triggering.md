@@ -1,4 +1,4 @@
-# Triggering Executions
+# Triggering executions
 
 Read this before creating an execution. It defines the request shape, input encoding, and safeguards against accidental duplicate runs.
 

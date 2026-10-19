@@ -56,7 +56,7 @@ Add a value to a nested array without mutating the rest of the object:
 toObject | { "configurationParameters": .configurationParameters + { "owners": .configurationParameters.owners + ["Monica"] } }
 ```
 
-Mind the direction — `has` takes the key and tests the piped-in object; `valueIn` takes the container and tests the piped-in value:
+Mind the direction. `has` takes the key and tests the piped-in object; `valueIn` takes the container and tests the piped-in value:
 
 ```text
 .getResource.output.headers | toObject | has("ETag")   # does the object have this key?

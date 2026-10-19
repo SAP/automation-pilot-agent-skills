@@ -11,7 +11,7 @@ express every multi-month cadence (every two months, quarterly, semi-annual, ann
   every two months = `[1, 3, 5, 7, 9, 11]`, semi-annual = `[1, 7]`, annual = a single month.
 - A `day` absent from a listed month is skipped for that month. For example, `days: [31]`
   triggers only in listed months that have a 31st. There is no "last day of the month"
-  primitive; choose a day present in every selected month when every occurrence must run.
+  option; choose a day present in every selected month when every occurrence must run.
 - Anchor quarters to the user's fiscal calendar if they have one; the examples assume
   calendar quarters.
 

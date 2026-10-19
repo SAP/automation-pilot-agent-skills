@@ -12,7 +12,7 @@ description: >
 
 ## Goal
 
-Publish a stable, safe client-facing tool surface backed by existing Automation Pilot commands, and keep that surface correct over its lifetime.
+Publish a stable, safe client-facing set of tools backed by existing Automation Pilot commands, and keep those tools correct over their lifetime.
 
 ## Required inputs
 
@@ -42,7 +42,7 @@ For values Automation Pilot should inject at call time, find reusable Inputs wit
 
 Done when every injected Input exists, supplies compatible keys, and removes only the intended parameters from the client-facing schema without exposing stored values.
 
-#### Step 3: Design the client-facing surface
+#### Step 3: Design the client-facing tools
 
 For each tool, derive its name, title, behavioral hints, enabled state, and wait behavior from the command's real behavior. Write server `instructions` that explain what the server fronts, when to use each tool, how related tools fit together, and any safety or workflow constraints.
 
@@ -88,7 +88,7 @@ Done when every exposed tool is mapped to its command and non-secret injected In
 
 ## Definition of done
 
-The published surface matches inspected command and Input contracts, uses stable client-facing
+The published tools match inspected command and Input contracts, use stable client-facing
 names and accurate hints, and keeps credentials out of the definition. A create or update is read
 back and matches the complete intended server. Lifecycle actions are verified, and explanations
 account for every exposed tool without revealing stored values.

@@ -32,7 +32,7 @@ Treat the execution-shaped fixture as the expression root. Reproduce the relevan
 }
 ```
 
-- `.` is the current pipeline scope. `$` reaches the global root. Because `.` is rebound by `|`, `map`, `filter`, `select`, and similar, use `$` (for example `$.execution.input.name`) to reach execution data from inside those. Dropping the `$` — `filter(.name == .execution.input.itemName)` — looks for that path on each element and silently finds nothing; a common cause of a predicate matching nothing.
+- `.` is the current pipeline scope. `$` reaches the global root. Because `.` is rebound by `|`, `map`, `filter`, `select`, and similar, use `$` (for example `$.execution.input.name`) to reach execution data from inside those. Dropping the `$`, as in `filter(.name == .execution.input.itemName)`, looks for that path on each element and silently finds nothing. This is a common cause of a predicate matching nothing.
 - Command data paths:
   - `.execution.input.<key>` — command input values.
   - `.execution.metadata.<key>` — execution metadata (`executionId`, `commandId`, `startTime`, `tenantId`, tags, and others).
@@ -40,8 +40,8 @@ Treat the execution-shaped fixture as the expression root. Reproduce the relevan
   - `.<alias>.output.<key>` — an earlier executor's output value.
   - `.<httpAlias>.output.status` — HTTP status code as a number; compare it numerically inside expressions.
   - `.<alias>.executed`, `.<alias>.retriesCount`, `.<alias>.repetitionsCount` — whether an executor ran, was retried, or was repeated.
-- Only earlier executor outputs are available. A conditionally skipped executor may not expose the expected output — its path resolves to `null`. Default it with `.alias.output.key // fallback`; this already covers the skipped case, so do not wrap it in `if .alias.executed then (.alias.output.key // fallback) else fallback end`, which restates what `//` does.
-- Object and array values can cross executor or command output boundaries as JSON-encoded strings. Apply `toObject` (object strings) or `toArray` (array strings) before selecting inside them. Selecting directly — `.childStep.output.obj.someKey` on an unparsed string — returns `null`, and picking the wrong converter (`toObject` on an array string) yields the same silent `null`.
+- Only earlier executor outputs are available. A conditionally skipped executor may not expose the expected output; its path resolves to `null`. Default it with `.alias.output.key // fallback`; this already covers the skipped case, so do not wrap it in `if .alias.executed then (.alias.output.key // fallback) else fallback end`, which restates what `//` does.
+- Object and array values can cross executor or command output boundaries as JSON-encoded strings. Apply `toObject` (object strings) or `toArray` (array strings) before selecting inside them. Selecting directly, as in `.childStep.output.obj.someKey` on an unparsed string, returns `null`, and picking the wrong converter (`toObject` on an array string) yields the same silent `null`.
 
 ## Scope restrictions
 

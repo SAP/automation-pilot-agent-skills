@@ -81,7 +81,7 @@ Automation Pilot does not copy service tags from the source. It creates `autopi:
 
 Put a tag on the command when it should apply to each run, on the schedule when it should apply to that recurring run, or in the trigger request for one run. Preserve existing schedule tags during updates unless the user asks to remove or replace them.
 
-## Service tags worth recognizing
+## Common service tags
 
 Use service tags to interpret and filter returned resources. Users do not author these tags. Common examples include:
 

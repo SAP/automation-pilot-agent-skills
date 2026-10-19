@@ -16,7 +16,7 @@ Inside any of these argument expressions `.` is the current element, not the roo
 | `add` | none | sum, merge, or concatenate the elements of an array |
 | `flatten` / `flatten(N)` | optional `N`, an integer depth | flatten all levels, or `N` levels |
 
-To keep the matching elements of an array, use `filter(cond)` — it is the single-step form and returns an array. Reserve `select` for a value stream (inside `reduce`, or after `.[]`): `map(select(cond))` is the verbose spelling of `filter(cond)`, and `map(select(cond) | f)` is `filter(cond) | map(f)`.
+To keep the matching elements of an array, use `filter(cond)`. It is the single-step form and returns an array. Reserve `select` for a value stream (inside `reduce`, or after `.[]`): `map(select(cond))` is the verbose spelling of `filter(cond)`, and `map(select(cond) | f)` is `filter(cond) | map(f)`.
 
 ## Order and dedup
 
@@ -95,7 +95,7 @@ Sum a field across an array with `reduce` (a syntactic form, not a call; the inp
 reduce .getItems.output.items[] as $item (0; . + $item.count)
 ```
 
-Pick the element with the largest field — use `maxBy(f)`, not a bare `max`:
+Pick the element with the largest field with `maxBy(f)`, not a bare `max`:
 
 ```text
 .getItems.output.items | maxBy(.priority)        # the whole element, not just .priority

@@ -1,4 +1,4 @@
-# Execution History
+# Execution history
 
 Read this for execution lookup, health sweeps, reliability questions, and history analytics.
 

@@ -17,7 +17,7 @@ Arithmetic, conditionals, variables, and the stream operators.
 
 | Construct | Form | Arguments |
 |---|---|---|
-| Conditional | `if cond then A else B end` | `cond` boolean; `A`/`B` expressions. `elif cond then …` chains. `else` is **required** — the engine rejects `if cond then A end` with "Expected 'else'" (unlike stock jq, where `else` is optional) |
+| Conditional | `if cond then A else B end` | `cond` boolean; `A`/`B` expressions. `elif cond then …` chains. `else` is **required**; the engine rejects `if cond then A end` with "Expected 'else'" (unlike stock jq, where `else` is optional) |
 | Variable binding | `expr as $x \| ...` | `expr` is any expression; `$x` is the binding name. For each value of `expr`, run the rest with `$x` bound to it and the original input as `.` |
 | Alternative | `A // B` | `A`, `B` expressions. Emits every value of stream `A` that is neither `false` nor `null`; falls back to `B` only when `A` produces nothing but `false`/`null` (or no value at all) |
 | Pipe | `A \| B` | feed `A`'s output into `B` |
@@ -54,7 +54,7 @@ Choose a value by condition:
 if .getResource.output.status == 200 then "ok" else "retry" end
 ```
 
-Default a possibly-missing scalar with `//` — safe here because the left side is a single value, not a stream or a boolean:
+Default a possibly-missing scalar with `//`, safe here because the left side is a single value, not a stream or a boolean:
 
 ```text
 .getResource.output.region // "unknown"

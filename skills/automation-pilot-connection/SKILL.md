@@ -14,7 +14,7 @@ Call `automation-pilot:get_connection_info` and report its non-secret summary.
 
 ## Verdict
 
-Open the response with one verdict on its own line, each prefixed with its emoji, then the supporting summary:
+Open the response with one verdict on its own line, prefixed with its emoji. Follow it with the supporting summary.
 
 - ✅ **Healthy:** the call succeeded and `permissions` contains `Read`, `Write`, and `Execute`.
 - ⚠️ **Degraded:** the call succeeded but lacks one or more required permissions. Name each missing permission and the affected skills.

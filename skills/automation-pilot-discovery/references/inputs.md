@@ -4,7 +4,7 @@ Read this when finding, inspecting, or recommending Automation Pilot Inputs. An 
 
 ## Evidence from the tools
 
-`automation-pilot:list_inputs` filters by `catalog_id` or tags and returns only the general fields — `id`, `catalog`, `name`, `description`, and `tags` — so use it to find candidates by name, purpose, and tags. `automation-pilot:get_input` reads one exact `catalog:name:version` ID and returns the full non-secret metadata. Both deliberately omit stored values.
+`automation-pilot:list_inputs` filters by `catalog_id` or tags and returns only the general fields (`id`, `catalog`, `name`, `description`, and `tags`), so use it to find candidates by name, purpose, and tags. `automation-pilot:get_input` reads one exact `catalog:name:version` ID and returns the full non-secret metadata. Both deliberately omit stored values.
 
 `list_inputs` surfaces for each candidate:
 

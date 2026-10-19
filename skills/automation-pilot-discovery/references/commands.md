@@ -4,17 +4,17 @@ Read this when finding, inspecting, comparing, or reusing commands. It defines t
 
 ## Evidence from the tools
 
-Discovery funnels through three tools, from cheap and broad to full and narrow:
+Discovery uses three tools, from cheap and broad to full and narrow:
 
-1. `automation-pilot:list_commands` returns only the general fields of each command — `id` in `catalog:name:version` form, `catalog`, `name`, `description`, and `tags` — and filters by `catalog_id` or tags. It does not return `inputKeys`, `outputKeys`, issues, or `executors`. Use it to find candidates by name, description, and tags (including lifecycle tags).
-2. `automation-pilot:get_command_contract` returns one command's caller-facing contract — `inputKeys`, `outputKeys`, version, tags, and the identifying fields — without the `executors` implementation. Call it on each shortlisted candidate to judge the contract.
+1. `automation-pilot:list_commands` returns only the general fields of each command (`id` in `catalog:name:version` form, `catalog`, `name`, `description`, and `tags`) and filters by `catalog_id` or tags. It does not return `inputKeys`, `outputKeys`, issues, or `executors`. Use it to find candidates by name, description, and tags (including lifecycle tags).
+2. `automation-pilot:get_command_contract` returns one command's caller-facing contract (`inputKeys`, `outputKeys`, version, tags, and the identifying fields) without the `executors` implementation. Call it on each shortlisted candidate to judge the contract.
 3. `automation-pilot:get_command` returns the full definition, including the `executors` tree and `issues`. Call it only when conditions, retries, repeats, validation, child commands, or validation issues can change fit.
 
-Resolve a candidate just far enough down this funnel to decide its fit: stop at the contract when the inputs and outputs settle the question, and read the full definition only when internal behavior matters.
+Resolve a candidate just far enough down this sequence to decide its fit. Stop at the contract when the inputs and outputs settle the question, and read the full definition only when internal behavior matters.
 
 ## Searching
 
-Search across these surfaces:
+Search across these:
 
 - The intended action and synonyms used by the product or target service.
 - The exact resource type; an application, application instance, service instance, binding, deployment, and pod are distinct.
@@ -31,20 +31,20 @@ Scope by catalog or tag when possible to keep listings focused and relevant. Bro
 
 Weigh every candidate on:
 
-1. **Intent:** whether it performs the requested outcome or only a related operation.
-2. **Resource:** whether it targets the exact resource type.
-3. **Contract:** whether the caller can safely supply every required input, including sensitive keys through reusable Inputs, and whether the outputs support downstream needs.
-4. **Behavior:** whether waits, retries, conditions, validation, and child commands match the requested semantics.
-5. **Abstraction:** whether a complete operation or a lower-level primitive best fits the intended use.
-6. **Lifecycle:** whether it is current, deprecated, or points to a replacement.
-7. **Ownership:** whether it is SAP-provided or tenant content; apply the same fit criteria to both.
+1. **Intent.** Whether it performs the requested outcome or only a related operation.
+2. **Resource.** Whether it targets the exact resource type.
+3. **Contract.** Whether the caller can safely supply every required input, including sensitive keys through reusable Inputs, and whether the outputs support downstream needs.
+4. **Behavior.** Whether waits, retries, conditions, validation, and child commands match the requested semantics.
+5. **Abstraction.** Whether a complete operation or a lower-level building block best fits the intended use.
+6. **Lifecycle.** Whether it is current, deprecated, or points to a replacement.
+7. **Ownership.** Whether it is SAP-provided or tenant content; apply the same fit criteria to both.
 
 Assign exactly one primary role:
 
-- `DIRECT_USE` — performs the requested operation with a usable contract and behavior.
-- `BUILDING_BLOCK` — performs a required sub-operation suitable for composition.
-- `REFERENCE_IMPLEMENTATION` — is useful as a design example but not as the reusable operation itself.
-- `NOT_SUITABLE` — fails a material intent, resource, contract, behavior, or lifecycle requirement.
+- `DIRECT_USE`. Performs the requested operation with a usable contract and behavior.
+- `BUILDING_BLOCK`. Performs a required sub-operation suitable for composition.
+- `REFERENCE_IMPLEMENTATION`. Useful as a design example but not as the reusable operation itself.
+- `NOT_SUITABLE`. Fails a material intent, resource, contract, behavior, or lifecycle requirement.
 
 Record secondary usefulness in notes rather than assigning multiple primary roles. Confidence reflects inspected evidence: `HIGH` requires the relevant contract (from `get_command_contract`) and behavior (from `get_command`) to be confirmed; `MEDIUM` means the name, description, and contract suggest fit but material internals remain unchecked; `LOW` means relevance is plausible from the name and description alone but the contract and suitability are unresolved.
 

@@ -33,10 +33,10 @@ Pin down, in this order:
 
 1. **Contract:** the input keys the caller supplies (name, type, required, sensitive, allowed values) and the output keys the command exposes. Design the contract for the caller rather than the underlying APIs.
 2. **Shape:** reuse an existing SAP built-in directly when one atomic operation fits; author a tenant command as a composite with a `configuration` that orchestrates one or more executors. Use multiple executors for data flow, conditions, polling, or batching.
-3. **Flow:** the ordered executors in a composite, what each consumes and produces, and where data crosses between them. Choose the reference by user goal: [call an API](references/commands/http.md), [run custom code or a CLI](references/commands/scripting.md), [query or change HANA data](references/commands/sql.md), or [process a collection](references/commands/iteration.md). Read the matching example when one exists. Before you commit to any composed executor or Input, read its contract live (see "Resolve everything live").
+3. **Flow:** the ordered executors in a composite, what each consumes and produces, and where data crosses between them. Load the executor reference for each step from the [reference table](#references-and-examples) below, and read the matching example when one exists. Trust those references for the built-ins they document; for any other executor or Input, read its contract live before you commit to it (see "Resolve everything live").
 4. **Resilience:** transient failures that need `autoRetry`, asynchronous operations that need `repeat` polling, conditional steps (`when`), postconditions (`validate`), and `errorMessages` written for the caller. The [pattern cookbook](references/patterns.md) has the composition shapes for these.
 
-Done when the contract, shape, flow, and resilience are each decided **and** every composed executor's and Input's contract has been read live.
+Done when the contract, shape, flow, and resilience are each decided **and** every executor or Input *not* covered by a command reference has had its contract read live.
 
 ### Step 2: Write the command
 
@@ -74,7 +74,7 @@ Done when `issues` is empty and a representative run produces the intended outpu
 
 ## Resolve everything live
 
-**Before using any composed executor or Input's name, keys, or version, read its contract from the tenant.** Catalog contents change, so an example or a remembered contract never confirms what the tenant exposes now; infer the version from the live read, never from a name.
+**The built-ins documented in the [command references](#references-and-examples) (HTTP, scripting, SQL, iteration, execution orchestration, human-in-the-loop) are authoritative. Trust their IDs, versions, keys, and usage as written, with no live read.** For anything else, meaning any other catalog command used as an executor or any reusable Input, read its contract from the tenant before using its name, keys, or version. Catalog contents change, so an example or a remembered contract never confirms what the tenant exposes now; infer the version from the live read, never from a name.
 
 - A **command executor** resolves with `automation-pilot:get_command_contract` (contract only) or `automation-pilot:get_command` (full definition plus validation `issues`).
 - A reusable **Input** (anything in a key's `allowedValuesFromInputKeys` or a `configuration.values[].inputReference`, such as `metadata-sapcp:CfRegionData:1`) resolves with `automation-pilot:get_input`. An Input ID 404s on `get_command`.
@@ -95,6 +95,8 @@ Prefer a fitting existing command over rebuilding the same operation from HTTP o
 | Run custom code or a CLI | [scripting](references/commands/scripting.md) |
 | Query or change HANA data | [SQL](references/commands/sql.md) |
 | Process a collection sequentially or in parallel | [iteration](references/commands/iteration.md) |
+| Start, await, or inspect a separate execution (async/complex flows) | [execution orchestration](references/commands/execution-orchestration.md) |
+| Pause for a human decision or free-text input (HITL) | [human-in-the-loop](references/commands/human-in-the-loop.md) |
 | Diagnose deployment validation or runtime authoring symptoms | [troubleshooting](references/troubleshooting.md) |
 | Apply tags, inheritance, retention, priority, or execution logging | Use the `automation-pilot-tags` skill |
 
@@ -108,11 +110,11 @@ reference directly. Reference files are terminal leaves; all cross-topic routing
 
 | Flow | Template |
 |------|----------|
-| Sequential in-execution batching | [`ProcessAppsBatch.command.json`](examples/ProcessAppsBatch.command.json) |
-| Parallel child executions | [`ProcessItemsInParallel.command.json`](examples/ProcessItemsInParallel.command.json) |
-| Polling an asynchronous operation | [`WaitForOperation.command.json`](examples/WaitForOperation.command.json) |
-| Resolving an identifier and chaining the result | [`ResolveAndGetResource.command.json`](examples/ResolveAndGetResource.command.json) |
-| Retrying transient HTTP failures | [`GetResourceWithRetry.command.json`](examples/GetResourceWithRetry.command.json) |
+| Sequential in-execution batching | [`ProcessAppsBatch.command.json`](assets/ProcessAppsBatch.command.json) |
+| Parallel child executions | [`ProcessItemsInParallel.command.json`](assets/ProcessItemsInParallel.command.json) |
+| Polling an asynchronous operation | [`WaitForOperation.command.json`](assets/WaitForOperation.command.json) |
+| Resolving an identifier and chaining the result | [`ResolveAndGetResource.command.json`](assets/ResolveAndGetResource.command.json) |
+| Retrying transient HTTP failures | [`GetResourceWithRetry.command.json`](assets/GetResourceWithRetry.command.json) |
 
 ## Handoffs
 

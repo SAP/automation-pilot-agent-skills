@@ -1,4 +1,4 @@
-# Execution Troubleshooting
+# Execution troubleshooting
 
 Collect execution evidence before matching an error pattern.
 

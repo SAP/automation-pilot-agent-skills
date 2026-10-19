@@ -3,9 +3,6 @@
 Run a SQL statement against an SAP HANA Cloud instance from a command step: a query that
 feeds later steps, a DML/DDL change, or a stored-procedure call.
 
-Resolve the executor contract live before use (`automation-pilot:get_command_contract`). Field tables are
-a 2026-10-14 snapshot, not proof of the target tenant's contract.
-
 ## Contents
 
 - [When to use](#when-to-use)
@@ -18,10 +15,10 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## When to use
 
-- Read or change data in HANA Cloud directly over JDBC → `ExecuteHanaCloudSqlStatement:1`.
-- The result set can contain sensitive data → `SensitiveExecuteHanaCloudSqlStatement:1`
-  (both `statement`, `parameters`, `result`, and `metadata` are then treated as sensitive).
-- Reach an on-premise HANA via SAP Cloud Connector → set `sccEnabled:"true"` (+ `sccLocationId`).
+- To read or change data in HANA Cloud directly over JDBC, use `ExecuteHanaCloudSqlStatement:1`.
+- When the result set can contain sensitive data, use `SensitiveExecuteHanaCloudSqlStatement:1`,
+  which treats `statement`, `parameters`, `result`, and `metadata` as sensitive.
+- To reach an on-premise HANA via SAP Cloud Connector, set `sccEnabled:"true"` (plus `sccLocationId`).
 
 ## Executor IDs & variants
 
@@ -32,7 +29,7 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## Key inputs
 
-Required: **`statement`** (the SQL) and **`connectionUrl`** (JDBC).
+Required: `statement` (the SQL) and `connectionUrl` (JDBC).
 
 | Field | Default | Notes |
 |-------|---------|-------|
@@ -42,7 +39,7 @@ Required: **`statement`** (the SQL) and **`connectionUrl`** (JDBC).
 | `user` + `password` | — | Basic (database-user) auth. `password` is sensitive. |
 | `clientCert` | — | Client-certificate auth: PKCS#8 key + X.509 cert(s), PEM (optionally Base64). Sensitive. |
 | `resultRowFormat` | `ARRAY` | `ARRAY` → each row `[v1,v2,…]`; `OBJECT` → `{"COL":v,…}` keyed by column name. |
-| `resultTransformer` | — | Dynamic-expression syntax **without** an outer `$()`; replaces `result`. Start with `toObject`/`toArray` (the result is a string). See "Result transformation" below. |
+| `resultTransformer` | — | Dynamic-expression syntax without an outer `$()`; replaces `result`. Start with `toObject`/`toArray` (the result is a string). See "Result transformation" below. |
 | `succeedOnErrorCodes` | `[]` | Error codes treated as success. Example: `["2xx","3xxx","708","-5"]`. |
 | `succeedOnTimeout` | `false` | `true` → a timeout does not fail the step. |
 | `timeout` | `3` | **1–90 seconds.** |
@@ -52,7 +49,6 @@ Required: **`statement`** (the SQL) and **`connectionUrl`** (JDBC).
 ### Authentication (pick one)
 - **Basic:** `user` + `password`.
 - **Client certificate:** `clientCert` (and `trustedCerts` for the server chain if needed).
-
 ## Outputs & how to read them
 
 | Output | Type | Meaning |
@@ -63,14 +59,14 @@ Required: **`statement`** (the SQL) and **`connectionUrl`** (JDBC).
 | `errorMessage` | string | Set when the statement fails. |
 | `errorCode` | number | Set when the statement fails. |
 
-- `result` is a **string**, so parse before indexing: `$(.runSql.output.result | toArray)`.
+- `result` is a string, so parse before indexing: `$(.runSql.output.result | toArray)`.
   With `resultRowFormat:"OBJECT"`, a cell is `$(.runSql.output.result | toArray[0][0].ID)`;
   with `ARRAY` it is positional `… | toArray[0][0][0]`.
 - Note the double nesting: `result[<resultSetIndex>][<rowIndex>]`.
 
 ## Result transformation
 
-`resultTransformer` runs dynamic-expression syntax on the `result` string **without** the outer
+`resultTransformer` runs dynamic-expression syntax on the `result` string without the outer
 `$()` wrapper, and the transformed value replaces `result`. The transformer field is a normal
 string, so it can still contain `$()` substitutions resolved from execution data before the
 result expression runs. The result arrives as a string, so start with `toObject`/`toArray`. Use
@@ -112,5 +108,5 @@ toArray[0] | map(.ID)
 - `result` is nested as result-set, then row, then column; a single-query single-row read is
   `result[0][0]`, not `result[0]`.
 - `timeout` outside 1–90 is rejected.
-- Use the `Sensitive*` variant only when the **result** can carry secrets.
+- Use the `Sensitive*` variant only when the result can carry secrets.
 - The connection string must be JDBC and may only carry the allowed JDBC properties listed above.

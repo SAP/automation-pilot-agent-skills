@@ -8,7 +8,7 @@ Fires on the listed day(s) of **every** month.
 
 - No month selector. It runs every month and cannot be restricted to selected months.
 - `days: [31]` only fires in months that have a 31st; shorter months skip it without error.
-  There is **no "last day of the month"** primitive. Safe choices present in every
+  There is **no "last day of the month"** option. Safe choices present in every
   month are `1` (first) or `28`.
 - "Twice a month" uses two days, e.g. `days: [1, 15]`. It does not mean "every two
   months."

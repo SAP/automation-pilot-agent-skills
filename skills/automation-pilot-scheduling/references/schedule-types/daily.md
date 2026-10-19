@@ -6,7 +6,7 @@ Fires every day at each hour x minute combination listed.
 
 ## Constraints and gotchas
 
-- The cartesian product bites here: `hours: [9, 17], minutes: [0, 30]` is four runs
+- The cartesian product applies here. `hours: [9, 17], minutes: [0, 30]` is four runs
   (09:00, 09:30, 17:00, 17:30), not two. For distinct times that are not a clean product,
   confirm with the user.
 

@@ -2,11 +2,7 @@
 
 Run a shell, Python, Node.js, or PowerShell script inside a command step. Reach for a script
 only when the logic is awkward to express as a dedicated catalog command, a plain `HttpRequest`,
-or an engine expression (its genuine fit is a CLI tool or multi-step glue). The "When to use"
-check below comes first.
-
-Resolve the executor contract live before use (`automation-pilot:get_command_contract`). Field tables are
-a 2026-10-14 snapshot, not proof of the target tenant's contract.
+or an engine expression (its genuine fit is a CLI tool or multi-step glue).
 
 ## Contents
 
@@ -19,12 +15,12 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## When to use
 
-- **First, check whether a script is needed at all.** A **dedicated catalog command** (e.g. `utils-sapcp:ParseCertificate:1` for certificate expiry, or another `utils-sapcp:*`/domain command) or a **dynamic expression** (the engine's own functions — `toDate`/`fromDate`, hashing, encoding, string and collection ops) often does the job with no runtime and clearer intent. Run discovery for a fitting command, and consult the dynamic-expressions skill, before hand-rolling a script. Write a script only for the logic that neither covers.
-- Arbitrary shell logic → `scripts-sapcp:ExecuteScript:2` (bash, plain-text script).
-- Python, with pip packages → `ExecutePythonScript:1`.
-- Node.js, with npm packages / a private registry → `ExecuteNodeJsScript:1`.
-- PowerShell → `ExecutePowerShellScript:1`.
-- Script output can contain secrets → the matching **`Sensitive*`** variant.
+- **First, check whether a script is needed at all.** A dedicated catalog command (e.g. `utils-sapcp:ParseCertificate:1` for certificate expiry, or another `utils-sapcp:*`/domain command) often does the job with no runtime and clearer intent. So does a dynamic expression, using the engine's own functions for dates (`toDate`/`fromDate`), hashing, encoding, and string and collection ops. Run discovery for a fitting command, and consult the dynamic-expressions skill, before hand-rolling a script. Write a script only for the logic that neither covers.
+- For arbitrary shell logic, use `scripts-sapcp:ExecuteScript:2` (bash, plain-text script).
+- For Python with pip packages, use `ExecutePythonScript:1`.
+- For Node.js with npm packages or a private registry, use `ExecuteNodeJsScript:1`.
+- For PowerShell, use `ExecutePowerShellScript:1`.
+- When script output can contain secrets, use the matching `Sensitive*` variant.
 
 ## Executor IDs & variants
 
@@ -45,9 +41,9 @@ Required: **`script`**.
 | Field | Default | Notes |
 |-------|---------|-------|
 | `parameters` | `[]` | Positional args passed to the script, in order (array). For Python/Node the first parameter is always the script file. |
-| `stdin` | — | **Sensitive**; passed to the script's standard input. Separate multiple values with `\n`. |
+| `stdin` | — | Sensitive; passed to the script's standard input. Separate multiple values with `\n`. |
 | `environment` | `{}` | Env vars available during execution (object). |
-| `timeout` | `30` (Python `60`) | **15–600 seconds.** On timeout the script is killed with exit code `124`. |
+| `timeout` | `30` (Python `60`) | 15–600 seconds. On timeout the script is killed with exit code `124`. |
 | `successExitCodes` | `["0"]` | Exit codes treated as success. `["x"]` = every code is success. |
 
 ### Python-only
@@ -55,7 +51,7 @@ Required: **`script`**.
 
 ### Node.js-only
 - `packages` (`[]`): npm packages.
-- `npmrc`: **sensitive** `.npmrc` content (private registry URLs/tokens); never persisted or logged.
+- `npmrc`: sensitive `.npmrc` content (private registry URLs/tokens); never persisted or logged.
 
 ## Outputs & how to read them
 
@@ -107,7 +103,7 @@ Python with packages:
 ## Gotchas
 
 - `timeout` outside 15–600 is rejected; a long package install plus run must fit the budget.
-- Use the `Sensitive*` variant only when the **output** can carry secrets. Sensitive `stdin`,
+- Use the `Sensitive*` variant only when the output can carry secrets. Sensitive `stdin`,
   `npmrc`, or env values alone do not require it; those inputs are already protected and the
   ordinary executor keeps a non-sensitive output visible.
 - Output is capped at the last 64 KB, so have the script print only what the caller needs.

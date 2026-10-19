@@ -30,8 +30,8 @@ Most conversions take no argument; they transform the piped-in value (`.body | t
 | Element | Does |
 |---|---|
 | `toBase64` / `fromBase64` | Base64 encode / decode |
-| `toUrlEncoded` / `fromUrlEncoded` | form (`application/x-www-form-urlencoded`) encode / decode — a space becomes `+` (e.g. `"a b&c"` → `a+b%26c`) |
-| `toPercentEncoded` | percent-encode — a space becomes `%20` (e.g. `"a b&c"` → `a%20b%26c`) |
+| `toUrlEncoded` / `fromUrlEncoded` | form (`application/x-www-form-urlencoded`) encode / decode, where a space becomes `+` (e.g. `"a b&c"` → `a+b%26c`) |
+| `toPercentEncoded` | percent-encode, where a space becomes `%20` (e.g. `"a b&c"` → `a%20b%26c`) |
 | `toEscapedJson` | stringify and escape all JSON special characters |
 | `toMd5` / `toSha256` | MD5 / SHA-256 hash |
 
