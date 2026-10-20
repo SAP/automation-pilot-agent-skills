@@ -32,7 +32,7 @@ Read this before creating, replacing, or deleting an Automation Pilot Input.
 }
 ```
 
-Automation Pilot creates a new Input at version 1. An Input belongs to exactly one catalog and its name/version pair must be unique there. Use a tenant-owned catalog; reserve `-sapcp` catalogs for SAP-provided content. An Input supports at most 32 keys.
+Automation Pilot creates a new Input at version 1. An Input belongs to exactly one catalog and its name/version pair must be unique there. Use a custom catalog; reserve `-sapcp` catalogs for SAP-provided content. An Input supports at most 32 keys.
 
 Key names may contain English letters, digits, dashes, and underscores; use the repository's camelCase convention for authored keys. Supported types are `string`, `number`, `boolean`, `array`, and `object`.
 

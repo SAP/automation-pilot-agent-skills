@@ -214,9 +214,67 @@ def delete_scheduled_execution(
 
 
 @mcp.tool
-def list_catalogs() -> list[dict[str, Any]]:
-    """List Automation Pilot catalogs available to the current service identity."""
-    return _request("GET", "/catalogs")
+def list_catalogs(
+    custom: Annotated[
+        bool | None,
+        Field(description="Filter by whether catalogs are custom to the tenant."),
+    ] = None,
+    provided: Annotated[
+        bool | None,
+        Field(description="Filter by whether catalogs are provided by SAP."),
+    ] = None,
+    tag: Annotated[
+        str | list[str] | None,
+        Field(description="Tag or tags used to filter catalogs."),
+    ] = None,
+) -> list[dict[str, Any]]:
+    """List Automation Pilot catalogs, optionally filtered by type or tags."""
+    params = {"own": custom, "provided": provided, "tag": tag}
+    return _request("GET", "/catalogs", params=params)
+
+
+@mcp.tool
+def get_catalog(
+    catalog_id: Annotated[
+        str,
+        Field(description="Exact Automation Pilot catalog ID."),
+    ],
+) -> dict[str, Any]:
+    """Retrieve one Automation Pilot catalog by ID."""
+    resource_id = quote(catalog_id, safe="")
+    return _request("GET", f"/catalogs/{resource_id}")
+
+
+@mcp.tool
+def create_catalog(
+    display_name: Annotated[
+        str,
+        Field(
+            description="Human-readable catalog name.",
+            min_length=1,
+            max_length=64,
+            pattern=r"^[a-zA-Z0-9-_ ]+$",
+        ),
+    ],
+    technical_name: Annotated[
+        str,
+        Field(
+            description="Immutable alphanumeric technical name used in the catalog ID.",
+            min_length=1,
+            max_length=10,
+            pattern=r"^[a-zA-Z0-9]+$",
+        ),
+    ],
+    description: Annotated[
+        str | None,
+        Field(description="Optional human-readable catalog description.", max_length=512),
+    ] = None,
+) -> dict[str, Any]:
+    """Create a custom Automation Pilot catalog."""
+    catalog = {"name": display_name, "technicalName": technical_name}
+    if description is not None:
+        catalog["description"] = description
+    return _request("POST", "/catalogs", body=catalog)
 
 
 # --- Commands ---

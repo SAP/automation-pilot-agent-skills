@@ -4,7 +4,7 @@
 
 ### Build and operate SAP BTP automations from your coding agent.
 
-A plugin for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It gives your agent **10 skills** that encode SAP [Automation Pilot](https://help.sap.com/docs/automation-pilot) patterns and uses MCP to connect to your tenant. You describe the automation you want; the agent builds, deploys, runs, and monitors it without leaving your editor.
+A plugin for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). It gives your agent **11 skills** that encode SAP [Automation Pilot](https://help.sap.com/docs/automation-pilot) patterns and uses MCP to connect to your tenant. You describe the automation you want; the agent builds, deploys, runs, and monitors it without leaving your editor.
 
 Review and test generated content against the target tenant before you rely on it.
 
@@ -28,6 +28,7 @@ Full control over your Automation Pilot resources from your favorite coding agen
 - **Build:** Author Commands and multi-step automations — HTTP calls, scripts, polling loops, sequential and parallel batch operations — and deploy them straight to your tenant.
 - **Debug and extend:** Pull an existing Command down, understand it, fix a broken dynamic expression, add a step, or harden its error handling, then push it back.
 - **Manage Inputs:** Create reusable configuration and credential sets, rotate values safely, and update their definitions.
+- **Manage catalogs:** Create custom catalogs with validated identities and descriptions.
 - **Operate:** Trigger Commands, follow Executions live, read logs and outputs, and troubleshoot failures without leaving your editor.
 - **Schedule:** Create, inspect, change, enable, disable, and delete scheduled Executions.
 - **Embedded expertise:** The skills carry Command structure, expression syntax, security requirements, and error-handling patterns. You describe *what* to automate; the agent handles the *how*.
@@ -42,6 +43,7 @@ Full control over your Automation Pilot resources from your favorite coding agen
 | [**Executions**](skills/automation-pilot-executions/SKILL.md) | Trigger Commands, monitor and troubleshoot Executions, and browse execution history |
 | [**Dynamic Expressions**](skills/automation-pilot-dynamic-expressions/SKILL.md) | Craft and debug Automation Pilot dynamic expressions against representative data |
 | [**Discovery**](skills/automation-pilot-discovery/SKILL.md) | Find and inspect catalogs, Commands, and reusable Inputs; judge reuse fit before building |
+| [**Catalogs**](skills/automation-pilot-catalogs/SKILL.md) | Create custom catalogs with validation and read-back verification |
 | [**Inputs**](skills/automation-pilot-inputs/SKILL.md) | Create and maintain reusable configuration and credential Inputs without exposing stored values |
 | [**Scheduling**](skills/automation-pilot-scheduling/SKILL.md) | Create, inspect, change, enable, disable, and delete scheduled Executions |
 | [**MCP Server Management**](skills/automation-pilot-mcp-servers/SKILL.md) | Create and maintain Automation Pilot MCP server definitions that expose Commands as tools |
