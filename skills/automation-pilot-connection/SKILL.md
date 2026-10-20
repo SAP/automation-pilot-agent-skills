@@ -5,12 +5,12 @@ metadata:
   author: SAP
   version: 1.0.0
 description: >
-  Validates the configured SAP Automation Pilot connection and reports its non-secret account summary. Use when a user wants to test connectivity, confirm which tenant is configured, or inspect effective access.
+  Validates the configured SAP Automation Pilot connection and reports its account summary. Use when a user wants to test connectivity, confirm which tenant is configured, or inspect effective access.
 ---
 
 # SAP Automation Pilot Connection
 
-Call `automation-pilot:get_connection_info` and report its non-secret summary.
+Call `automation-pilot:get_connection_info` and report its summary.
 
 ## Verdict
 
