@@ -14,6 +14,7 @@ Review and test generated content against the target tenant before you rely on i
 - [Skills](#skills)
 - [Installation](#installation)
 - [Updating](#updating)
+- [Verify the connection](#verify-the-connection)
 - [How to use](#how-to-use)
 - [About SAP Automation Pilot](#about-sap-automation-pilot)
 - [Resources](#resources)
@@ -94,6 +95,14 @@ marketplace.
 To enable automatic updates, run `/plugin` in a Claude Code session and open the
 **Marketplaces** tab. Select the marketplace, then choose **Enable auto-update**. You can
 turn automatic updates off from the same menu by choosing **Disable auto-update**.
+
+## Verify the connection
+
+After installing or updating, call the connection skill to verify that the plugin and configured connection work:
+
+```text
+/automation-pilot-skills:automation-pilot-connection
+```
 
 ## How to use
 
