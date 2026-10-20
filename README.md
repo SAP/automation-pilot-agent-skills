@@ -79,8 +79,6 @@ claude
 | `hostname` | `emea.autopilot.cloud.sap` (tenant host, no `https://`) |
 | `token` | `ap_T000000R4-claude-1_EHOA...` (service account bearer token) |
 
-That's it — Autopilot Skills is ready to use.
-
 ## Updating
 
 To update the plugin manually, run this command in your terminal:
