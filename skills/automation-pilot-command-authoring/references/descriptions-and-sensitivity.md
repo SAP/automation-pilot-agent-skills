@@ -12,6 +12,17 @@ the implementation behind it.
   protects the input and its output is non-sensitive.
 - Describe a secret's purpose and expected source without including an example secret value.
 
+### Sensitive outputs read back redacted
+
+A sensitive output is redacted on API readback: `get_execution` shows it as `null` or `****`. The
+engine propagates sensitivity through derived values, so `get_execution` also redacts a value
+computed from a sensitive output. Readback alone cannot distinguish this redaction from a broken
+expression.
+
+- Assert a sensitive value's expected shape in a `validate` on a composing step. The engine
+  evaluates the real value and returns only the validation result.
+- Keep the `Sensitive*` executor; a plain variant exposes the secret in logs and readback.
+
 ## Standard input descriptions
 
 Use one matching sentence exactly, or begin with it and append task-specific constraints.

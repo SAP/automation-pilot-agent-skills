@@ -175,6 +175,10 @@ sensitive-output variant.
 empty-conditions block (`{"semantic":"OR","conditions":[]}`) with `when ... is null`. This differs
 from a listener's `when`, which treats `null` as unconditional.
 
+An `errorMessages` entry customizes a failure message; it does not define whether the step fails.
+Use a `validate` block to define the acceptable result. A result outside that condition fails
+validation, and a matching `errorMessages[].when` supplies the caller-facing text.
+
 ## Initial delay
 
 `{"interval":"30s","when":null}` delays an executor unconditionally. Add a condition block to
