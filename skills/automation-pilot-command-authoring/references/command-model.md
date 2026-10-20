@@ -33,10 +33,8 @@ even when it wraps one built-in command.
 | Command or Input name | PascalCase | `RestartCfApp`, `BtpCredentials` |
 | Input/output key | camelCase | `resourceName`, `subAccount` |
 | Executor alias | camelCase | `getResource`, `createInstance` |
-| Default tenant catalog | `welcome-` plus tenant suffix | `welcome-<<<TENANT_ID>>>` |
 
-Author commands in a tenant catalog. Use the tenant's `welcome-<<<TENANT_ID>>>` catalog unless the
-user names another tenant catalog. Reserve the `-sapcp` suffix for SAP-provided catalogs.
+Author commands in a tenant catalog that the user has confirmed; there is no default catalog, so propose a catalog name/id and ask before creating content. Reserve the `-sapcp` suffix for SAP-provided catalogs.
 
 ## Input keys
 

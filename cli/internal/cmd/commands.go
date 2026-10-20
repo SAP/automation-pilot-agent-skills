@@ -52,7 +52,7 @@ func catalogListVerb(c *cmdContext, args []string, name, endpoint, example, coll
 	if err != nil {
 		return err
 	}
-	// The catalog comes from the global --catalog flag or AUTOPI_DEFAULT_CATALOG.
+	// The catalog filter comes from the global --catalog flag.
 	q := url.Values{}
 	if cfg.Catalog != "" {
 		q.Set("catalog", cfg.Catalog)

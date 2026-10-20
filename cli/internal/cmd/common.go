@@ -58,7 +58,7 @@ func bindGlobal(fs *flag.FlagSet) *globalFlags {
 	fs.StringVar(&g.host, "host", "", "API hostname (env AUTOPI_HOSTNAME)")
 	fs.StringVar(&g.user, "user", "", "API username (env AUTOPI_USERNAME)")
 	fs.StringVar(&g.password, "password", "", "API password (env AUTOPI_PASSWORD; prefer the env var)")
-	fs.StringVar(&g.catalog, "catalog", "", "default catalog (env AUTOPI_DEFAULT_CATALOG)")
+	fs.StringVar(&g.catalog, "catalog", "", "filter list/ids by catalog")
 	fs.StringVar(&g.output, "output", "", "output format: json (default) or raw")
 	fs.StringVar(&g.timeout, "timeout", "", "request timeout, e.g. 30s (env AUTOPI_TIMEOUT)")
 	fs.BoolVar(&g.printRequest, "print-request", false, "render the request (auth masked) without sending it")

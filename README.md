@@ -118,7 +118,6 @@ Create a `.env` file in the repository root:
 export AUTOPI_HOSTNAME='emea.autopilot.cloud.sap'
 export AUTOPI_USERNAME='your-tenant-technical-user'
 export AUTOPI_PASSWORD='your-password-here'
-export AUTOPI_DEFAULT_CATALOG='your-catalog-id'
 ```
 
 **Important notes:**

@@ -29,7 +29,6 @@ func printOverview(c *cmdContext) {
 	fmt.Fprintln(w, "  AUTOPI_HOSTNAME         regional host, e.g. emea.autopilot.cloud.sap")
 	fmt.Fprintln(w, "  AUTOPI_USERNAME         tenant technical user")
 	fmt.Fprintln(w, "  AUTOPI_PASSWORD         password (read from env; never logged)")
-	fmt.Fprintln(w, "  AUTOPI_DEFAULT_CATALOG  default --catalog for list/ids")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "  Supported hosts:")
 	for _, h := range client.SupportedHosts {
@@ -37,7 +36,8 @@ func printOverview(c *cmdContext) {
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "GLOBAL FLAGS")
-	fmt.Fprintln(w, "  --host --user --password --catalog   override the env vars")
+	fmt.Fprintln(w, "  --host --user --password             override the env vars")
+	fmt.Fprintln(w, "  --catalog <id>                       filter list/ids by catalog")
 	fmt.Fprintln(w, "  --output json|raw                    pretty JSON (default) or verbatim")
 	fmt.Fprintln(w, "  --print-request                      render the request (auth masked), do not send")
 	fmt.Fprintln(w, "  --timeout 30s   --insecure")

@@ -13,7 +13,7 @@ type Config struct {
 	Host     string // AUTOPI_HOSTNAME, e.g. emea.autopilot.cloud.sap
 	User     string // AUTOPI_USERNAME
 	Password string // AUTOPI_PASSWORD (never logged)
-	Catalog  string // AUTOPI_DEFAULT_CATALOG, used as default where --catalog is omitted
+	Catalog  string // --catalog filter for commands/inputs list verbs (no env default)
 
 	Timeout      time.Duration
 	Output       string // "json" (pretty) or "raw" (passthrough)
@@ -46,7 +46,6 @@ func FromEnv() Config {
 		Host:     os.Getenv("AUTOPI_HOSTNAME"),
 		User:     os.Getenv("AUTOPI_USERNAME"),
 		Password: os.Getenv("AUTOPI_PASSWORD"),
-		Catalog:  os.Getenv("AUTOPI_DEFAULT_CATALOG"),
 		Timeout:  30 * time.Second,
 		Output:   "json",
 	}

@@ -24,3 +24,6 @@ Thumbs.db
 
 # Local convenience symlinks / Claude workspace scratch
 .claude/skills
+
+# local build artifacts directory
+build/

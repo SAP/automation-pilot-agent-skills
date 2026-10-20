@@ -18,7 +18,6 @@ func newServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, func()
 	t.Setenv("AUTOPI_HOSTNAME", host)
 	t.Setenv("AUTOPI_USERNAME", "u")
 	t.Setenv("AUTOPI_PASSWORD", "p")
-	t.Setenv("AUTOPI_DEFAULT_CATALOG", "")
 	return srv, nil
 }
 
@@ -37,7 +36,6 @@ func TestEveryVerbFlagSet(t *testing.T) {
 	t.Setenv("AUTOPI_HOSTNAME", "h")
 	t.Setenv("AUTOPI_USERNAME", "u")
 	t.Setenv("AUTOPI_PASSWORD", "p")
-	t.Setenv("AUTOPI_DEFAULT_CATALOG", "cat")
 	for _, r := range registry() {
 		for _, v := range r.verbs {
 			name := r.name + " " + v.name

@@ -11,7 +11,7 @@ endpoint a verb calls, and an example.
 | `--host` | `AUTOPI_HOSTNAME` | regional API host |
 | `--user` | `AUTOPI_USERNAME` | tenant technical user |
 | `--password` | `AUTOPI_PASSWORD` | password (prefer the env var; never logged) |
-| `--catalog` | `AUTOPI_DEFAULT_CATALOG` | default catalog for list/ids |
+| `--catalog` | — | explicit catalog filter for `list`/`ids` (no default, no env var) |
 | `--output json\|raw` | — | pretty JSON (default) or verbatim body |
 | `--timeout 30s` | `AUTOPI_TIMEOUT` | request deadline |
 | `--print-request` | — | render METHOD/URL/headers/body (auth masked), don't send |

@@ -23,7 +23,6 @@ never written to logs, echoed, or embedded in URLs.
 export AUTOPI_HOSTNAME="emea.autopilot.cloud.sap"
 export AUTOPI_USERNAME="your-username"
 export AUTOPI_PASSWORD="your-password"
-export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"   # optional; default --catalog for list/ids
 ```
 
 **Supported regional hosts:**
@@ -37,8 +36,12 @@ export AUTOPI_DEFAULT_CATALOG="mycommands-<<<TENANT_ID>>>"   # optional; default
 | `ksa.autopilot.cloud.sap`  | Saudi Arabia |
 
 Each flag has an env var and vice-versa: `--host`/`AUTOPI_HOSTNAME`,
-`--user`/`AUTOPI_USERNAME`, `--password`/`AUTOPI_PASSWORD`, `--catalog`/`AUTOPI_DEFAULT_CATALOG`.
+`--user`/`AUTOPI_USERNAME`, `--password`/`AUTOPI_PASSWORD`.
 A flag always wins over the env var. Prefer the env var for the password.
+
+There is **no default catalog**. `--catalog` is an explicit filter on the `list`/`ids`
+verbs only, and it has no env var — name the catalog every time you list or author
+content. Never assume a catalog: propose a catalog id and confirm it with the user.
 
 ## Running it
 
