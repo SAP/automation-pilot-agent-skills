@@ -10,6 +10,12 @@ description: >
 
 # SAP Automation Pilot MCP Servers
 
+MCP writes require `GenAI` permission in the repository service snapshot; verify it
+with `autopi connection info`.
+
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
+
 ## Goal
 
 Publish a stable, safe client-facing tool surface backed by existing Automation Pilot commands, and keep that surface correct over its lifetime.
@@ -62,13 +68,22 @@ Done when the server and tool names are unique and immutable, instructions and s
 
 Call `autopi mcp-servers create` once with the assembled body. Read the created server back by its returned `id` and compare its name, instructions, enabled state, complete tool set, command mappings, injected Inputs, hints, and wait behavior with the request.
 
-Done when the server ID is captured and the complete read-back matches every intended server and tool field.
+After read-back, check the server endpoint/readiness and the client-visible tool schema using
+the returned endpoint or product UI. Confirm injected keys are absent, remaining parameters
+match the contract, and disabled tools are hidden. Verify GenAI/Execute access as needed.
+A real tool call requires user authorization for its effects. If client access is unavailable,
+report definition verification separately from endpoint/client validation.
+
+Done when the server ID is captured, read-back matches the definition, and readiness/client
+validation is completed or its specific evidence limit is reported.
 
 ### Changing a server
 
 Resolve an indirect reference with `autopi mcp-servers list` when needed. Read the current definition with `autopi mcp-servers get`, change only the requested editable properties, and send the full object with `autopi mcp-servers update`. Preserve every unchanged tool and field because the update replaces the complete definition and `mcpTools` array.
 
-Resolve the backing command and injected Inputs before adding or remapping a tool. Neither a server name nor an existing tool name can be edited. A new name requires creating a replacement server or tool and removing the old one. Warn before replacing or removing a tool because existing clients may depend on its name and schema. Read the result back and verify it.
+Resolve the backing command and injected Inputs before adding or remapping a tool. Neither a server name nor an existing tool name can be edited. A new name requires creating a replacement server or tool and removing the old one. Prepare a migration that lists affected clients and parameter changes before replacing or
+removing a tool. Keep the old surface until clients migrate when that is compatible with the
+request; use existing authorization for the exact replacement scope. Read the result back and verify it.
 
 Done when requested editable fields changed, all untouched tools and fields are preserved, immutable-name replacements are explicit, and the read-back confirms the full definition.
 

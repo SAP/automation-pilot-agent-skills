@@ -43,12 +43,13 @@ const (
 // arrays, so they unmarshal into maps. The map key is the authoritative key
 // name; InputKey carries only the per-key attributes.
 type Doc struct {
-	Name      string                     `json:"name"`
-	Keys      map[string]InputKey        `json:"keys"`      // input-definition keys
-	InputKeys map[string]InputKey        `json:"inputKeys"` // command input schema
-	Tags      map[string]json.RawMessage `json:"tags"`      // flat tag map (keys are all we lint)
-	Raw       json.RawMessage            `json:"-"`
-	Fields    map[string]any             `json:"-"`
+	Name       string                     `json:"name"`
+	Keys       map[string]InputKey        `json:"keys"` // input-definition keys
+	OutputKeys map[string]InputKey        `json:"outputKeys"`
+	InputKeys  map[string]InputKey        `json:"inputKeys"` // command input schema
+	Tags       map[string]json.RawMessage `json:"tags"`      // flat tag map (keys are all we lint)
+	Raw        json.RawMessage            `json:"-"`
+	Fields     map[string]any             `json:"-"`
 }
 
 // InputKey is one key of an input definition or command input schema. The key
@@ -68,6 +69,9 @@ func Parse(b []byte) (*Doc, Kind, error) {
 		return nil, KindUnknown, fmt.Errorf("invalid JSON: %w", err)
 	}
 	_ = json.Unmarshal(b, &d.Fields)
+	if d.Fields == nil {
+		return nil, KindUnknown, fmt.Errorf("artifact must be a JSON object")
+	}
 	d.Raw = append(json.RawMessage(nil), b...)
 	return &d, classify(d.Fields), nil
 }

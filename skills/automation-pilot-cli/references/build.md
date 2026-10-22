@@ -14,7 +14,7 @@ skill stays documentation + binaries only).
 cli/
   go.mod                 module github.com/SAP/automation-pilot-agent-skills/cli (stdlib only, zero requires)
   main.go  version.go    entrypoint; Version injected via -ldflags
-  internal/client/       HTTP client, env+flag config, --print-request renderer
+  internal/client/       HTTP client, env-only connection + operational flags, --print-request renderer
   internal/cmd/          one file per resource + api.go, lint.go, help.go, root.go
   internal/lint/         lint model + rules
   build.sh  Makefile      cross-compilation
@@ -25,7 +25,7 @@ Dependencies: **none beyond the Go standard library** (`net/http`, `encoding/jso
 
 ## Prerequisites
 
-A Go toolchain (1.22+) — build-time only. The produced binaries are statically linked
+The Go toolchain pinned in `cli/.go-version` (currently 1.27.2) — build-time only. The produced binaries are statically linked
 with `CGO_ENABLED=0` and have no runtime dependencies.
 
 ```bash
@@ -36,10 +36,9 @@ brew install go
 ## Build all platforms
 
 ```bash
-cd cli
-./build.sh                 # version from `git describe`
-./build.sh v0.2.0          # explicit version
-# or: make build
+cli/build.sh              # from repository root or any working directory
+cli/build.sh v0.2.0        # explicit version
+# or from cli/: make build
 ```
 
 `build.sh` cross-compiles five targets into `../skills/automation-pilot-cli/scripts/bin/`:
@@ -52,9 +51,17 @@ cd cli
 | `linux-arm64`   | linux/arm64 |
 | `windows-amd64` | windows/amd64 (`autopi.exe`) |
 
-Each is built with `CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -X main.Version=$VERSION"`
-— `-trimpath` for reproducibility, `-s -w` to strip debug info (~6–7 MB each). `autopi
-version` prints the embedded version so a committed binary can be traced to a build.
+Each is built with `CGO_ENABLED=0`, `-trimpath`, `-buildvcs=false`, and stripped
+`-s -w` linker flags. `autopi version` embeds the selected version plus the full CLI
+source SHA-256. The default version includes a dirty marker when appropriate.
+`bin/build-manifest.json` records revision, toolchain, flags, source digest, and every
+binary checksum; `bin/SHA256SUMS` is a conventional checksum list. Disabling implicit
+VCS stamps avoids attributing an uncommitted build solely to its predecessor revision.
+
+From `cli/`, run `go run ./tools/buildmeta verify . ../skills/automation-pilot-cli/scripts/bin`
+to check the bundled binaries against their source and checksum manifest. CI also rebuilds
+and compares checksums, tests race/vet, and runs native platform smoke tests. Size depends
+on the Go toolchain; no fixed byte-size range is promised.
 
 ## Other make targets
 

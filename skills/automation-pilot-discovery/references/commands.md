@@ -6,7 +6,7 @@ Read this when finding, inspecting, comparing, or reusing commands. It defines t
 
 Discovery funnels through three tools, from cheap and broad to full and narrow:
 
-1. `autopi commands list` returns only the general fields of each command — `id` in `catalog:name:version` form, `catalog`, `name`, `description`, and `tags` — and filters by `--catalog` or `--tag`. It does not return `inputKeys`, `outputKeys`, issues, or `executors`. Use it to find candidates by name, description, and tags (including lifecycle tags).
+1. `autopi commands list` returns only the general fields of each command — `id` in `catalog:name:version` form, `catalog`, `name`, `description`, and `tags` — and filters by `--catalog` or `--tag`. Its default summary omits `inputKeys`, `outputKeys`, and `executors`; `--include-issues` requests validation issues. Use it to find candidates by name, description, and tags (including lifecycle tags).
 2. `autopi commands contract` returns one command's caller-facing contract — `inputKeys`, `outputKeys`, version, tags, and the identifying fields — without the `executors` implementation. Call it on each shortlisted candidate to judge the contract.
 3. `autopi commands get` returns the full definition, including the `executors` tree and `issues`. Call it only when conditions, retries, repeats, validation, child commands, or validation issues can change fit.
 
@@ -50,7 +50,11 @@ Record secondary usefulness in notes rather than assigning multiple primary role
 
 ## Dependencies and limits
 
-`autopi commands get` returns the `executors` tree. Follow child `commandId` values through nested `subExecutors` when the user's question or fit decision depends on internal behavior. A child command can be a better building block than its parent.
+`autopi commands get` can return an expanded live `executors` tree with `commandId` and
+`subExecutors`; authored files express dependencies through `configuration.executors[].execute`.
+Inspect the shape actually returned and follow both forms when internal behavior affects fit.
+Track visited command IDs to stop cycles, and bound traversal (for example 50 unique commands).
+Report unvisited dependencies when the bound is reached. Resolve each dependency's contract live. A child command can be a better building block than its parent.
 
 The tools expose forward dependencies only. They cannot find every command that uses a given command, so discovery evidence cannot establish that a command is safe to change.
 

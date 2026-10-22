@@ -103,7 +103,7 @@
     "configuration": {
         "values": [],
         "output": {
-            "processedCount": "$((.processApps.output.outputs // []) | length)",
+            "processedCount": "$((.processApps.output.outputs | toArray) // [] | length)",
             "results": "$(.processApps.output.outputs // [])"
         },
         "executors": [
@@ -137,7 +137,7 @@
                     "inputMapping": "{\"message\":\"$(.processApps.current.item)\"}"
                 },
                 "description": "Pass each application name through Void in sequence",
-                "progressMessage": "Processing $(.listApps.output.resourceNames | length) application(s)...",
+                "progressMessage": "Processing $(.listApps.output.resourceNames | toArray | length) application(s)...",
                 "initialDelay": null,
                 "pause": null,
                 "when": {
@@ -147,7 +147,7 @@
                             "semantic": "OR",
                             "cases": [
                                 {
-                                    "expression": "$(.listApps.output.resourceNames | length)",
+                                    "expression": "$(.listApps.output.resourceNames | toArray | length)",
                                     "operator": "GREATER_THAN",
                                     "semantic": "OR",
                                     "values": [

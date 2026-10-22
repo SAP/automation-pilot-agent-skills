@@ -30,8 +30,12 @@ Format a round like this:
 
 Each round of answers reshapes the tree: settled decisions push the frontier outward. Recompute it and ask the next round.
 
-Present each decision with a recommended answer, then wait. Ask the user to settle exclusions, destructive steps, and protected resources.
+Keep settled decisions from the conversation; do not interview them again. Ask only about
+consequential gaps. For each new decision, present a recommendation, then wait. Ask the user to settle exclusions, destructive steps, and protected resources.
 
 The frontier becomes empty after the user settles each item when its prerequisites allow: **outcome** (one sentence from the user's perspective) · **target systems** (specific names) · **scope and exclusions** (protected resources; state-changing automations need explicit exclusions) · **trigger model** (on-demand / scheduled / event) · **inputs** (type, requiredness, sensitivity, source) · **outputs** · **failure behavior** (including post-failure guarantees) · **success criteria**.
 
-Finish the interview after visiting each branch and recording each assumption. **Wait for the user to confirm the shared understanding before acting.** Then write the specification in the conversation. Include the outcome, target systems, scope and exclusions, trigger model, inputs, outputs, failure behavior, assumptions, dependencies, and acceptance scenarios. Mark each accepted default as vetoable. Include a failure path and an exclusion case. Reference secret sources without recording their values. Ask discovery to find reusable building blocks, then give the specification to command authoring.
+Finish the interview after visiting each branch and recording each assumption. Write the concrete specification in the conversation before asking for approval. Use discovery
+reads to verify feasibility and dependencies while preparing it. If implementation is already
+authorized and no consequential gaps remain, proceed from the settled specification; otherwise
+request final approval of that reviewable specification. Include the outcome, target systems, scope and exclusions, trigger model, inputs, outputs, failure behavior, assumptions, dependencies, and acceptance scenarios. Mark each accepted default as vetoable. Include a failure path and an exclusion case. Reference secret sources without recording their values. Ask discovery to find reusable building blocks, then give the specification to command authoring.

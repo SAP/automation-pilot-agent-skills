@@ -1,6 +1,8 @@
 package client
 
 import (
+	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -8,16 +10,15 @@ import (
 )
 
 // Config holds everything needed to talk to a SAP Automation Pilot tenant.
-// Values are resolved flag > environment variable > error (for required fields).
+// Connection fields come only from the environment; operational options use flags.
 type Config struct {
-	Host     string // AUTOPI_HOSTNAME, e.g. emea.autopilot.cloud.sap
-	User     string // AUTOPI_USERNAME
-	Password string // AUTOPI_PASSWORD (never logged)
-	Catalog  string // --catalog filter for commands/inputs list verbs (no env default)
+	Host    string // AUTOMATION_PILOT_HOSTNAME, e.g. emea.autopilot.cloud.sap
+	Token   string // AUTOMATION_PILOT_TOKEN, without the Bearer prefix (never logged)
+	Catalog string // --catalog filter for commands/inputs list verbs (no env default)
 
 	Timeout      time.Duration
 	Output       string // "json" (pretty) or "raw" (passthrough)
-	PrintRequest bool   // dry-run: render the request instead of sending it
+	PrintRequest bool   // request preview: render the request instead of sending it
 	Insecure     bool   // skip TLS verification (escape hatch, off by default)
 }
 
@@ -39,24 +40,14 @@ func (e *ConfigError) Error() string { return e.msg }
 // NewConfigError builds a ConfigError with the given message.
 func NewConfigError(msg string) *ConfigError { return &ConfigError{msg: msg} }
 
-// FromEnv seeds a Config from the AUTOPI_* environment variables. Flag parsing
-// in the cmd layer overrides any field the user set explicitly.
+// FromEnv reads the two connection variables and defaults operational options.
 func FromEnv() Config {
-	c := Config{
-		Host:     os.Getenv("AUTOPI_HOSTNAME"),
-		User:     os.Getenv("AUTOPI_USERNAME"),
-		Password: os.Getenv("AUTOPI_PASSWORD"),
-		Timeout:  30 * time.Second,
-		Output:   "json",
+	return Config{
+		Host:    os.Getenv("AUTOMATION_PILOT_HOSTNAME"),
+		Token:   os.Getenv("AUTOMATION_PILOT_TOKEN"),
+		Timeout: 30 * time.Second,
+		Output:  "json",
 	}
-	if v := os.Getenv("AUTOPI_TIMEOUT"); v != "" {
-		if d, err := time.ParseDuration(v); err == nil {
-			c.Timeout = d
-		} else if n, err := strconv.Atoi(v); err == nil {
-			c.Timeout = time.Duration(n) * time.Second
-		}
-	}
-	return c
 }
 
 // Validate checks that the required connection fields are present. It is called
@@ -65,16 +56,43 @@ func FromEnv() Config {
 func (c Config) Validate() error {
 	var missing []string
 	if strings.TrimSpace(c.Host) == "" {
-		missing = append(missing, "host (--host / AUTOPI_HOSTNAME)")
+		missing = append(missing, "AUTOMATION_PILOT_HOSTNAME")
 	}
-	if strings.TrimSpace(c.User) == "" {
-		missing = append(missing, "user (--user / AUTOPI_USERNAME)")
-	}
-	if strings.TrimSpace(c.Password) == "" {
-		missing = append(missing, "password (--password / AUTOPI_PASSWORD)")
+	if strings.TrimSpace(c.Token) == "" {
+		missing = append(missing, "AUTOMATION_PILOT_TOKEN")
 	}
 	if len(missing) > 0 {
-		return NewConfigError("missing required credentials: " + strings.Join(missing, ", "))
+		return NewConfigError("missing required configuration: " + strings.Join(missing, ", "))
+	}
+	u, err := url.Parse("https://" + c.Host)
+	if err != nil || u.Host != c.Host || u.Hostname() == "" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || strings.ContainsAny(c.Host, " /\\\t\r\n?#") {
+		return NewConfigError("AUTOMATION_PILOT_HOSTNAME must be a hostname, optionally with a port, without scheme or path")
+	}
+	if ip := net.ParseIP(u.Hostname()); ip == nil {
+		if len(u.Hostname()) > 253 {
+			return NewConfigError("invalid AUTOMATION_PILOT_HOSTNAME")
+		}
+		for _, label := range strings.Split(u.Hostname(), ".") {
+			if label == "" || len(label) > 63 || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
+				return NewConfigError("invalid AUTOMATION_PILOT_HOSTNAME")
+			}
+			for _, r := range label {
+				if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-') {
+					return NewConfigError("invalid AUTOMATION_PILOT_HOSTNAME")
+				}
+			}
+		}
+	}
+	if port := u.Port(); port != "" {
+		n, err := strconv.Atoi(port)
+		if err != nil || n < 1 || n > 65535 {
+			return NewConfigError("invalid AUTOMATION_PILOT_HOSTNAME port")
+		}
+	} else if strings.HasSuffix(c.Host, ":") {
+		return NewConfigError("invalid AUTOMATION_PILOT_HOSTNAME port")
+	}
+	if strings.ContainsAny(c.Token, " \t\r\n") || strings.HasPrefix(strings.ToLower(c.Token), "bearer ") {
+		return NewConfigError("AUTOMATION_PILOT_TOKEN must be a token without whitespace or the Bearer prefix")
 	}
 	return nil
 }

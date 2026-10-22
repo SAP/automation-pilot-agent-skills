@@ -1,0 +1,18 @@
+{
+  "provenance": {
+    "reviewed": "2026-10-22",
+    "source": "Repository expression documentation and repaired templates",
+    "validation": "Predicted outputs; not evaluated by the SAP engine",
+    "serviceVersion": null
+  },
+  "cases": [
+    {"name":"array count","fixture":{"listApps":{"output":{"resourceNames":"[\"a\",\"b\"]"}}},"expression":".listApps.output.resourceNames | toArray | length","expectedWire":"2"},
+    {"name":"empty array","fixture":{"listApps":{"output":{"resourceNames":"[]"}}},"expression":".listApps.output.resourceNames | toArray | length","expectedWire":"0"},
+    {"name":"skipped batch","fixture":{"processApps":{"executed":false}},"expression":"(.processApps.output.outputs | toArray) // [] | length","expectedWire":"0"},
+    {"name":"filter serialized items","fixture":{"getItems":{"output":{"items":"[{\"id\":\"a\",\"state\":\"Stopped\"},{\"id\":\"b\",\"state\":\"Running\"}]"}}},"expression":".getItems.output.items | toArray | filter(.state == \"Stopped\") | map(.id)","expectedSemantic":["a"]},
+    {"name":"fallback stream","fixture":{},"expression":"(null, 1, null, 2) // \"fb\"","expectedWire":"12"},
+    {"name":"all null fallback","fixture":{},"expression":"(null, false) // \"fb\"","expectedWire":"fb"},
+    {"name":"comparison precedence","fixture":{"n":5},"expression":".n == 5 // false","expectedWire":"true"},
+    {"name":"executor retry path","fixture":{"getResource":{"retriesCount":2,"output":{"status":"200"}}},"expression":"(.getResource.retriesCount // 0) == 0","expectedWire":"false"}
+  ]
+}

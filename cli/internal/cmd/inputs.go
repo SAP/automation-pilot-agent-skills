@@ -24,7 +24,7 @@ func inputsResource() *resource {
 
 func inputsList(c *cmdContext, args []string) error {
 	return catalogListVerb(c, args, "inputs list", "GET /inputs",
-		"autopi inputs list --catalog my-cat --tag type:credentials", "inputs", false, true)
+		"autopi inputs list --catalog my-cat --tag type=credentials", "inputs", false, true)
 }
 
 // inputsGet mirrors the MCP get_input tool: the secret-bearing values block is
@@ -55,20 +55,10 @@ func inputsGet(c *cmdContext, args []string) error {
 	if full || statusOnly || cfg.PrintRequest {
 		return execute(c, cfg, req, statusOnly)
 	}
-	if err := cfg.Validate(); err != nil {
-		return err
+	req.Project = func(b []byte) ([]byte, error) {
+		return client.InputContract(b)
 	}
-	cl := client.New(cfg, c.stdout)
-	res, err := cl.Do(req)
-	if err != nil {
-		if res != nil {
-			cl.Render(c.stdout, res)
-		}
-		return err
-	}
-	res.Body = client.StripKeys(res.Body, "values")
-	cl.Render(c.stdout, res)
-	return nil
+	return execute(c, cfg, req, false)
 }
 
 func inputsCreate(c *cmdContext, args []string) error {
@@ -85,7 +75,7 @@ func inputsUpdate(c *cmdContext, args []string) error {
 // update can't be sent with the wrong header.
 func inputsPatch(c *cmdContext, args []string) error {
 	return writeVerbWithID(c, args, "inputs patch", "PATCH", "application/merge-patch+json", "PATCH /inputs/{id}",
-		`autopi inputs patch my-cat:BtpCredentials:1 --data '{"values":{"password":"new"}}'`, "input id", "inputs")
+		`autopi inputs patch my-cat:BtpCredentials:1 -f - < protected-rotation.json`, "input id", "inputs")
 }
 
 func inputsDelete(c *cmdContext, args []string) error {

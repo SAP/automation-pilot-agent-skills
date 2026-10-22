@@ -141,7 +141,7 @@
                     "maxCount": 3,
                     "delay": "5s",
                     "logic": "INCREMENTAL",
-                    "applyOnValidation": false,
+                    "applyOnValidation": true,
                     "when": {
                         "semantic": "OR",
                         "conditions": [
@@ -149,7 +149,7 @@
                                 "semantic": "OR",
                                 "cases": [
                                     {
-                                        "expression": "$(.getResource.output.status | valueIn([408, 429, 500, 502, 503, 504, -1]))",
+                                        "expression": "$(.getResource.output.status | toNumber | valueIn([408, 429, 500, 502, 503, 504, -1]))",
                                         "operator": "EQUALS",
                                         "semantic": "OR",
                                         "values": [

@@ -41,13 +41,13 @@ func triggerVerb(c *cmdContext, args []string, name, endpoint, example, collecti
 	fs.StringVar(&data, "data", "", "inline JSON event body, or @file")
 	fs.StringVar(&commandRef, "command-reference", "", "command id to trigger (required)")
 	setUsage(fs, endpoint, name+" --command-reference ID (-f FILE | --data JSON)", example)
-	if _, err := parseArgs(fs, args); err != nil {
+	if err := parseNoArgs(fs, args); err != nil {
 		return err
 	}
 	if commandRef == "" {
 		return usagef("missing --command-reference")
 	}
-	body, err := resolveBody(file, data)
+	body, err := resolveBody(c, file, data)
 	if err != nil {
 		return err
 	}

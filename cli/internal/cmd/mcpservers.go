@@ -59,7 +59,7 @@ func listVerb(c *cmdContext, args []string, name, endpoint, example, collection 
 		fs.BoolVar(&full, "full", false, "return complete objects instead of the metadata summary")
 	}
 	setUsage(fs, endpoint, name, example)
-	if _, err := parseArgs(fs, args); err != nil {
+	if err := parseNoArgs(fs, args); err != nil {
 		return err
 	}
 	cfg, err := g.config()

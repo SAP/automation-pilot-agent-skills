@@ -69,7 +69,24 @@
                 },
                 "pause": null,
                 "when": null,
-                "validate": null,
+                "validate": {
+                    "semantic": "AND",
+                    "conditions": [
+                        {
+                            "semantic": "AND",
+                            "cases": [
+                                {
+                                    "expression": "$(.poll.output.body | toObject.state)",
+                                    "operator": "NOT_EQUALS",
+                                    "semantic": "AND",
+                                    "values": [
+                                        "FAILED"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
                 "autoRetry": null,
                 "repeat": {
                     "maxCount": 60,

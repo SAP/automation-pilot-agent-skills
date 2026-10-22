@@ -16,6 +16,7 @@ import (
 
 // cmdContext carries process-wide I/O and metadata through the dispatch tree.
 type cmdContext struct {
+	stdin   io.Reader
 	stdout  io.Writer
 	stderr  io.Writer
 	version string
@@ -45,39 +46,25 @@ func (r *resource) verb(name string) *verb {
 	return nil
 }
 
-// globalFlags are accepted by every verb; they override the AUTOPI_* env vars.
+// globalFlags are operational options accepted by every verb.
 type globalFlags struct {
-	host, user, password, catalog string
-	output, timeout               string
-	printRequest, insecure        bool
+	catalog, output, timeout string
+	printRequest, insecure   bool
 }
 
 // bindGlobal registers the global flags on fs and returns the holder.
 func bindGlobal(fs *flag.FlagSet) *globalFlags {
 	g := &globalFlags{}
-	fs.StringVar(&g.host, "host", "", "API hostname (env AUTOPI_HOSTNAME)")
-	fs.StringVar(&g.user, "user", "", "API username (env AUTOPI_USERNAME)")
-	fs.StringVar(&g.password, "password", "", "API password (env AUTOPI_PASSWORD; prefer the env var)")
-	fs.StringVar(&g.catalog, "catalog", "", "filter list/ids by catalog")
 	fs.StringVar(&g.output, "output", "", "output format: json (default) or raw")
-	fs.StringVar(&g.timeout, "timeout", "", "request timeout, e.g. 30s (env AUTOPI_TIMEOUT)")
+	fs.StringVar(&g.timeout, "timeout", "", "request timeout, e.g. 30s (default 30s)")
 	fs.BoolVar(&g.printRequest, "print-request", false, "render the request (auth masked) without sending it")
 	fs.BoolVar(&g.insecure, "insecure", false, "skip TLS verification (escape hatch)")
 	return g
 }
 
-// config merges env defaults with any explicitly set global flags.
+// config reads connection variables and applies operational flags.
 func (g *globalFlags) config() (client.Config, error) {
 	cfg := client.FromEnv()
-	if g.host != "" {
-		cfg.Host = g.host
-	}
-	if g.user != "" {
-		cfg.User = g.user
-	}
-	if g.password != "" {
-		cfg.Password = g.password
-	}
 	if g.catalog != "" {
 		cfg.Catalog = g.catalog
 	}
@@ -95,6 +82,9 @@ func (g *globalFlags) config() (client.Config, error) {
 			} else {
 				return cfg, usagef("invalid --timeout %q", g.timeout)
 			}
+		}
+		if d <= 0 {
+			return cfg, usagef("--timeout must be positive")
 		}
 		cfg.Timeout = d
 	}
@@ -121,20 +111,59 @@ var errHelpRequested = errors.New("help requested")
 // `commands get <id> --output raw` works). Returns the positional arguments.
 func parseArgs(fs *flag.FlagSet, args []string) ([]string, error) {
 	var positional []string
-	for {
-		if err := fs.Parse(args); err != nil {
-			if errors.Is(err, flag.ErrHelp) {
-				return nil, errHelpRequested
-			}
-			return nil, &usageError{msg: err.Error()}
-		}
-		if fs.NArg() == 0 {
+	var flags []string
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if a == "--" {
+			positional = append(positional, args[i+1:]...)
 			break
 		}
-		positional = append(positional, fs.Arg(0))
-		args = fs.Args()[1:]
+		if !strings.HasPrefix(a, "-") || a == "-" {
+			positional = append(positional, a)
+			continue
+		}
+		flags = append(flags, a)
+		name, _, hasValue := strings.Cut(strings.TrimLeft(a, "-"), "=")
+		f := fs.Lookup(name)
+		if f == nil {
+			continue
+		}
+		if b, ok := f.Value.(interface{ IsBoolFlag() bool }); ok && b.IsBoolFlag() {
+			continue
+		}
+		if !hasValue && i+1 < len(args) {
+			i++
+			flags = append(flags, args[i])
+		}
+	}
+	if err := fs.Parse(flags); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil, errHelpRequested
+		}
+		return nil, &usageError{msg: err.Error()}
 	}
 	return positional, nil
+}
+
+func parseNoArgs(fs *flag.FlagSet, args []string) error {
+	pos, err := parseArgs(fs, args)
+	if err != nil {
+		return err
+	}
+	if len(pos) != 0 {
+		return usagef("unexpected positional arguments for %s", fs.Name())
+	}
+	return nil
+}
+
+func flagSet(fs *flag.FlagSet, name string) bool {
+	set := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			set = true
+		}
+	})
+	return set
 }
 
 // setUsage installs a per-verb --help banner: the endpoint it calls, an optional
@@ -168,13 +197,13 @@ func (s *stringList) Set(v string) error {
 }
 
 // addTagFilters serializes repeatable --tag filters as the server expects them:
-// a tag query is `key=value`, while the CLI accepts the `key:value` convention
-// used everywhere else. A key-only filter (no colon) matches any value and is
-// forwarded as the bare key. Without this translation the raw colon string is
-// sent verbatim and the server silently matches nothing.
+// a tag query is `key=value`. The CLI accepts `key=value` (matching the wire
+// format) so that tag keys containing colons (e.g. `feature:logs`) are not
+// split incorrectly. A key-only filter (no `=`) matches any value and is
+// forwarded as the bare key.
 func addTagFilters(q url.Values, tags stringList) {
 	for _, t := range tags {
-		if k, v, ok := strings.Cut(t, ":"); ok {
+		if k, v, ok := strings.Cut(t, "="); ok {
 			q.Add("tag", k+"="+v)
 		} else {
 			q.Add("tag", t)
@@ -184,13 +213,19 @@ func addTagFilters(q url.Values, tags stringList) {
 
 // resolveBody returns the request body from either -f/--file (a path) or --data
 // (inline JSON, or "@path" curl-style). Exactly one source may be set.
-func resolveBody(file, data string) ([]byte, error) {
+func resolveBody(c *cmdContext, file, data string) ([]byte, error) {
 	switch {
 	case file != "" && data != "":
 		return nil, usagef("use either -f/--file or --data, not both")
 	case file != "":
+		if file == "-" {
+			return readStdin(c)
+		}
 		return readFile(file)
 	case strings.HasPrefix(data, "@"):
+		if data == "@-" {
+			return readStdin(c)
+		}
 		return readFile(strings.TrimPrefix(data, "@"))
 	case data != "":
 		return []byte(data), nil
@@ -199,10 +234,33 @@ func resolveBody(file, data string) ([]byte, error) {
 	}
 }
 
+func readStdin(c *cmdContext) ([]byte, error) {
+	r := c.stdin
+	if r == nil {
+		r = os.Stdin
+	}
+	b, err := io.ReadAll(io.LimitReader(r, (32<<20)+1))
+	if err != nil {
+		return nil, fmt.Errorf("cannot read request body from stdin: %w", err)
+	}
+	if len(b) > 32<<20 {
+		return nil, usagef("request body exceeds 32 MiB limit")
+	}
+	return b, nil
+}
+
 func readFile(path string) ([]byte, error) {
-	b, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, usagef("cannot read %s: %v", path, err)
+	}
+	defer f.Close()
+	b, err := io.ReadAll(io.LimitReader(f, (32<<20)+1))
+	if err != nil {
+		return nil, usagef("cannot read request body: %v", err)
+	}
+	if len(b) > 32<<20 {
+		return nil, usagef("request body exceeds 32 MiB limit")
 	}
 	return b, nil
 }
@@ -217,19 +275,21 @@ func execute(c *cmdContext, cfg client.Config, req client.Request, statusOnly bo
 	if statusOnly {
 		var he *client.HTTPError
 		if res != nil {
-			fmt.Fprintln(c.stdout, res.Status)
-			return nil
+			_, err := fmt.Fprintln(c.stdout, res.Status)
+			return err
 		}
 		if asHTTP(err, &he) {
-			fmt.Fprintln(c.stdout, he.Status)
-			return nil
+			_, writeErr := fmt.Fprintln(c.stdout, he.Status)
+			return writeErr
 		}
 		return err // config/network errors still surface
 	}
 	if err != nil {
 		// Still render any error body the API returned before failing.
 		if res != nil {
-			cl.Render(c.stdout, res)
+			if writeErr := cl.Render(c.stdout, res); writeErr != nil {
+				return writeErr
+			}
 		}
 		return err
 	}
@@ -239,8 +299,18 @@ func execute(c *cmdContext, cfg client.Config, req client.Request, statusOnly bo
 	if req.FilterIDPrefix != "" && res != nil {
 		res.Body = client.FilterIDPrefix(res.Body, req.FilterIDPrefix)
 	}
-	cl.Render(c.stdout, res)
-	return nil
+	return cl.Render(c.stdout, res)
+}
+
+// fetch shares safe API-error rendering with specialized response consumers.
+func fetch(c *cmdContext, cl *client.Client, req client.Request) (*client.Result, error) {
+	res, err := cl.Do(req)
+	if err != nil && res != nil {
+		if writeErr := cl.Render(c.stdout, res); writeErr != nil {
+			return nil, writeErr
+		}
+	}
+	return res, err
 }
 
 func asHTTP(err error, target **client.HTTPError) bool {

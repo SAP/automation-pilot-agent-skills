@@ -51,7 +51,7 @@ Select even numbers from a merged array, as an array:
 Choose a value by condition:
 
 ```text
-if .getResource.output.status == 200 then "ok" else "retry" end
+if (.getResource.output.status | toNumber) == 200 then "ok" else "retry" end
 ```
 
 Default a possibly-missing scalar with `//` — safe here because the left side is a single value, not a stream or a boolean:
@@ -60,8 +60,9 @@ Default a possibly-missing scalar with `//` — safe here because the left side 
 .getResource.output.region // "unknown"
 ```
 
-Parenthesize a comparison on the left of `//`, since `//` binds looser than `==` (without the parentheses, `.n == 5 // false` would parse as `.n == (5 // false)`):
+`//` binds looser than `==`: `.n == 5 // false` parses as `(.n == 5) // false`.
+For a missing retry count, default the numeric value before comparing, and use the executor-level path:
 
 ```text
-(.getResource.output.retriesCount == 0) // false
+(.getResource.retriesCount // 0) == 0
 ```

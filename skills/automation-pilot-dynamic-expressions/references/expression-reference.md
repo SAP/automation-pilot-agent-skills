@@ -6,7 +6,7 @@ Core forms, scope, engine behavior, and limits for SAP Automation Pilot dynamic 
 
 - A dynamic expression is jq-compatible syntax wrapped in `$(` and `)`, for example `$(.execution.input.enabled)`. The text inside must be a valid jq filter.
 - A single `$()` substitution holds one expression. Surrounding literal text belongs outside the `$()` pair.
-- A command value may contain several substitutions, for example `https://$(.execution.input.host)/api/v1/resource/$(.execution.input.resourceId)`, and may embed jq string interpolation inside an expression such as `$("https://host?q=\(.value | toUrlEncoded)")`. Reason about each embedded expression separately, then about the assembled value.
+- A command value may contain several substitutions, for example `https://$(.execution.input.host)/api/v1/resource/$(.execution.input.resourceId | toPercentEncoded)`, and may embed jq string interpolation inside an expression such as `$("https://host?q=\(.value | toUrlEncoded)")`. Reason about each embedded expression separately, then about the assembled value.
 - An HTTP executor's `responseBodyTransformer` receives the same expression syntax without the surrounding `$()` wrapper. It is stored as a normal string, so it can also contain `$()` substitutions resolved from execution data before the transformer runs against the response body, for example `toArray | filter(. == $(.execution.input.expectedNumber))`.
 
 ## Scope and execution-shaped data
@@ -25,7 +25,7 @@ Treat the execution-shaped fixture as the expression root. Reproduce the relevan
     "retriesCount": 0,
     "repetitionsCount": 0,
     "output": {
-      "status": 200,
+      "status": "200",
       "body": "{\"items\":[{\"name\":\"demo\"}]}"
     }
   }
@@ -38,7 +38,7 @@ Treat the execution-shaped fixture as the expression root. Reproduce the relevan
   - `.execution.metadata.<key>` — execution metadata (`executionId`, `commandId`, `startTime`, `tenantId`, tags, and others).
   - `.execution.error.originalMessage` — the original error of a failed execution, before any custom error message overwrites it.
   - `.<alias>.output.<key>` — an earlier executor's output value.
-  - `.<httpAlias>.output.status` — HTTP status code as a number; compare it numerically inside expressions.
+  - `.<httpAlias>.output.status` — HTTP status code uses the documented output wire representation; apply `toNumber` before numeric membership or comparisons.
   - `.<alias>.executed`, `.<alias>.retriesCount`, `.<alias>.repetitionsCount` — whether an executor ran, was retried, or was repeated.
 - Only earlier executor outputs are available. A conditionally skipped executor may not expose the expected output — its path resolves to `null`. Default it with `.alias.output.key // fallback`; this already covers the skipped case, so do not wrap it in `if .alias.executed then (.alias.output.key // fallback) else fallback end`, which restates what `//` does.
 - Object and array values can cross executor or command output boundaries as JSON-encoded strings. Apply `toObject` (object strings) or `toArray` (array strings) before selecting inside them. Selecting directly — `.childStep.output.obj.someKey` on an unparsed string — returns `null`, and picking the wrong converter (`toObject` on an array string) yields the same silent `null`.

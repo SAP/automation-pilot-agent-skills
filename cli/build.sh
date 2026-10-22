@@ -1,27 +1,30 @@
 #!/bin/sh
-# Cross-compiles the autopi CLI for all supported platforms and writes the static
-# binaries into the automation-pilot-cli skill. Requires a Go toolchain (build-time
-# only — the committed binaries have no runtime dependencies).
-#
-# Usage: ./build.sh [version]
+# Usage from any working directory: cli/build.sh [version]
+# Requires the Go toolchain pinned in .go-version. Runtime binaries need no Go.
 set -eu
-
-VERSION="${1:-$(git describe --tags --always 2>/dev/null || echo dev)}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+PINNED="$(cat .go-version)"
+ACTUAL="$(go env GOVERSION)"
+[ "$ACTUAL" = "go$PINNED" ] || { echo "build requires Go $PINNED (found $ACTUAL)" >&2; exit 1; }
+REVISION="$(git rev-parse HEAD)"
+VERSION="${1:-$(git describe --tags --always --dirty)}"
+case "$VERSION" in
+  *[!a-zA-Z0-9._+-]*|'') echo "invalid version" >&2; exit 1 ;;
+esac
+SOURCE_SHA="$(go run ./tools/buildmeta source "$SCRIPT_DIR")"
+VERSION="$VERSION+source.$SOURCE_SHA"
 BIN_DIR="$SCRIPT_DIR/../skills/automation-pilot-cli/scripts/bin"
-
-# GOOS/GOARCH pairs → output subdirectory name.
 TARGETS="darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64"
-
 echo "building autopi $VERSION"
-for t in $TARGETS; do
-  os="${t%/*}"
-  arch="${t#*/}"
-  out="$BIN_DIR/${os}-${arch}/autopi"
-  [ "$os" = "windows" ] && out="${out}.exe"
+for target in $TARGETS; do
+  target_os="${target%/*}"
+  target_arch="${target#*/}"
+  out="$BIN_DIR/${target_os}-${target_arch}/autopi"
+  [ "$target_os" = "windows" ] && out="${out}.exe"
   mkdir -p "$(dirname "$out")"
-  echo "  $os/$arch -> $out"
-  CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
-    go build -trimpath -ldflags "-s -w -X main.Version=$VERSION" -o "$out" "$SCRIPT_DIR"
+  CGO_ENABLED=0 GOOS="$target_os" GOARCH="$target_arch" \
+    go build -trimpath -buildvcs=false -ldflags "-s -w -X main.Version=$VERSION" -o "$out" .
 done
-echo "done"
+go run ./tools/buildmeta manifest "$SCRIPT_DIR" "$BIN_DIR" "$VERSION" "$REVISION"
+echo "built five targets; source digest and checksums recorded"

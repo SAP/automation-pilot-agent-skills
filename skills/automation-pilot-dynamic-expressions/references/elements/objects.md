@@ -60,5 +60,5 @@ Mind the direction — `has` takes the key and tests the piped-in object; `value
 
 ```text
 .getResource.output.headers | toObject | has("ETag")   # does the object have this key?
-.getResource.output.status | valueIn([408, 429, 500])  # is this value one of these?
+.getResource.output.status | toNumber | valueIn([408, 429, 500])  # is this value one of these?
 ```

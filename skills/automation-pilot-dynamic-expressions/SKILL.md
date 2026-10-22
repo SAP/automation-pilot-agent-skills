@@ -36,6 +36,10 @@ An expression is jq-compatible syntax wrapped in `$(` and `)`, evaluated against
 
 Never return a whole container (`.execution`, a bare `.<alias>`, `.<alias>.output`): the engine resolves it to a silent `null`. Reach the specific field. Values that crossed an executor boundary arrive as JSON strings; parse with `toObject`/`toArray` before selecting inside them.
 
+Use the [wire-shaped fixture scenarios](references/fixtures.json) for collection boundaries
+and operator edge cases. Their expected results are documented predictions, not engine test
+results; record service version and observed output when validating them on a tenant.
+
 Read the [expression reference](references/expression-reference.md) for the full fixture shape, expression forms, engine behavior, scope restrictions, and limits before writing a non-trivial expression or diagnosing a failure.
 
 Load the matching element reference when the expression needs functions from that group, and adapt its documented spellings and gotchas:

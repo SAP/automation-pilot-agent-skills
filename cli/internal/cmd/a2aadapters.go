@@ -46,18 +46,25 @@ func a2aGet(c *cmdContext, args []string) error {
 	if err != nil {
 		return err
 	}
+	if statusOnly && showETag {
+		return usagef("--show-etag and --status-only are mutually exclusive")
+	}
 	req := client.Request{Method: "GET", Path: client.JoinPath("a2a-adapters", id)}
 	if showETag && !cfg.PrintRequest {
 		if err := cfg.Validate(); err != nil {
 			return err
 		}
 		cl := client.New(cfg, c.stdout)
-		res, err := cl.Do(req)
+		res, err := fetch(c, cl, req)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(c.stdout, res.Header.Get("ETag"))
-		return nil
+		etag := res.Header.Get("ETag")
+		if etag == "" {
+			return fmt.Errorf("adapter response has no ETag")
+		}
+		_, err = fmt.Fprintln(c.stdout, etag)
+		return err
 	}
 	return execute(c, cfg, req, statusOnly)
 }

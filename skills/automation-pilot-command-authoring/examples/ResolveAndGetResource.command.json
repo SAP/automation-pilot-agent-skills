@@ -204,7 +204,7 @@
                     "maxCount": 3,
                     "delay": "5s",
                     "logic": "INCREMENTAL",
-                    "applyOnValidation": false,
+                    "applyOnValidation": true,
                     "when": {
                         "semantic": "OR",
                         "conditions": [
@@ -212,7 +212,7 @@
                                 "semantic": "OR",
                                 "cases": [
                                     {
-                                        "expression": "$(.getApps.output.status | valueIn([408, 429, 500, 502, 503, 504, -1]))",
+                                        "expression": "$(.getApps.output.status | toNumber | valueIn([408, 429, 500, 502, 503, 504, -1]))",
                                         "operator": "EQUALS",
                                         "semantic": "OR",
                                         "values": [

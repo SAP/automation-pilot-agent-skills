@@ -26,11 +26,14 @@ func catalogsList(c *cmdContext, args []string) error {
 	var tag stringList
 	fs.BoolVar(&own, "own", false, "only catalogs owned by this tenant")
 	fs.BoolVar(&provided, "provided", false, "only catalogs provided by SAP")
-	fs.Var(&tag, "tag", "filter by tag key:value (repeatable)")
+	fs.Var(&tag, "tag", "filter by tag key=value (repeatable)")
 	fs.BoolVar(&full, "full", false, "return complete objects instead of the metadata summary")
-	setUsage(fs, "GET /catalogs", "autopi catalogs list [--own|--provided] [--tag k:v]", "autopi catalogs list --own")
-	if _, err := parseArgs(fs, args); err != nil {
+	setUsage(fs, "GET /catalogs", "autopi catalogs list [--own|--provided] [--tag k=v]", "autopi catalogs list --own")
+	if err := parseNoArgs(fs, args); err != nil {
 		return err
+	}
+	if own && provided {
+		return usagef("--own and --provided are mutually exclusive")
 	}
 	cfg, err := g.config()
 	if err != nil {

@@ -10,6 +10,9 @@ description: >
 
 # SAP Automation Pilot Inputs
 
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
+
 ## Goal
 
 Maintain reusable values without exposing secrets or breaking commands, schedules, executions, or MCP tools that bind them.
@@ -34,7 +37,13 @@ Done when the catalog, unique name, purpose, complete key set, types, descriptio
 
 #### Step 2: Handle values safely
 
-Serialize every stored value as a JSON string regardless of its declared type. Keep secrets out of descriptions, tags, reports, and examples. This plugin has no separate secure secret-ingress channel: do not ask the user to paste a new secret into conversation. Use a secret only when the user has already supplied and authorized it for this mutation. Otherwise stop before the write, return the prepared non-secret contract, and direct the user to populate the Input in the Automation Pilot UI.
+Serialize every stored value as a JSON string regardless of its declared type. Keep secrets out of descriptions, tags, reports, and examples. Use an existing user-authorized secret source (protected file, environment variable, or secret
+manager) without printing it or reading it into conversation. Assemble JSON within a local
+process and pipe it to `autopi inputs create -f -` or `inputs patch -f -`; never interpolate a
+secret into argv or enable shell tracing. Follow the shared CLI operating rules for protected
+temporary payloads and cleanup. If no authorized source exists, finish the non-secret contract
+and let the user populate values through the product UI. Do not request secrets in chat.
+Run `autopi lint <Name>.input.json` on the non-secret definition before creating it.
 
 Done when each value matches its declared type after parsing, sensitive keys are protected, and no secret is repeated in user-facing output.
 

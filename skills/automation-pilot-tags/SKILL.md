@@ -10,6 +10,9 @@ description: >
 
 # Tags in SAP Automation Pilot
 
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
+
 Tags attach metadata to commands, inputs, executions, and scheduled executions. The API represents them as a flat string-to-string map. Use an empty JSON string for a tag with no value:
 
 ```json
@@ -26,14 +29,18 @@ Choose tags for a stated purpose. Regular tags identify and group resources, fea
 | Category | Prefix | User-writable | Purpose |
 |---|---|---|---|
 | Regular | none | Yes | Free-form metadata for grouping, filtering, and selection |
-| Feature | `feature:` | Yes, from the allow-list below | Enables optional product behavior |
+| Feature | `feature:` | Yes, from the supported registry | Enables optional product behavior |
 | Service | `autopi:` | No | Platform-managed lifecycle, origin, status, and lineage metadata |
 
 Use the canonical lowercase prefixes. Service-prefix matching is case-insensitive, so a case variation does not bypass the restriction. Do not create, update, or copy an `autopi:` tag in a user-authored payload. Automation Pilot strips source service tags during triggering and stamps service tags for the new execution.
 
 ## Feature tags
 
-Automation Pilot validates feature tags against a fixed allow-list. All supported feature tags
+Run `autopi policy` for the registry shared by trigger validation and lint (snapshot dated
+2026-10-22). The table below covers the features documented in this skill; reconcile
+differences with live service validation.
+
+Automation Pilot validates feature tags against a fixed allow-list. The features below
 apply to commands, executions, and scheduled executions.
 
 | Tag | Value and behavior |

@@ -38,7 +38,10 @@ Every `inputValues` value travels as a string regardless of its declared command
 }
 ```
 
-Malformed values fail command validation. A value read through `autopi executions input <id>` has the same string representation.
+Use the shared [CLI wire rules](../../automation-pilot-cli/SKILL.md#values-are-always-strings-on-the-wire).
+The builder accepts repeatable `--input-reference ID`; `--input-json` must contain strings.
+Prebuilt files cannot be mixed with builder modifiers. Malformed values fail command validation.
+A value read through `autopi executions input <id>` has the same string representation.
 
 ## Trigger safety
 

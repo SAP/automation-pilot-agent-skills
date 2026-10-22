@@ -34,7 +34,7 @@ even when it wraps one built-in command.
 | Input/output key | camelCase | `resourceName`, `subAccount` |
 | Executor alias | camelCase | `getResource`, `createInstance` |
 
-Author commands in a tenant catalog that the user has confirmed; there is no default catalog, so propose a catalog name/id and ask before creating content. Reserve the `-sapcp` suffix for SAP-provided catalogs.
+Author commands in the tenant catalog already settled with the user. There is no default catalog; resolve a missing target before a tenant write. Reserve the `-sapcp` suffix for SAP-provided catalogs.
 
 ## Input keys
 

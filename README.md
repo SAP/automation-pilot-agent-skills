@@ -115,14 +115,16 @@ Create a `.env` file in the repository root:
 
 ```bash
 # SAP Automation Pilot credentials
-export AUTOPI_HOSTNAME='emea.autopilot.cloud.sap'
-export AUTOPI_USERNAME='your-tenant-technical-user'
-export AUTOPI_PASSWORD='your-password-here'
+export AUTOMATION_PILOT_HOSTNAME='emea.autopilot.cloud.sap'
+export AUTOMATION_PILOT_TOKEN='your-bearer-token-here'
 ```
 
 **Important notes:**
 
-- **Use single quotes** for `AUTOPI_PASSWORD` if it contains special characters (`$`, `!`, etc.) to prevent shell expansion
+- Set `AUTOMATION_PILOT_TOKEN` to the token without the `Bearer ` prefix; the CLI adds it
+  to the `Authorization` header. Keep the token private.
+- Connection configuration is env-only. Legacy `AUTOPI_*` variables and connection
+  flags are unsupported. Use `--timeout` for a deadline other than the 30-second default.
 - **Supported hostnames:**
   - `emea.autopilot.cloud.sap` (Europe)
   - `amer.autopilot.cloud.sap` (Americas)
@@ -133,11 +135,23 @@ export AUTOPI_PASSWORD='your-password-here'
 
 ### 3. Load environment variables
 
-Before using the API skills, load your credentials:
+Before using the API skills, load your credentials in the process that launches your agent:
 
 ```bash
 source .env
+export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
 ```
+
+The CLI does not load `.env` automatically. Only source a trusted local file. A shell
+environment does not automatically reach an already-running desktop app; configure its
+launch environment or restart the agent from this shell. Plugin manifests do not inject
+credentials. Never commit tokens or print the environment.
+
+On Windows PowerShell, set `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN`
+through your approved local secret source, then set
+`$env:PATH = "$PWD\skills\automation-pilot-cli\scripts;$env:PATH"` and launch the
+agent from that PowerShell session. The launcher is `autopi.cmd`; `.env` shell syntax is
+not PowerShell syntax.
 
 ### 4. Verify connection
 
@@ -149,9 +163,25 @@ export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
 autopi catalogs list --own
 ```
 
+### 5. Activate the skills
+
+From the configured shell in the repository root, start Claude Code with the local plugin:
+
+```bash
+claude --plugin-dir .
+```
+
+Check `/help` for the `automation-pilot-skills` namespaced skills and invoke, for example,
+`/automation-pilot-skills:automation-pilot-connection`. If a skill is absent, verify the
+plugin directory and restart the session. For other agents, install or register the
+individual folders under `skills/` using that client's documented skill mechanism.
+Opening a clone alone does not register these skills. The ignored `.claude/skills` local
+symlink is a development convenience, not a clean-clone installation step.
+
 ## How to use
 
-Open this repository in Claude Code and start a conversation. The skills are automatically available.
+Start a conversation in the agent session with the plugin loaded. Reviews and local-only
+authoring stay local; deployment and execution follow the scope you request.
 
 #### Generate a Command
 

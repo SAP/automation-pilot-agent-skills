@@ -138,7 +138,10 @@ Use `autoRetry` only for a transient, repeat-safe operation:
 
 The executor must expose the result that the retry condition inspects. For HTTP, a non-success
 status or timeout can fail before `autoRetry.when` runs; apply the HTTP observability rules loaded
-by the skill workflow before branching on those outcomes.
+by the skill workflow before branching on those outcomes. If accepted transient status codes
+are converted into failures by `validate`, set `applyOnValidation: true` so those failures
+participate in retry. Keep `when` restricted to transient codes; permanent 401/403 failures
+should fail immediately. Verify the engine ordering using the template acceptance scenarios.
 
 ## Polling
 

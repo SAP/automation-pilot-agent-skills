@@ -7,7 +7,7 @@ Read this when following a run, interpreting its state, or inspecting its input,
 | Status | Meaning | Monitoring action |
 |---|---|---|
 | `RUNNING` | Executing now. Initial delays, retry backoff, and repeat intervals remain `RUNNING`. | Continue while progress or expected waiting is visible. |
-| `PAUSED` | A user paused the run in the product. | Hand back; resume requires product action. |
+| `PAUSED` | A user paused the run in the product. | Report attention; use CLI `action --type RESUME` when the user requests resumption. |
 | `INPUT_REQUIRED` | A Confirm step is waiting for a choice. | Hand back with the requested choice; responding requires the product or raw API. |
 | `FAILED` | An error or failed validation stopped the run. The product can retry or reset it. | Stop polling and diagnose or report. |
 | `FINISHED` | The command completed and its output is available. | Stop and report. |
@@ -37,6 +37,6 @@ Pull the heavier payloads only when they bear on the request:
 
 - `autopi executions input <id>` returns the resolved input the run used.
   Decode its string values with the triggering rules loaded directly by the skill.
-  Inspect sensitive values without reproducing them.
+  Prefer key metadata and presence; avoid fetching secret payloads when metadata answers the question. Never reproduce sensitive values.
 - `autopi executions output <id>` returns the persisted endpoint response; declared command outputs are under `values`. The summary's `outputValues` may still be null, so use the fetched output object as the source of truth. `FINISHED` has complete output; `ABORTED` and `SUSPENDED` may have partial output. A `FAILED` run may have no output.
 - `autopi executions logs <id>` takes an executor path via `--executor`. Use `currentExecutorPath` or the relevant path from the execution details; the root executor uses `""`. Logs exist only when logging was enabled before the run and remain available for the product's retention window.

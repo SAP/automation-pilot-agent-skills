@@ -10,11 +10,13 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+
+	"github.com/SAP/automation-pilot-agent-skills/cli/internal/domain"
 )
 
 // Request describes a single API call in resource-agnostic terms. Path is the
 // portion after /api/v1 (with or without a leading slash); the client builds the
-// full URL, injects Basic auth, and applies Query and Headers.
+// full URL, injects Bearer auth, and applies Query and Headers.
 type Request struct {
 	Method      string
 	Path        string
@@ -27,6 +29,7 @@ type Request struct {
 	// JSON array that start with the prefix. The /commands/ids endpoint ignores
 	// its ?catalog= filter server-side, so the CLI scopes the id list itself.
 	FilterIDPrefix string
+	Project        func([]byte) ([]byte, error)
 }
 
 // Result is the outcome of a sent request.
@@ -67,13 +70,13 @@ type Client struct {
 
 // New builds a Client. out receives --print-request output; pass os.Stdout.
 func New(cfg Config, out io.Writer) *Client {
-	tr := &http.Transport{}
+	tr := http.DefaultTransport.(*http.Transport).Clone()
 	if cfg.Insecure {
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // #nosec G402 — opt-in escape hatch
 	}
 	return &Client{
 		cfg:  cfg,
-		http: &http.Client{Timeout: cfg.Timeout, Transport: tr},
+		http: &http.Client{Timeout: cfg.Timeout, Transport: tr, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
 		out:  out,
 	}
 }
@@ -82,8 +85,8 @@ func New(cfg Config, out io.Writer) *Client {
 // for --print-request so examples render offline without credentials.
 func (c *Client) baseURL() string {
 	host := c.cfg.Host
-	if host == "" {
-		host = "<AUTOPI_HOSTNAME>"
+	if strings.TrimSpace(host) == "" {
+		host = "<AUTOMATION_PILOT_HOSTNAME>"
 	}
 	return "https://" + host + "/api/v1"
 }
@@ -104,6 +107,14 @@ func (c *Client) buildURL(req Request) string {
 // and returns nil without touching the network. Otherwise it validates config,
 // sends the request, and returns a Result or a typed error.
 func (c *Client) Do(req Request) (*Result, error) {
+	if len(req.Body) > 32<<20 {
+		return nil, NewConfigError("request body exceeds 32 MiB limit")
+	}
+	for k := range req.Headers {
+		if strings.EqualFold(k, "Authorization") {
+			return nil, NewConfigError("Authorization is managed by AUTOMATION_PILOT_TOKEN; custom Authorization headers are unsupported")
+		}
+	}
 	fullURL := c.buildURL(req)
 	ctype := req.ContentType
 	if ctype == "" && len(req.Body) > 0 {
@@ -111,8 +122,7 @@ func (c *Client) Do(req Request) (*Result, error) {
 	}
 
 	if c.cfg.PrintRequest {
-		c.renderRequest(req.Method, fullURL, ctype, req.Headers, req.Body)
-		return nil, nil
+		return nil, c.renderRequest(req.Method, fullURL, ctype, req.Headers, req.Body)
 	}
 
 	if err := c.cfg.Validate(); err != nil {
@@ -127,7 +137,7 @@ func (c *Client) Do(req Request) (*Result, error) {
 	if err != nil {
 		return nil, &NetworkError{err: err}
 	}
-	httpReq.SetBasicAuth(c.cfg.User, c.cfg.Password)
+	httpReq.Header.Set("Authorization", "Bearer "+c.cfg.Token)
 	if ctype != "" {
 		httpReq.Header.Set("Content-Type", ctype)
 	}
@@ -141,24 +151,42 @@ func (c *Client) Do(req Request) (*Result, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	const maxResponse = 32 << 20
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponse+1))
 	if err != nil {
 		return nil, &NetworkError{err: err}
 	}
+	if len(body) > maxResponse {
+		return nil, &NetworkError{err: fmt.Errorf("response exceeds 32 MiB limit")}
+	}
 	res := &Result{Status: resp.StatusCode, Body: body, Header: resp.Header}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		if protectedInput(req.Path) {
+			res.Body = nil
+			body = nil
+		}
 		return res, &HTTPError{Status: resp.StatusCode, Body: body}
+	}
+	if protectedInput(req.Path) && req.Method != "GET" && req.Method != "HEAD" {
+		res.Body = inputMetadata(body)
+	}
+	if req.Project != nil {
+		res.Body, err = req.Project(res.Body)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return res, nil
 }
 
 // renderRequest prints a human-readable, credential-safe view of the request for
 // --print-request. The Authorization header is always masked.
-func (c *Client) renderRequest(method, fullURL, ctype string, headers map[string]string, body []byte) {
-	fmt.Fprintf(c.out, "%s %s\n", method, fullURL)
-	fmt.Fprintln(c.out, "Authorization: Basic ***")
+func (c *Client) renderRequest(method, fullURL, ctype string, headers map[string]string, body []byte) error {
+	var out bytes.Buffer
+	fmt.Fprintf(&out, "%s %s\n", method, redactURL(fullURL))
+	fmt.Fprintln(&out, "Authorization: Bearer ***")
 	if ctype != "" {
-		fmt.Fprintf(c.out, "Content-Type: %s\n", ctype)
+		fmt.Fprintf(&out, "Content-Type: %s\n", ctype)
 	}
 	keys := make([]string, 0, len(headers))
 	for k := range headers {
@@ -166,30 +194,42 @@ func (c *Client) renderRequest(method, fullURL, ctype string, headers map[string
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		fmt.Fprintf(c.out, "%s: %s\n", k, headers[k])
+		value := headers[k]
+		if domain.SecretKey(k) {
+			value = "***"
+		}
+		fmt.Fprintf(&out, "%s: %s\n", k, value)
 	}
 	if len(body) > 0 {
-		fmt.Fprintln(c.out)
-		c.out.Write(indentJSON(body))
-		fmt.Fprintln(c.out)
+		fmt.Fprintln(&out)
+		out.Write(indentJSON(redactBody(body)))
+		fmt.Fprintln(&out)
 	}
+	_, err := c.out.Write(out.Bytes())
+	return err
 }
 
 // Render writes a Result's body to w according to the output mode: pretty-printed
 // JSON ("json") or verbatim ("raw"). Non-JSON bodies pass through unchanged.
-func (c *Client) Render(w io.Writer, res *Result) {
+func (c *Client) Render(w io.Writer, res *Result) error {
 	if res == nil || len(res.Body) == 0 {
-		return
+		return nil
 	}
 	if c.cfg.Output == "raw" {
-		w.Write(res.Body)
-		if !bytes.HasSuffix(res.Body, []byte("\n")) {
-			fmt.Fprintln(w)
+		if _, err := w.Write(res.Body); err != nil {
+			return err
 		}
-		return
+		if !bytes.HasSuffix(res.Body, []byte("\n")) {
+			_, err := fmt.Fprintln(w)
+			return err
+		}
+		return nil
 	}
-	w.Write(indentJSON(res.Body))
-	fmt.Fprintln(w)
+	if _, err := w.Write(indentJSON(res.Body)); err != nil {
+		return err
+	}
+	_, err := fmt.Fprintln(w)
+	return err
 }
 
 // indentJSON pretty-prints JSON; if the input is not valid JSON it is returned

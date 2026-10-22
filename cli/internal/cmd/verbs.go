@@ -2,10 +2,10 @@ package cmd
 
 import "github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
 
-// requireID returns the first positional argument or a usage error.
+// requireID enforces exactly one non-empty positional argument.
 func requireID(pos []string, label string) (string, error) {
-	if len(pos) == 0 || pos[0] == "" {
-		return "", usagef("missing %s", label)
+	if len(pos) != 1 || pos[0] == "" {
+		return "", usagef("expected exactly one %s", label)
 	}
 	return pos[0], nil
 }
@@ -18,10 +18,10 @@ func createVerb(c *cmdContext, args []string, name, endpoint, example, collectio
 	fs.StringVar(&file, "file", "", "path to a JSON file to send as the body")
 	fs.StringVar(&data, "data", "", "inline JSON body, or @file")
 	setUsage(fs, endpoint, name+" (-f FILE | --data JSON)", example)
-	if _, err := parseArgs(fs, args); err != nil {
+	if err := parseNoArgs(fs, args); err != nil {
 		return err
 	}
-	body, err := resolveBody(file, data)
+	body, err := resolveBody(c, file, data)
 	if err != nil {
 		return err
 	}
@@ -50,13 +50,16 @@ func writeVerbWithID(c *cmdContext, args []string, name, method, ctype, endpoint
 	if err != nil {
 		return err
 	}
-	body, err := resolveBody(file, data)
+	body, err := resolveBody(c, file, data)
 	if err != nil {
 		return err
 	}
 	cfg, err := g.config()
 	if err != nil {
 		return err
+	}
+	if flagSet(fs, "if-match") && ifMatch == "" {
+		return usagef("--if-match requires a non-empty ETag")
 	}
 	headers := map[string]string{}
 	if ifMatch != "" {
@@ -74,7 +77,9 @@ func writeVerbWithID(c *cmdContext, args []string, name, method, ctype, endpoint
 // deleteVerb implements DELETE {collection}/{id}.
 func deleteVerb(c *cmdContext, args []string, name, endpoint, example, idLabel, collection string) error {
 	fs, g := newFlagSet(c, name)
-	setUsage(fs, endpoint, name+" <id>", example)
+	var ifMatch string
+	fs.StringVar(&ifMatch, "if-match", "", "optimistic-locking ETag (If-Match header)")
+	setUsage(fs, endpoint, name+" <id> [--if-match ETAG]", example)
 	pos, err := parseArgs(fs, args)
 	if err != nil {
 		return err
@@ -87,7 +92,14 @@ func deleteVerb(c *cmdContext, args []string, name, endpoint, example, idLabel, 
 	if err != nil {
 		return err
 	}
-	return execute(c, cfg, client.Request{Method: "DELETE", Path: client.JoinPath(collection, id)}, false)
+	if flagSet(fs, "if-match") && ifMatch == "" {
+		return usagef("--if-match requires a non-empty ETag")
+	}
+	headers := map[string]string{}
+	if ifMatch != "" {
+		headers["If-Match"] = ifMatch
+	}
+	return execute(c, cfg, client.Request{Method: "DELETE", Path: client.JoinPath(collection, id), Headers: headers}, false)
 }
 
 // lifecycleVerb implements PUT {collection}/{id}/{action} (release/deprecate/restore).

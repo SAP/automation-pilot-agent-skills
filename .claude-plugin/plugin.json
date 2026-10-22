@@ -19,26 +19,5 @@
     "executions",
     "scheduling",
     "cli"
-  ],
-  "userConfig": {
-    "hostname": {
-      "type": "string",
-      "title": "Automation Pilot hostname",
-      "description": "Regional host of your Automation Pilot tenant, e.g. emea.autopilot.cloud.sap. Exposed to the autopi CLI as AUTOPI_HOSTNAME.",
-      "required": true
-    },
-    "username": {
-      "type": "string",
-      "title": "Automation Pilot username",
-      "description": "Technical-user name for HTTP Basic auth against your tenant. Exposed to the autopi CLI as AUTOPI_USERNAME.",
-      "required": true
-    },
-    "password": {
-      "type": "string",
-      "title": "Automation Pilot password",
-      "description": "Password for the technical user. Exposed to the autopi CLI as AUTOPI_PASSWORD; never logged or embedded in URLs.",
-      "sensitive": true,
-      "required": true
-    }
-  }
+  ]
 }

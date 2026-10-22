@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
@@ -35,17 +38,18 @@ func commandsResource() *resource {
 // id-only `ids` endpoint passes summarize=false since it is already minimal.
 func catalogListVerb(c *cmdContext, args []string, name, endpoint, example, collection string, includeIssues, summarize bool) error {
 	fs, g := newFlagSet(c, name)
+	fs.StringVar(&g.catalog, "catalog", "", "filter by catalog")
 	var tag stringList
 	var issues, full bool
-	fs.Var(&tag, "tag", "filter by tag key:value (repeatable)")
+	fs.Var(&tag, "tag", "filter by tag key=value (repeatable)")
 	if includeIssues {
 		fs.BoolVar(&issues, "include-issues", false, "include validation issues")
 	}
 	if summarize {
 		fs.BoolVar(&full, "full", false, "return complete objects instead of the metadata summary")
 	}
-	setUsage(fs, endpoint, name+" [--catalog C] [--tag k:v]", example)
-	if _, err := parseArgs(fs, args); err != nil {
+	setUsage(fs, endpoint, name+" [--catalog C] [--tag k=v]", example)
+	if err := parseNoArgs(fs, args); err != nil {
 		return err
 	}
 	cfg, err := g.config()
@@ -105,23 +109,10 @@ func commandsContract(c *cmdContext, args []string) error {
 		return err
 	}
 	req := client.Request{Method: "GET", Path: client.JoinPath("commands", id)}
-	if cfg.PrintRequest {
-		return execute(c, cfg, req, false)
+	req.Project = func(b []byte) ([]byte, error) {
+		return client.ProjectObject(b, "id", "catalog", "name", "description", "version", "inputKeys", "outputKeys", "tags")
 	}
-	if err := cfg.Validate(); err != nil {
-		return err
-	}
-	cl := client.New(cfg, c.stdout)
-	res, err := cl.Do(req)
-	if err != nil {
-		if res != nil {
-			cl.Render(c.stdout, res)
-		}
-		return err
-	}
-	res.Body = client.Contract(res.Body)
-	cl.Render(c.stdout, res)
-	return nil
+	return execute(c, cfg, req, false)
 }
 
 func commandsCreate(c *cmdContext, args []string) error {
@@ -194,16 +185,39 @@ func exportVerb(c *cmdContext, args []string, name, endpoint, example, idLabel, 
 		return err
 	}
 	cl := client.New(cfg, c.stdout)
-	res, err := cl.Do(client.Request{Method: "GET", Path: client.JoinPath(collection, id)})
+	res, err := fetch(c, cl, client.Request{Method: "GET", Path: client.JoinPath(collection, id)})
 	if err != nil {
 		return err
 	}
 	if out == "" {
-		cl.Render(c.stdout, res)
-		return nil
+		return cl.Render(c.stdout, res)
 	}
-	if err := os.WriteFile(out, res.Body, 0o644); err != nil {
-		return usagef("cannot write %s: %v", out, err)
+	var object map[string]any
+	if json.Unmarshal(res.Body, &object) != nil || object == nil || object["name"] == nil {
+		return fmt.Errorf("export returned an invalid command object; existing file preserved")
+	}
+	return atomicWrite(out, res.Body)
+}
+
+func atomicWrite(path string, body []byte) error {
+	f, err := os.CreateTemp(filepath.Dir(path), ".autopi-export-*")
+	if err != nil {
+		return fmt.Errorf("cannot create export file: %w", err)
+	}
+	defer os.Remove(f.Name())
+	if _, err := f.Write(body); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Sync(); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(f.Name(), path); err != nil {
+		return fmt.Errorf("cannot replace export file: %w", err)
 	}
 	return nil
 }

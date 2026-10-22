@@ -50,7 +50,7 @@ Every entry in `values` is a JSON string, regardless of the declared type:
 
 The service validates the string against the declared type. Do not double-encode strings or send native JSON numbers, booleans, arrays, or objects in `values`.
 
-`autopi inputs get` deliberately removes the complete `values` object, not only sensitive entries. Input write tools remove `values` recursively from successful responses and suppress server error payloads entirely because an error message could echo a submitted secret. The HTTP status remains available for diagnosis. A read-back can verify the contract but cannot prove the stored value. Prefer merge patches because a full replacement assembled from `autopi inputs get` would silently omit every stored value.
+`autopi inputs get` deliberately removes the complete `values` object, not only sensitive entries. Input write tools return only identity metadata (including nested bulk results) from successful responses and suppress server error payloads entirely because an error message could echo a submitted secret. The HTTP status remains available for diagnosis. A read-back can verify the contract but cannot prove the stored value. Prefer merge patches because a full replacement assembled from `autopi inputs get` would silently omit every stored value.
 
 ## Sensitivity
 

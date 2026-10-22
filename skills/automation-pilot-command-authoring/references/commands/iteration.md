@@ -107,7 +107,7 @@ Parallel (`ParallelForEach:1`):
 - **Quote every mapping value, including object and array ones.** `"payload":"$(.<thisAlias>.current.item.payload)"` delivers the object to the sub-command typed. Writing it unquoted (`"payload":$(...)`) breaks static-JSON validity and is rejected at deploy. Do not reach for `toEscapedJson` here — the quotes alone are enough.
 - Reach the element with the ForEach's **own** alias (`$(.<thisAlias>.current.item)`), never the
   list step's alias. This is a frequent copy-paste error.
-- Guard the step with `when` on `$(.listStep.output.X | length) GREATER_THAN "0"` so an empty
+- Guard the step with `when` on `$(.listStep.output.X | toArray | length) GREATER_THAN "0"` so an empty
   list is skipped rather than erroring. If the parent exposes iterator results, map skipped output
   to an empty array with `$(.<alias>.output.outputs // [])`; use the same fallback for
   `executionsMetadata` from `ParallelForEach`.

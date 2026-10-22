@@ -10,6 +10,9 @@ description: >
 
 # SAP Automation Pilot Discovery
 
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
+
 ## Goal
 
 Find the best-fitting existing content for the intended automation, and support every recommendation with inspected evidence.

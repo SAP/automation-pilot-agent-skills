@@ -10,6 +10,9 @@ description: >
 
 # SAP Automation Pilot Scheduling
 
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
+
 ## Goal
 
 Bind a command and its inputs to trigger times, and keep that binding correct over its lifetime.
@@ -67,7 +70,13 @@ Load exactly one matching type reference and adapt its payload:
 
 Use the `automation-pilot-tags` skill to attach tags or execution features.
 
-Apply the selected type's field rules and edge cases. Also account for DST transitions where a local time does not exist or occurs twice.
+Apply the selected type's field rules and edge cases. Show at least the next three predicted occurrences with local date/time and UTC offset,
+including the next relevant DST or month-end edge. Confirm `timeZone` with `autopi
+scheduled-executions time-zones`. Fields form a cartesian product: paired times such as
+09:00 and 17:30 need separate schedules to avoid also scheduling 09:30 and 17:00.
+For a one-time schedule, show the full next calendar date before creating it. Label these
+as calendar predictions; repository docs do not prove how the service skips or duplicates
+DST times. Use UTC or an unambiguous local time when the request requires a guarantee.
 
 Done when exactly one schedule type is present and its recurrence, time zone, description, inputs, enabled state, tags, and relevant date/DST edge cases match the request.
 

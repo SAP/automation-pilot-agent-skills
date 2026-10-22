@@ -52,7 +52,7 @@ To keep the matching elements of an array, use `filter(cond)` — it is the sing
 
 ## Gotchas
 
-- `add` over an empty array produces no value. Use `(<array expression> | add) // 0` when an empty array should default to zero: the parenthesized left side produces one scalar or no value. This differs from applying `//` directly to a multi-value stream, where fallback evaluation happens per streamed value and can pass through multiple results.
+- `add` over an empty array produces no value. Use `(<array expression> | add) // 0` when an empty array should default to zero: the parenthesized left side produces one scalar or no value. For a multi-value left stream, `//` filters false/null values and evaluates its fallback only when no values survive.
 - For the minimum or maximum of a plain array, use `sort | .[0]` and `sort | .[-1]`. Do not assume a bare `max`/`min` filter exists; `minBy`/`maxBy` take an expression argument and return an element.
 - `reduce` needs an iterable input: wrap an array with `[]` or `toArray[]`, and iterate an object with `toEntries[]`.
 - A value iterator (`.arr[]`), `map`, and `filter` applied to a stream produce a stream of results, which the engine concatenates into one text value unless you collect it. Wrap the stream in `[ ... ]` to get an array: `[.arr[] | . * 100]` yields `[100, 200, 300]`, whereas `.arr[] | . * 100` yields `100200300`.
@@ -62,7 +62,7 @@ To keep the matching elements of an array, use `filter(cond)` — it is the sing
 Filter objects by a field, then project a value:
 
 ```text
-.getItems.output.items | filter(.state == "Stopped") | map(.id)
+.getItems.output.items | toArray | filter(.state == "Stopped") | map(.id)
 ```
 
 Combine two arrays and remove duplicates:
@@ -92,11 +92,11 @@ toArray | filter(. | length > 0)
 Sum a field across an array with `reduce` (a syntactic form, not a call; the input must be iterated, here with `.items[]`):
 
 ```text
-reduce .getItems.output.items[] as $item (0; . + $item.count)
+reduce (.getItems.output.items | toArray[]) as $item (0; . + $item.count)
 ```
 
 Pick the element with the largest field — use `maxBy(f)`, not a bare `max`:
 
 ```text
-.getItems.output.items | maxBy(.priority)        # the whole element, not just .priority
+.getItems.output.items | toArray | maxBy(.priority)        # the whole element, not just .priority
 ```

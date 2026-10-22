@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
 )
@@ -19,13 +20,12 @@ func connectionResource() *resource {
 
 // connectionInfo mirrors the MCP get_connection_info tool: it makes three GET
 // calls and composes a single non-secret summary. The configured credential is
-// never echoed; permissions come from /user-information regardless of whether
-// auth is Basic (this CLI) or Bearer (the MCP server).
+// never echoed; permissions come from /user-information using Bearer auth.
 func connectionInfo(c *cmdContext, args []string) error {
 	fs, g := newFlagSet(c, "connection info")
 	setUsage(fs, "GET /server-info + /user-information + /tenant",
 		"autopi connection info", "autopi connection info")
-	if _, err := parseArgs(fs, args); err != nil {
+	if err := parseNoArgs(fs, args); err != nil {
 		return err
 	}
 	cfg, err := g.config()
@@ -53,11 +53,8 @@ func connectionInfo(c *cmdContext, args []string) error {
 	// failure short-circuits, so reaching composition means all three returned
 	// 2xx — which is what makes "connected": true meaningful.
 	getObject := func(path string) (map[string]any, error) {
-		res, err := cl.Do(client.Request{Method: "GET", Path: path})
+		res, err := fetch(c, cl, client.Request{Method: "GET", Path: path})
 		if err != nil {
-			if res != nil {
-				cl.Render(c.stdout, res)
-			}
 			return nil, err
 		}
 		var m map[string]any
@@ -65,6 +62,9 @@ func connectionInfo(c *cmdContext, args []string) error {
 			if err := json.Unmarshal(res.Body, &m); err != nil {
 				return nil, err
 			}
+		}
+		if m == nil {
+			return nil, fmt.Errorf("%s returned no identity object", path)
 		}
 		return m, nil
 	}
@@ -94,6 +94,5 @@ func connectionInfo(c *cmdContext, args []string) error {
 	if err != nil {
 		return err
 	}
-	cl.Render(c.stdout, &client.Result{Status: 200, Body: out})
-	return nil
+	return cl.Render(c.stdout, &client.Result{Status: 200, Body: out})
 }

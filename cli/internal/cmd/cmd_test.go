@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // newServer starts a TLS test server recording the last request it saw and
@@ -15,9 +16,8 @@ func newServer(t *testing.T, handler http.HandlerFunc) (*httptest.Server, func()
 	srv := httptest.NewTLSServer(handler)
 	t.Cleanup(srv.Close)
 	host := strings.TrimPrefix(srv.URL, "https://")
-	t.Setenv("AUTOPI_HOSTNAME", host)
-	t.Setenv("AUTOPI_USERNAME", "u")
-	t.Setenv("AUTOPI_PASSWORD", "p")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", host)
+	t.Setenv("AUTOMATION_PILOT_TOKEN", "test-token")
 	return srv, nil
 }
 
@@ -33,9 +33,8 @@ func runCmd(args ...string) (string, string, int) {
 // time) can never ship silently again. We don't assert output here — only that
 // no verb panics while constructing its flagset.
 func TestEveryVerbFlagSet(t *testing.T) {
-	t.Setenv("AUTOPI_HOSTNAME", "h")
-	t.Setenv("AUTOPI_USERNAME", "u")
-	t.Setenv("AUTOPI_PASSWORD", "p")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "h")
+	t.Setenv("AUTOMATION_PILOT_TOKEN", "test-token")
 	for _, r := range registry() {
 		for _, v := range r.verbs {
 			name := r.name + " " + v.name
@@ -54,7 +53,7 @@ func TestEveryVerbFlagSet(t *testing.T) {
 }
 
 func TestRepeatableStatusQuery(t *testing.T) {
-	t.Setenv("AUTOPI_HOSTNAME", "h")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "h")
 	out, _, code := runCmd("executions", "list", "--status", "FAILED", "--status", "RUNNING", "--print-request")
 	if code != 0 {
 		t.Fatalf("exit = %d", code)
@@ -65,12 +64,12 @@ func TestRepeatableStatusQuery(t *testing.T) {
 }
 
 // TestTagFilterUsesEquals verifies the --tag list filter is forwarded as the
-// server's key=value form, not the raw key:value the CLI accepts. A key-only
-// filter passes through unchanged. (Regression: the colon form silently
-// matched nothing server-side.)
+// server's key=value form. The CLI now accepts `key=value` directly, which
+// lets tag keys containing colons (e.g. `feature:logs`) pass through intact.
+// A key-only filter (no `=`) is forwarded as the bare key.
 func TestTagFilterUsesEquals(t *testing.T) {
-	t.Setenv("AUTOPI_HOSTNAME", "h")
-	out, _, code := runCmd("executions", "list", "--tag", "skilltest:1019", "--tag", "keyonly", "--print-request")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "h")
+	out, _, code := runCmd("executions", "list", "--tag", "skilltest=1019", "--tag", "keyonly", "--print-request")
 	if code != 0 {
 		t.Fatalf("exit = %d", code)
 	}
@@ -80,10 +79,19 @@ func TestTagFilterUsesEquals(t *testing.T) {
 	if !strings.Contains(out, "tag=keyonly") || strings.Contains(out, "keyonly%3D") {
 		t.Fatalf("key-only tag should pass through unchanged, got:\n%s", out)
 	}
+	// Colon-in-key: feature:logs=true must not be split on the colon.
+	out2, _, code2 := runCmd("executions", "list", "--tag", "feature:logs=true", "--print-request")
+	if code2 != 0 {
+		t.Fatalf("exit = %d", code2)
+	}
+	want := "tag=feature%3Alogs%3Dtrue"
+	if !strings.Contains(out2, want) {
+		t.Fatalf("want %s (feature:logs=true encoded), got:\n%s", want, out2)
+	}
 }
 
 func TestMergePatchContentType(t *testing.T) {
-	t.Setenv("AUTOPI_HOSTNAME", "h")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "h")
 	out, _, _ := runCmd("inputs", "patch", "cat:Cred:1", "--data", `{"values":{"p":"x"}}`, "--print-request")
 	if !strings.Contains(out, "Content-Type: application/merge-patch+json") {
 		t.Fatalf("want merge-patch content type, got:\n%s", out)
@@ -91,9 +99,9 @@ func TestMergePatchContentType(t *testing.T) {
 }
 
 func TestTriggerBuildsBody(t *testing.T) {
-	t.Setenv("AUTOPI_HOSTNAME", "h")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "h")
 	out, _, _ := runCmd("executions", "trigger", "--command-id", "c:C:1", "--input", "a=b", "--logs", "--print-request")
-	for _, want := range []string{`"commandId": "c:C:1"`, `"a": "b"`, `"feature:logs": ""`} {
+	for _, want := range []string{`"commandId": "c:C:1"`, `"inputValues": "***"`, `"feature:logs": ""`} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("missing %q in:\n%s", want, out)
 		}
@@ -102,12 +110,93 @@ func TestTriggerBuildsBody(t *testing.T) {
 
 func TestConfigErrorExit(t *testing.T) {
 	// No credentials and a real (non-print) call -> exit 2.
-	t.Setenv("AUTOPI_HOSTNAME", "")
-	t.Setenv("AUTOPI_USERNAME", "")
-	t.Setenv("AUTOPI_PASSWORD", "")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "")
+	t.Setenv("AUTOMATION_PILOT_TOKEN", "")
 	_, errb, code := runCmd("catalogs", "list")
 	if code != exitConfig {
 		t.Fatalf("exit = %d, want %d (%s)", code, exitConfig, errb)
+	}
+}
+
+func TestLegacyOnlyConfigErrorExit(t *testing.T) {
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "")
+	t.Setenv("AUTOMATION_PILOT_TOKEN", "")
+	t.Setenv("AUTOPI_HOSTNAME", "legacy.example")
+	t.Setenv("AUTOPI_USERNAME", "legacy-user")
+	t.Setenv("AUTOPI_PASSWORD", "private-legacy-password")
+	_, errb, code := runCmd("catalogs", "list")
+	if code != exitConfig {
+		t.Fatalf("legacy-only configuration: exit=%d, want %d", code, exitConfig)
+	}
+	for _, want := range []string{"AUTOMATION_PILOT_HOSTNAME", "AUTOMATION_PILOT_TOKEN"} {
+		if !strings.Contains(errb, want) {
+			t.Errorf("config error missing %s", want)
+		}
+	}
+	if strings.Contains(errb, "private-legacy-password") {
+		t.Fatal("config error exposed legacy password")
+	}
+}
+
+func TestConnectionFlagsRejected(t *testing.T) {
+	for _, args := range [][]string{
+		{"catalogs", "list"},
+		{"api", "GET", "catalogs"},
+	} {
+		for _, flag := range []string{"--host", "--user", "--password", "--token"} {
+			cmdArgs := append(append([]string{}, args...), flag, "private-override", "--print-request")
+			out, errb, code := runCmd(cmdArgs...)
+			if code != exitUsage {
+				t.Fatalf("%s: exit=%d, want usage error", flag, code)
+			}
+			if strings.Contains(out+errb, "private-override") {
+				t.Fatalf("%s error exposed its value", flag)
+			}
+		}
+	}
+}
+
+func TestAPIRejectsAuthorizationOverride(t *testing.T) {
+	for _, header := range []string{
+		"Authorization: Bearer private-override",
+		"authorization: Basic private-override",
+		" AUTHORIZATION : Bearer private-override",
+		"aUtHoRiZaTiOn: Bearer private-override",
+		"Authorization",
+	} {
+		for _, preview := range []bool{false, true} {
+			args := []string{"api", "GET", "catalogs", "--header", header}
+			if preview {
+				args = append(args, "--print-request")
+			}
+			out, errb, code := runCmd(args...)
+			if code != exitUsage {
+				t.Fatalf("custom Authorization accepted (preview=%t): exit=%d", preview, code)
+			}
+			if out != "" || strings.Contains(errb, "private-override") {
+				t.Fatal("rejected Authorization exposed request or credential")
+			}
+		}
+	}
+}
+
+func TestTimeoutFlagWithoutEnvironmentDefault(t *testing.T) {
+	t.Setenv("AUTOPI_TIMEOUT", "120s")
+	for _, tc := range []struct {
+		flag string
+		want time.Duration
+	}{
+		{"", 30 * time.Second},
+		{"45s", 45 * time.Second},
+		{"60", 60 * time.Second},
+	} {
+		cfg, err := (&globalFlags{timeout: tc.flag}).config()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cfg.Timeout != tc.want {
+			t.Errorf("--timeout %q: got %s, want %s", tc.flag, cfg.Timeout, tc.want)
+		}
 	}
 }
 
@@ -157,8 +246,8 @@ func TestServerRequestShape(t *testing.T) {
 	if gotMethod != "POST" || gotPath != "/api/v1/commands" {
 		t.Fatalf("got %s %s", gotMethod, gotPath)
 	}
-	if !strings.HasPrefix(gotAuth, "Basic ") {
-		t.Fatalf("missing basic auth: %q", gotAuth)
+	if gotAuth != "Bearer test-token" {
+		t.Fatalf("unexpected Bearer auth: %q", gotAuth)
 	}
 	if gotCT != "application/json" {
 		t.Fatalf("content-type = %q", gotCT)
@@ -278,7 +367,7 @@ func TestTriggerCommandReferenceInQuery(t *testing.T) {
 }
 
 func TestTriggerRequiresCommandReference(t *testing.T) {
-	t.Setenv("AUTOPI_HOSTNAME", "h")
+	t.Setenv("AUTOMATION_PILOT_HOSTNAME", "h")
 	_, _, code := runCmd("triggers", "generic-event", "--data", `{"type":"alert"}`, "--print-request")
 	if code != exitUsage {
 		t.Fatalf("missing --command-reference should be a usage error, exit=%d", code)
@@ -326,6 +415,9 @@ func TestDeployCreatesWithoutID(t *testing.T) {
 // GETs and composes a non-secret summary (mirroring MCP get_connection_info).
 func TestConnectionInfoComposesSummary(t *testing.T) {
 	newServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer test-token" {
+			t.Error("connection info request missing Bearer token")
+		}
 		w.WriteHeader(200)
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/server-info"):
@@ -341,6 +433,9 @@ func TestConnectionInfoComposesSummary(t *testing.T) {
 	out, _, code := runCmd("connection", "info", "--insecure")
 	if code != 0 {
 		t.Fatalf("exit=%d", code)
+	}
+	if strings.Contains(out, "test-token") {
+		t.Fatal("connection summary exposed token")
 	}
 	for _, want := range []string{`"connected": true`, `"url": "https://t.example"`,
 		`"tenantId": "T001"`, `"username": "svc"`, `"Execute"`, `"plan": "STANDARD"`} {

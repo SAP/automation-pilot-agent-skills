@@ -37,3 +37,14 @@ The following rule governs code contributions:
 * We use GitHub issues to track bugs and enhancement requests.
 
 * Please provide as much context as possible when you open an issue. The information you provide must be comprehensive enough to reproduce that issue for the assignee.
+
+## Local validation
+
+Use the toolchain pinned in `cli/.go-version`. From `cli/`, run `go test -race ./...`
+and `go vet ./...`. From repository root, run `cli/build.sh` after source changes and
+`python3 scripts/validate-content.py` (requires PyYAML 6.0.2 for validation only).
+The validator checks skill frontmatter, local links, manifests, JSON examples, lint, and
+the shared policy. CI verifies source/binary checksums, cross-build reproducibility, and
+native platform smoke tests. Product-specific template acceptance scenarios live in
+`skills/automation-pilot-command-authoring/references/template-validation.md`; record
+actual service evidence separately from offline validation.

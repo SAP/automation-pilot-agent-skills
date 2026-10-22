@@ -168,7 +168,7 @@
                             "semantic": "OR",
                             "cases": [
                                 {
-                                    "expression": "$(.listApps.output.resourceNames | length)",
+                                    "expression": "$(.listApps.output.resourceNames | toArray | length)",
                                     "operator": "GREATER_THAN",
                                     "semantic": "OR",
                                     "values": [

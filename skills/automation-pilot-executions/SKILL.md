@@ -5,10 +5,13 @@ metadata:
   author: SAP
   version: 1.0.0
 description: >
-  Runs SAP Automation Pilot commands and operates their executions. Use when a user wants to trigger or monitor a run, inspect its input, output, or logs, diagnose a failed or stalled execution, or analyze execution history. Do not use to repair a command definition or a schedule that failed to trigger.
+  Runs SAP Automation Pilot commands and operates their executions. Use when a user wants to trigger or monitor a run, inspect its input, output, or logs, diagnose a failed or stalled execution, or analyze execution history, pause/resume/retry/reset/abort a run, add a comment, or delete execution history. Do not use to repair a command definition or a schedule that failed to trigger.
 ---
 
 # SAP Automation Pilot Executions
+
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
 
 ## Goal
 
@@ -77,6 +80,23 @@ Read [monitoring and inspection](references/monitoring.md) for state and respons
 Apply the reference's cause classification. Correct and re-trigger run inputs only when the user authorizes the new run and repeating the command is safe. Hand command-definition changes to command authoring, focused expression defects to Dynamic Expressions, and missed schedule triggers to scheduling.
 
 Done when the top-level state, failed executor path, relevant input/output/log evidence, cause class, and next owner or action are each accounted for.
+
+### Controlling or deleting an execution
+
+Read `autopi executions get <id>` and `autopi executions actions <id>` first. Apply only the
+action the user requested to that exact ID: `autopi executions action <id> --type
+PAUSE|RESUME|RETRY|ABORT|RESET|COMMENT`, with a non-secret `--reason` and `--value` only
+when the live action contract requires it. State eligibility is enforced by the service; do
+not guess a reset path or user choice. RETRY and RESET may repeat side effects, so inspect
+completed steps and idempotency before performing the authorized repeat. Monitoring alone
+does not authorize a repeat, abort, or Confirm choice. On a timeout, inspect action history
+and current state before resending. Read state and actions back to verify the result.
+
+Delete with `autopi executions delete <id>` only when deletion of that history is requested
+and the exact target is settled. Verify a 404; other failures do not establish deletion.
+
+Done when the requested action is recorded and its state effect is verified, or deletion
+is verified, without inventing a human choice.
 
 ### Browsing and analyzing history
 

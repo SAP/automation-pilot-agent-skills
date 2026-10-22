@@ -16,6 +16,8 @@ func printOverview(c *cmdContext) {
 	fmt.Fprintln(w, "USAGE")
 	fmt.Fprintln(w, "  autopi <resource> <verb> [flags]")
 	fmt.Fprintln(w, "  autopi api <METHOD> <path> [--data @file|json]   # raw escape hatch")
+	fmt.Fprintln(w, "  autopi surface                                  # machine-readable resource verbs")
+	fmt.Fprintln(w, "  autopi policy                                   # shared product rule snapshot")
 	fmt.Fprintln(w, "  autopi lint <files...>                           # validate command/input JSON")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "RESOURCES")
@@ -26,9 +28,9 @@ func printOverview(c *cmdContext) {
 	tw.Flush()
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "ENVIRONMENT")
-	fmt.Fprintln(w, "  AUTOPI_HOSTNAME         regional host, e.g. emea.autopilot.cloud.sap")
-	fmt.Fprintln(w, "  AUTOPI_USERNAME         tenant technical user")
-	fmt.Fprintln(w, "  AUTOPI_PASSWORD         password (read from env; never logged)")
+	fmt.Fprintln(w, "  AUTOMATION_PILOT_HOSTNAME   regional host, e.g. emea.autopilot.cloud.sap")
+	fmt.Fprintln(w, "  AUTOMATION_PILOT_TOKEN      Bearer token without the prefix (read from env; never logged)")
+	fmt.Fprintln(w, "  Connection configuration is environment-only.")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "  Supported hosts:")
 	for _, h := range client.SupportedHosts {
@@ -36,10 +38,9 @@ func printOverview(c *cmdContext) {
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "GLOBAL FLAGS")
-	fmt.Fprintln(w, "  --host --user --password             override the env vars")
-	fmt.Fprintln(w, "  --catalog <id>                       filter list/ids by catalog")
+	fmt.Fprintln(w, "  --catalog <id>                       filter catalog-scoped list/ids verbs only")
 	fmt.Fprintln(w, "  --output json|raw                    pretty JSON (default) or verbatim")
-	fmt.Fprintln(w, "  --print-request                      render the request (auth masked), do not send")
+	fmt.Fprintln(w, "  --print-request                      render a redacted request, do not send")
 	fmt.Fprintln(w, "  --timeout 30s   --insecure")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "EXIT CODES")
@@ -62,6 +63,9 @@ func printResourceHelp(c *cmdContext, r *resource) {
 
 // runHelp handles `autopi help [resource [verb]]`.
 func runHelp(c *cmdContext, args []string) error {
+	if len(args) > 2 {
+		return usagef("usage: autopi help [resource [verb]]")
+	}
 	if len(args) == 0 {
 		printOverview(c)
 		return nil

@@ -5,10 +5,13 @@ metadata:
   author: SAP
   version: 1.0.0
 description: >
-  Authors and maintains SAP Automation Pilot commands and composite automations on the tenant. Use when a user wants to create a reusable command, build an orchestration flow (HTTP calls, scripts, polling, batching, conditionals), or change an existing command's contract, executor flow, expressions, or error handling.
+  Authors and maintains SAP Automation Pilot commands and composite automations on the tenant. Use when a user wants to create a reusable command, build an orchestration flow (HTTP calls, scripts, polling, batching, conditionals), or change an existing command's contract, executor flow, expressions, or error handling. Also use for production-readiness reviews and local-only command definitions.
 ---
 
 # SAP Automation Pilot Command Authoring
+
+Before API work, read the [shared CLI operating rules](../automation-pilot-cli/SKILL.md)
+for setup, authorization, secret handling, and response safety.
 
 ## Goal
 
@@ -22,6 +25,13 @@ You need two things from the user:
 - The **caller-facing contract**: the input keys the caller supplies and the output keys it exposes.
 
 Resolve gaps in intent, scope, or success criteria before authoring. If the user ran the planning skill, author from its specification. Ask about an omitted choice only when it changes the contract or behavior; otherwise author from the documented defaults and state the assumption.
+
+Select the requested mode first: **review** reads and reports findings with file paths and fixes;
+**local authoring** writes or edits files and runs lint; **tenant authoring** additionally deploys
+and verifies. Reviews do not deploy or trigger. Preserve the existing ID, version, contract,
+executor controls, descriptions, tags, and unrelated fields when updating. Fetch the current full
+definition before a tenant update; compare only the requested changes and exclude server-owned
+fields from the write. Use settled targets and prior authorization.
 
 Then follow the five-step workflow below. The reference material is indexed at the end of this document. Each step points to the one it needs as you reach it.
 
@@ -42,7 +52,7 @@ Done when the contract, shape, flow, and resilience are each decided **and** eve
 
 Read the [command model](references/command-model.md) for the caller-facing contract and top-level JSON, then the [composition controls](references/composition-controls.md) for `configuration`, executors, conditions, retries, polling, errors, and delays. The facts that bite hardest if missed:
 
-- **Naming.** Command and Input names use PascalCase; input/output keys and executor aliases use camelCase. Names cannot contain spaces. There is no default catalog: always propose a catalog name/id and ask the user to confirm the target catalog before authoring or deploying content. Reserve the `-sapcp` suffix for SAP built-ins.
+- **Naming.** Command and Input names use PascalCase; input/output keys and executor aliases use camelCase. Names cannot contain spaces. There is no default catalog: use the catalog and target already selected by the user; propose one only when no target is settled, and resolve that choice before a tenant write. Reserve the `-sapcp` suffix for SAP built-ins.
 - **Everything-is-a-string on the wire.** An input key's `defaultValue`, every execution-time input value, and every `values` entry inside a condition block is a JSON string regardless of declared type: `"5"`, `"true"`, `"[\"a\",\"b\"]"`. Condition `values` are `["200"]`, `["true"]`, `["1"]`. A `number`/`object`/`array` output also serializes back as a string.
 - **Expressions.** Use the `automation-pilot-dynamic-expressions` skill for every non-trivial expression. Supply its intended field, expected result type, and a non-sensitive execution-shaped fixture containing the parent input and prior executor outputs.
 - **Keep the executor shape explicit.** Include the applicable control fields (`when`, `validate`, `autoRetry`, `repeat`, `errorMessages`, `initialDelay`, `pause`, `progressMessage`, `description`) with `null` or `[]` when unset; the examples show the shape.
@@ -57,9 +67,18 @@ Mark every secret-bearing input or output key `sensitive: true`. Use a `Sensitiv
 
 Done when the command and every key carry a caller-facing description, mandated strings are used verbatim, and every secret-bearing key is `sensitive: true`.
 
-### Step 4: Create on the tenant
+### Step 4: Validate, then deploy when requested
 
-Creation mutates the tenant. Confirm the target command ID with the user first. Create with `autopi commands create` or replace an existing version with `autopi commands update`. `autopi commands delete` is irreversible, so confirm the exact ID with the user and use it only to clean up a command you created, never one you did not author.
+Run `autopi lint <Name>.command.json` before every deployment. Fix CRITICAL/HIGH findings;
+resolve or explain lower-severity heuristic findings with evidence. For reviews, return prioritized
+findings and proposals here. For local authoring, return the validated file and remaining live
+contract assumptions here.
+
+For tenant authoring, use the exact target covered by the user's request. Create with
+`autopi commands create`, replace with `autopi commands update`, or use `autopi commands deploy`
+for a 404-only upsert. Preview the redacted request when it helps review. Ask for final approval
+only if deployment is outside the existing authorization, after the definition is ready. Delete
+only an exact target explicitly authorized by the user, with dependency impact understood.
 
 When a validation execution needs diagnostic evidence, use the `automation-pilot-tags` skill to
 apply execution logging, then hand the command to the executions skill.
@@ -68,9 +87,11 @@ Done when the command exists at the confirmed ID.
 
 ### Step 5: Verify
 
-Read the command back with `autopi commands get` and compare its contract, executor wiring, resilience blocks, descriptions, sensitivity flags, and `issues` array with the design. `autopi commands get` returns the validation `issues` for the command; `autopi commands list` does not. Then exercise the command with representative inputs: schema validation cannot catch expression, ordering, or integration failures, so only a run proves them.
+Read the command back with `autopi commands get` and compare its contract, executor wiring, resilience blocks, descriptions, sensitivity flags, and `issues` array with the design. `autopi commands get` returns the validation `issues` for the command; `autopi commands list --include-issues` can include them, but use the full get for verification. When execution is requested and authorized, exercise the command with representative inputs: schema validation cannot catch expression, ordering, or integration failures, so only a run proves them.
 
-Done when `issues` is empty and a representative run produces the intended output.
+Done when no blocking validation issues remain, informational warnings are explained, and an
+authorized representative run produces the intended output. If execution was not requested,
+report deployment/read-back validation and the specific runtime checks still needed.
 
 ## Resolve everything live
 
@@ -104,7 +125,9 @@ and HTTP references; a complete composite definition needs both the command mode
 controls. When troubleshooting identifies an owning topic, return to this table and load that
 reference directly. Reference files are terminal leaves; all cross-topic routing happens here.
 
-**Examples.** Open the complete template matching the flow; each still needs tenant-ID substitution and live contract verification:
+**Examples.** Open the complete template matching the flow; each still needs tenant-ID substitution and live contract verification. Read the
+[template acceptance scenarios](references/template-validation.md) before relying on retry,
+polling, or collection behavior:
 
 | Flow | Template |
 |------|----------|
@@ -125,7 +148,7 @@ Sequence: **plan → discovery → Inputs when needed → authoring → executio
 
 ## Error handling
 
-- **Schema or contract problem** (validation error on deploy, or non-empty `issues`): read the `issues` array with `autopi commands get` and fix the named key or executor.
+- **Schema or contract problem** (validation error on deploy, or blocking `issues`): read the `issues` array with `autopi commands get` and fix the named key or executor.
 - **Expression failure at runtime:** reproduce it in the dynamic-expressions skill against an execution-shaped fixture, then `autopi commands update` the same command.
 - **Integration failure at runtime:** read the failed run back through the executions skill, fix the definition here, and update the same command.
 - Read [command-authoring troubleshooting](references/troubleshooting.md) for symptom → cause → owner,
@@ -133,4 +156,7 @@ Sequence: **plan → discovery → Inputs when needed → authoring → executio
 
 ## Definition of done
 
-The command expresses the intended contract and behavior, reuses content that fits, follows the naming and engine rules, uses mandated descriptions, and marks secrets as sensitive. It is created on the tenant, read back with an empty `issues` array, and tested with representative inputs. Report what it does and how to run it, and point to executions for triggering and scheduling for recurring runs.
+The command expresses the intended contract and behavior, reuses content that fits, follows the naming and engine rules, uses mandated descriptions, and marks secrets as sensitive. Completion follows the requested mode: review findings, a locally validated file, or an authorized
+tenant deployment with read-back. Blocking `issues` are fixed; informational warnings are
+reported with their meaning. Runtime behavior is claimed only for representative runs actually
+performed within the user's authorization. Report what it does and how to run it, and point to executions for triggering and scheduling for recurring runs.

@@ -32,7 +32,7 @@ func findResource(name string) *resource {
 
 // Run is the CLI entrypoint. It returns the process exit code.
 func Run(args []string, version string) int {
-	c := &cmdContext{stdout: os.Stdout, stderr: os.Stderr, version: version}
+	c := &cmdContext{stdin: os.Stdin, stdout: os.Stdout, stderr: os.Stderr, version: version}
 	return dispatch(c, args)
 }
 
@@ -48,10 +48,17 @@ func dispatch(c *cmdContext, args []string) int {
 	case "-h", "--help", "help":
 		return codeFor(runHelp(c, args[1:]), c.stderr)
 	case "-v", "--version", "version":
-		fmt.Fprintf(c.stdout, "autopi %s\n", c.version)
-		return exitOK
+		if len(args) != 1 {
+			return codeFor(usagef("version takes no arguments"), c.stderr)
+		}
+		_, err := fmt.Fprintf(c.stdout, "autopi %s\n", c.version)
+		return codeFor(err, c.stderr)
 	case "api":
 		return codeFor(runAPI(c, args[1:]), c.stderr)
+	case "surface":
+		return codeFor(runSurface(c, args[1:]), c.stderr)
+	case "policy":
+		return codeFor(runPolicy(c, args[1:]), c.stderr)
 	case "lint":
 		return codeFor(runLint(c, args[1:]), c.stderr)
 	}
