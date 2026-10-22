@@ -156,6 +156,10 @@ Use `repeat` when the same executor must run until an observed condition becomes
 Define both the success condition and the terminal failure path. Use the pattern cookbook for
 fixed-count and wall-clock-budget variants.
 
+`delay` accepts only these values: `5s`, `10s`, `15s`, `30s`, `1m`, `2m`, `3m`. There is no
+value above `3m`, so a longer gap between attempts is impossible; span a longer wall-clock window
+with a larger `maxCount` plus a time-budget `until` case rather than a bigger `delay`.
+
 ## Custom errors
 
 ```json
@@ -182,5 +186,6 @@ validation, and a matching `errorMessages[].when` supplies the caller-facing tex
 ## Initial delay
 
 `{"interval":"30s","when":null}` delays an executor unconditionally. Add a condition block to
-delay only while a prerequisite state holds.
+delay only while a prerequisite state holds. `interval` accepts the same fixed values as a poll
+`delay` (`5s`, `10s`, `15s`, `30s`, `1m`, `2m`, `3m`).
 

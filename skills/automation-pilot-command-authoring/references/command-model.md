@@ -91,8 +91,8 @@ an informational validation issue; assess issue severity instead of inventing a 
 }
 ```
 
-An `object` or `array` output crosses a command boundary as a JSON-encoded string. A consuming
-command parses it with `toObject` or `toArray` before reading nested values. An executor skipped by
-a condition exposes no output, so final mappings that read conditionally executed steps must supply
-an explicit fallback of the declared type.
+Automation Pilot converts an output mapping to the output key's declared type for command
+evaluation and serializes it for API transport. An executor skipped by a condition exposes no
+output, so final mappings that read conditionally executed steps must supply an explicit fallback of
+the declared type.
 

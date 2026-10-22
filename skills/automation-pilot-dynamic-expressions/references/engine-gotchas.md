@@ -25,6 +25,13 @@ Without the quotes, `{"delName":$(EXPR)}` where `EXPR` can be empty produces mal
 - Precedence: `//` binds looser than comparisons and tighter than `|`. `null // 5 == 5` parses as `null // (5 == 5)`; `.a // .b | .c` parses as `(.a // .b) | .c`. Because `false` triggers the fallback, `(1 > 2) // "fb"` is `"fb"` and `.flag // true` returns `true` even when `.flag` is a real `false`. Parenthesize a comparison on the left of `//`, and never use `//` to default a boolean.
 - There is no `empty` keyword in the engine; `$(empty // x)` fails to parse. Use a non-matching `select`/`filter` to make an empty stream.
 
+## The optional operator `?` fails to parse
+
+The optional-iteration/access operator `?` (as in `.arr[]?` or `.maybe?`) is rejected at parse
+time: an expression like `[.a.b[]?.c[]?]` fails with `Expected ']'`. The engine does not need it:
+`[]` over a missing or empty path already yields an empty stream (and plain field access on a
+missing key yields `null`), so write `[.a.b[].c[]]` without the `?`.
+
 ## Nested `$()` is not interpolated
 
 A `$(...)` written inside another `$(...)` is treated literally, not evaluated. To build a string inside an expression, use jq string concatenation or interpolation: `("prefix-" + (.x | toString))` or `"prefix-\(.x)"`. The interpolation-hole form `$(...)` is for literal text or JSON outside an expression.

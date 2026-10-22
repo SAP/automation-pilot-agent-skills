@@ -32,7 +32,7 @@ Note the direction: `has`/`in` are about keys/indices, `valueIn` is about values
 
 ## Gotchas
 
-- An object or array that crossed an executor or command output boundary arrives as a JSON string; parse it with `toObject` (object strings) or `toArray` (array strings) before key access. Reading a key off the unparsed string returns `null`.
+- Key access requires an object. Parse a JSON string with `toObject`; access an object value directly. The [output-key type boundary](../expression-reference.md#output-key-type-boundary) determines the type that a later expression receives. Reading a key from a string returns `null`.
 - `getCaseInsensitive` is the safe way to read a header or key whose casing is not guaranteed.
 - Reach root data from inside `map`/`filter`/`select` with `$`, not `.`.
 

@@ -41,7 +41,14 @@ Treat the execution-shaped fixture as the expression root. Reproduce the relevan
   - `.<httpAlias>.output.status` — HTTP status code as a number; compare it numerically inside expressions.
   - `.<alias>.executed`, `.<alias>.retriesCount`, `.<alias>.repetitionsCount` — whether an executor ran, was retried, or was repeated.
 - Only earlier executor outputs are available. A conditionally skipped executor may not expose the expected output; its path resolves to `null`. Default it with `.alias.output.key // fallback`; this already covers the skipped case, so do not wrap it in `if .alias.executed then (.alias.output.key // fallback) else fallback end`, which restates what `//` does.
-- Object and array values can cross executor or command output boundaries as JSON-encoded strings. Apply `toObject` (object strings) or `toArray` (array strings) before selecting inside them. Selecting directly, as in `.childStep.output.obj.someKey` on an unparsed string, returns `null`, and picking the wrong converter (`toObject` on an array string) yields the same silent `null`.
+
+### Output-key type boundary
+
+- Inside an expression, use the value's current type. Parse a JSON string with `toObject` or `toArray` before object or array operations.
+- When an expression maps a value to an output key, Automation Pilot converts it to that key's declared type. A compatible JSON string mapped to an `object` or `array` output needs no explicit conversion.
+- Later expressions receive the declared output type. Select directly from an `object` or `array` output, for example `.childStep.output.obj.someKey`. Parse a structured `string` output before structured operations, for example `(.httpStep.output.body | toObject).someKey`.
+
+Picking the wrong converter (`toObject` on an array string) returns `null`.
 
 ## Scope restrictions
 

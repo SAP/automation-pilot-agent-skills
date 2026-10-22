@@ -4,6 +4,17 @@ Read this when describing a command or its keys, or when deciding which values a
 must be marked sensitive. The command contract should explain caller-visible behavior rather than
 the implementation behind it.
 
+## Command description
+
+The command `description` states what the command does for its caller at a high level. Give the
+overall behavior and outcome, not the executor flow, the intermediate steps, or the APIs behind
+them. A caller reads it to decide whether to run the command, so describe the operation and its
+effect, and leave the implementation to the executor `description` fields.
+
+The engine caps `description` at 512 characters. A description that approaches the cap has usually
+drifted into step-by-step implementation detail that belongs in the per-executor descriptions.
+Keep it to the caller-visible summary and it stays well under the cap.
+
 ## Sensitivity
 
 - Mark every secret-bearing input or output key `sensitive: true`.

@@ -44,13 +44,13 @@ Most conversions take no argument; they transform the piped-in value (`.body | t
 
 ## Gotchas
 
-- `toObject` parses object strings only; `toArray` parses array strings. Picking the wrong one on a stringified value returns `null`: `"[1,2,3]" | toObject` is `null`, not the array. When an object or array crosses an executor or command output boundary it arrives as a JSON-encoded string, so re-parse with the matching converter before selecting inside it.
-- Do not add a conversion the source does not need. A value already of the right type does not need coercing (for example `toBoolean` on an actual boolean, or `toMinifiedJsonString` on a value already passed through unchanged).
+- `toObject` parses object strings only; `toArray` parses array strings. Picking the wrong one returns `null`: `"[1,2,3]" | toObject` is `null`, not the array. Apply them to a string, not to a value that already has the target type.
+- `toMinifiedJsonString` serves a receiving field or operation that requires JSON text. An output key uses the [output-key type boundary](../expression-reference.md#output-key-type-boundary) instead.
 - An impossible conversion returns `null` silently rather than erroring.
 
 ## Examples
 
-Parse a JSON string from an output boundary, then select inside it:
+Parse a JSON string from an output declared as `string`, then select inside it:
 
 ```text
 (.getResource.output.body | toObject).items[0].name

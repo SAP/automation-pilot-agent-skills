@@ -36,15 +36,17 @@ Pin down, in this order:
 3. **Flow:** the ordered executors in a composite, what each consumes and produces, and where data crosses between them. Load the executor reference for each step from the [reference table](#references-and-examples) below, and read the matching example when one exists. Trust those references for the built-ins they document; for any other executor or Input, read its contract live before you commit to it (see "Resolve everything live").
 4. **Resilience:** transient failures that need `autoRetry`, asynchronous operations that need `repeat` polling, conditional steps (`when`), postconditions (`validate`), and `errorMessages` written for the caller. The [pattern cookbook](references/patterns.md) has the composition shapes for these.
 
-Done when the contract, shape, flow, and resilience are each decided **and** every executor or Input *not* covered by a command reference has had its contract read live.
+For each prior-executor field used by an executor input, `when`, `validate`, or final output mapping, record the evidence for its path. A command reference or live child contract proves the top-level output key; a sanitized representative execution output proves nested paths and types. If representative output is unavailable, record the path as an assumption for Step 5.
+
+Done when the contract, shape, flow, and resilience are each decided, every executor or Input *not* covered by a command reference has had its contract read live, and every prior-executor path is backed by the required evidence or recorded as a verification assumption.
 
 ### Step 2: Write the command
 
 Read the [command model](references/command-model.md) for the caller-facing contract and top-level JSON, then the [composition controls](references/composition-controls.md) for `configuration`, executors, conditions, retries, polling, errors, and delays. The facts that bite hardest if missed:
 
 - **Naming.** Command and Input names use PascalCase; input/output keys and executor aliases use camelCase. Names cannot contain spaces. Put generated commands in the tenant's default `welcome-<<<TENANT_ID>>>` catalog unless the user names another existing custom catalog; reserve the `-sapcp` suffix for SAP built-ins.
-- **Everything-is-a-string on the wire.** An input key's `defaultValue`, every execution-time input value, and every `values` entry inside a condition block is a JSON string regardless of declared type: `"5"`, `"true"`, `"[\"a\",\"b\"]"`. Condition `values` are `["200"]`, `["true"]`, `["1"]`. A `number`/`object`/`array` output also serializes back as a string.
-- **Expressions.** Use the `automation-pilot-dynamic-expressions` skill for every non-trivial expression. Supply its intended field, expected result type, and a non-sensitive execution-shaped fixture containing the parent input and prior executor outputs.
+- **Wire strings.** An input key's `defaultValue`, every execution-time input value, and every `values` entry inside a condition block is a JSON string regardless of declared type: `"5"`, `"true"`, `"[\"a\",\"b\"]"`. Condition `values` are `["200"]`, `["true"]`, `["1"]`.
+- **Expressions.** Use the `automation-pilot-dynamic-expressions` skill for every non-trivial expression. Supply its intended field, expected result type, and a non-sensitive execution-shaped fixture containing the parent input and prior executor outputs. Preserve the evidenced sibling relationships, nesting, declared types, and string-encoded structured values; field names do not prove nesting.
 - **Keep the executor shape explicit.** Include the applicable control fields (`when`, `validate`, `autoRetry`, `repeat`, `errorMessages`, `initialDelay`, `pause`, `progressMessage`, `description`) with `null` or `[]` when unset; the examples show the shape.
 
 Done when the JSON expresses the designed contract, follows the naming and engine rules, and carries the explicit executor shape.
@@ -68,9 +70,9 @@ Done when the command exists at the confirmed ID.
 
 ### Step 5: Verify
 
-Read the command back with `automation-pilot:get_command` and compare its contract, executor wiring, resilience blocks, descriptions, sensitivity flags, and `issues` array with the design. `automation-pilot:get_command` returns the validation `issues` for the command; `list_commands` does not. Then exercise the command with representative inputs: schema validation cannot catch expression, ordering, or integration failures, so only a run proves them.
+Read the command back with `automation-pilot:get_command` and compare its contract, executor wiring, resilience blocks, descriptions, sensitivity flags, and `issues` array with the design. Then exercise each caller-visible condition branch with safe representative inputs, and a value from each input partition the command folds into one output. Trace an unsafe branch, or a partition with no safe example, against sanitized captured output when available.
 
-Done when `issues` is empty and a representative run produces the intended output.
+Done when `issues` is empty, a representative run produces the intended output, every safe caller-visible branch and documented input partition has been exercised, and the report distinguishes cases verified by a live run, traced only against captured output, or left unverified for lack of safe evidence.
 
 ## Resolve everything live
 
