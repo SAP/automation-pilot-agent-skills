@@ -15,7 +15,16 @@ for setup, authorization, secret handling, and response safety.
 
 ## Goal
 
-Turn an operational intent into a well-formed Automation Pilot command and create or update it on the tenant. A command is a JSON definition with an input/output contract. SAP built-ins may be atomic, but a tenant command authored through this skill has a `configuration` that orchestrates one or more executors. Design that definition, write its expressions, create or update it on the tenant, and prove it with a run.
+Produce or review an Automation Pilot command whose caller-facing contract, executor flow,
+and failure behavior match the intended operation. Completion follows the requested mode.
+
+## Critical Rules (MANDATORY)
+
+- **Native commands first.** Always prefer existing Automation Pilot commands, including
+  `HttpRequest`, and dynamic expressions over script executors (Bash `ExecuteScript:2`,
+  Python, or Node.js). Native composition keeps generated commands easier to maintain.
+  Use a script only for required behavior that those commands and expressions cannot
+  implement, and document the specific gap that makes the script necessary.
 
 ## Before you start
 
@@ -43,11 +52,17 @@ Pin down, in this order:
 
 1. **Contract:** the input keys the caller supplies (name, type, required, sensitive, allowed values) and the output keys the command exposes. Design the contract for the caller rather than the underlying APIs.
 2. **Shape:** reuse an existing SAP built-in directly when one atomic operation fits; author a tenant command as a composite with a `configuration` that orchestrates one or more executors. Use multiple executors for data flow, conditions, polling, or batching.
-3. **Flow:** the ordered executors in a composite, what each consumes and produces, and where data crosses between them. Choose the reference by user goal: [call an API](references/commands/http.md), [run custom code or a CLI](references/commands/scripting.md), [query or change HANA data](references/commands/sql.md), or [process a collection](references/commands/iteration.md). Read the matching example when one exists. Before tenant deployment, read composed executor and Input contracts live (see "Resolve everything live"). Local-only work records any unavailable contracts.
+3. **Flow:** the ordered executors in a composite, what each consumes and produces, and where data crosses between them. Load each step's executor reference from the [reference table](#references-and-examples), including separate executions and human decisions. Read the matching example when one exists. Before tenant deployment, read composed executor and Input contracts live (see "Resolve everything live"). Local-only work records any unavailable contracts.
 4. **Resilience:** transient failures that need `autoRetry`, asynchronous operations that need `repeat` polling, conditional steps (`when`), postconditions (`validate`), and `errorMessages` written for the caller. The [pattern cookbook](references/patterns.md) has the composition shapes for these.
 
-Done when contract, shape, flow, and resilience are decided. Tenant authoring also requires
-live executor/Input contracts; local-only work records unavailable contracts as assumptions.
+Record the evidence for every prior-executor path used by an input, condition, validation, or
+final output. Read [path evidence and behavioral verification](references/behavior-verification.md)
+for nested-path evidence and acceptance scenarios.
+
+Done when contract, shape, flow, and resilience are decided and every cross-executor path has
+supporting evidence or a named verification assumption. Each scripted step identifies the
+gap required by **Native commands first**. Tenant authoring also requires live
+executor/Input contracts; local-only work records unavailable contracts as assumptions.
 
 ### Step 2: Write the command
 
@@ -55,7 +70,7 @@ Read the [command model](references/command-model.md) for the caller-facing cont
 
 - **Naming.** Command and Input names use PascalCase; input/output keys and executor aliases use camelCase. Names cannot contain spaces. There is no default catalog: use the catalog and target already selected by the user; propose one only when no target is settled, and resolve that choice before a tenant write. Reserve the `-sapcp` suffix for SAP built-ins.
 - **Everything-is-a-string on the wire.** An input key's `defaultValue`, every execution-time input value, and every `values` entry inside a condition block is a JSON string regardless of declared type: `"5"`, `"true"`, `"[\"a\",\"b\"]"`. Condition `values` are `["200"]`, `["true"]`, `["1"]`. A `number`/`object`/`array` output also serializes back as a string.
-- **Expressions.** Use the `automation-pilot-dynamic-expressions` skill for every non-trivial expression. Supply its intended field, expected result type, and a non-sensitive execution-shaped fixture containing the parent input and prior executor outputs.
+- **Expressions.** Use the `automation-pilot-dynamic-expressions` skill for every non-trivial expression. Supply its intended field, expected result type, and a non-sensitive execution-shaped fixture containing the parent input and prior executor outputs. Preserve evidenced siblings, nesting, declared types, and string-encoded structured values.
 - **Keep the executor shape explicit.** Include the applicable control fields (`when`, `validate`, `autoRetry`, `repeat`, `errorMessages`, `initialDelay`, `pause`, `progressMessage`, `description`) with `null` or `[]` when unset; the examples show the shape.
 
 Done when the JSON expresses the designed contract, follows the naming and engine rules, and carries the explicit executor shape.
@@ -73,7 +88,7 @@ Done when the command and every key carry a caller-facing description, mandated 
 Run `autopi lint <Name>.command.json` before every deployment. Fix CRITICAL/HIGH findings;
 resolve or explain lower-severity heuristic findings with evidence. For reviews, return prioritized
 findings and proposals here. For local authoring, return the validated file and remaining live
-contract assumptions here.
+contract assumptions and acceptance scenarios here.
 
 For tenant authoring, use the exact target covered by the user's request. Create with
 `autopi commands create`, replace with `autopi commands update`, or use `autopi commands deploy`
@@ -88,15 +103,18 @@ Deploy dependencies first: catalog, reusable Inputs, leaf commands, then parent 
 Stop at a failed prerequisite or blocking read-back issue; dependent definitions and execution
 requests wait until it is repaired. Prefer sequential deployment for dependent resources.
 
-Done when the command exists at the confirmed ID and its prerequisites are verified.
+Done when the selected mode's outcome is ready: prioritized review findings, a locally
+validated file with assumptions and acceptance scenarios, or an authorized deployment
+at the exact ID with verified prerequisites. Continue to Step 5 for tenant read-back.
 
 ### Step 5: Verify
 
-Read the command back with `autopi commands get` and compare its contract, executor wiring, resilience blocks, descriptions, sensitivity flags, and `issues` array with the design. `autopi commands get` returns the validation `issues` for the command; `autopi commands list --include-issues` can include them, but use the full get for verification. When execution is requested and authorized, exercise the command with representative inputs: schema validation cannot catch expression, ordering, or integration failures, so only a run proves them.
+Read the command back with `autopi commands get` and compare its contract, executor wiring, resilience blocks, descriptions, sensitivity flags, and `issues` array with the design. `autopi commands get` returns the validation `issues` for the command; `autopi commands list --include-issues` can include them, but use the full get for verification. When execution is requested and authorized, exercise each safe caller-visible branch and a representative value from each input partition using [behavioral verification](references/behavior-verification.md). Trace other cases against sanitized captured output when available and label the evidence obtained.
 
-Done when no blocking validation issues remain, informational warnings are explained, and an
-authorized representative run produces the intended output. If execution was not requested,
-report deployment/read-back validation and the specific runtime checks still needed.
+Done when no blocking validation issues remain, informational warnings are explained, and the
+authorized cases produce the intended statuses, paths, and output. Account for each planned
+branch and input partition as live-tested, traced, or unverified. If execution was not
+requested, report deployment/read-back validation and the specific runtime checks still needed.
 
 ## Resolve everything live
 
@@ -104,8 +122,6 @@ report deployment/read-back validation and the specific runtime checks still nee
 
 - A **command executor** resolves with `autopi commands contract` (contract only) or `autopi commands get` (full definition plus validation `issues`).
 - A reusable **Input** (anything in a key's `allowedValuesFromInputKeys` or a `configuration.values[].inputReference`, such as `metadata-sapcp:CfRegionData:1`) resolves with `autopi inputs get`. An Input ID 404s on `autopi commands get`.
-
-Prefer a fitting existing command over rebuilding the same operation from HTTP or script primitives; the discovery skill finds those.
 
 ## References and examples
 
@@ -121,6 +137,9 @@ Prefer a fitting existing command over rebuilding the same operation from HTTP o
 | Run custom code or a CLI | [scripting](references/commands/scripting.md) |
 | Query or change HANA data | [SQL](references/commands/sql.md) |
 | Process a collection sequentially or in parallel | [iteration](references/commands/iteration.md) |
+| Start, await, or inspect a separate child execution | [execution orchestration](references/commands/execution-orchestration.md) |
+| Pause for a human choice or free-text input | [human-in-the-loop](references/commands/human-in-the-loop.md) |
+| Prove nested paths or plan branch/input-partition checks | [path evidence and behavioral verification](references/behavior-verification.md) |
 | Diagnose deployment validation or runtime authoring symptoms | [troubleshooting](references/troubleshooting.md) |
 | Apply tags, inheritance, retention, priority, or execution logging | Use the `automation-pilot-tags` skill |
 
@@ -132,7 +151,7 @@ reference directly. Reference files are terminal leaves; all cross-topic routing
 
 **Examples.** Open the complete template matching the flow; each still needs tenant-ID substitution and live contract verification. Read the
 [template acceptance scenarios](references/template-validation.md) before relying on retry,
-polling, or collection behavior:
+polling, collection, human-choice, or explicit child-execution behavior:
 
 | Flow | Template |
 |------|----------|
@@ -142,6 +161,8 @@ polling, or collection behavior:
 | Polling an asynchronous operation | [`WaitForOperation.command.json`](examples/WaitForOperation.command.json) |
 | Resolving an identifier and chaining the result | [`ResolveAndGetResource.command.json`](examples/ResolveAndGetResource.command.json) |
 | Retrying transient HTTP failures | [`GetResourceWithRetry.command.json`](examples/GetResourceWithRetry.command.json) |
+| Trigger a child, await successful completion, then read its output | [`TriggerAndAwaitCommand.command.json`](examples/TriggerAndAwaitCommand.command.json) |
+| Collect a runtime environment choice without changing that environment | [`ChooseEnvironment.command.json`](examples/ChooseEnvironment.command.json) |
 
 ## Handoffs
 
@@ -149,8 +170,11 @@ Sequence: **plan → discovery → Inputs when needed → authoring → executio
 
 - Ask **discovery** to find an existing command or reusable building blocks before you write one. Reuse a fitting command as a direct executor or embedded sub-command; write new behavior only for the remaining gap.
 - Ask **Inputs** to create or rotate a reusable configuration or credential set; authoring only binds its verified ID.
+- Use **Catalogs** when the requested placement needs a custom catalog created or its metadata changed.
 - Use **dynamic expressions** to craft and verify every non-trivial expression.
 - Send a finished command and any failed run to **executions**; send recurring runs to **scheduling**.
+- For a runtime human decision, send the execution ID and current prompt/options to
+  **executions**, which owns applying an authorized answer and verifying resumed state.
 
 ## Error handling
 

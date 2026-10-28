@@ -8,6 +8,7 @@ contracts before binding them; unknown permissions or state rules require servic
 |---|---|---|---|---|---|
 | Inspect tenant | Connection | `connection info` | Tenant read access | None | Non-secret identity and task-specific permissions |
 | Find command/Input | Discovery | `catalogs list`, `commands list/contract/get`, `inputs list/get` | Read | None | Exact ID, live contract, dependency evidence |
+| Manage custom catalog | Catalogs | `catalogs create/get/update/delete` | Read for inspection; Write for management | catalog or catalog-update model | Returned ID and full metadata read-back; contents/dependency impact and 404 for deletion |
 | Review/local command | Command Authoring | `lint` | None locally; Read for live contracts | `Name.command.json` | Prioritized findings or lint plus assumptions |
 | Deploy command | Command Authoring | `commands create/update/deploy` | Write (Read for deploy check) | command model | Full get, blocking issue resolution; authorized run for runtime proof |
 | Create/rotate Input | Inputs | `inputs create/patch/update` | Write | input model, string values | Non-secret get; hidden value changes confirmed only by successful write |

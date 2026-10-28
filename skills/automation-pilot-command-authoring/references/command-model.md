@@ -43,9 +43,9 @@ even when it wraps one built-in command.
 
 Author commands in the tenant catalog already settled with the user. There is no default catalog; resolve a missing target before a tenant write. Reserve the `-sapcp` suffix for SAP-provided catalogs.
 
-A new catalog's `technicalName` is the short prefix of `<technicalName>-<tenantId>`;
-the observed service limit is 1–10 characters for that prefix, not for the full catalog ID.
-Use the returned catalog ID in commands and Inputs. The [SAP catalog guide](https://help.sap.com/docs/automation-pilot/automation-pilot/catalog)
+Use the returned catalog ID in commands and Inputs rather than inferring it from a display
+name. Custom catalog creation and its naming limits belong to the Catalogs skill.
+The [SAP catalog guide](https://help.sap.com/docs/automation-pilot/automation-pilot/catalog)
 documents ownership, dependencies, and import behavior. Imports can overwrite existing content
 and omit sensitive exported values; verify prerequisites and supply secrets from their approved
 source rather than treating an export as a complete credential backup.

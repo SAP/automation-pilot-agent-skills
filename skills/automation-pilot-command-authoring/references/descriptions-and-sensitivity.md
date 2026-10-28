@@ -4,6 +4,13 @@ Read this when describing a command or its keys, or when deciding which values a
 must be marked sensitive. The command contract should explain caller-visible behavior rather than
 the implementation behind it.
 
+## Command description
+
+State the overall operation and outcome so a caller can decide whether to run the command.
+Put intermediate steps, executor wiring, and API details in executor `description` fields.
+The command description has a 512-character limit; use that space for caller-visible
+behavior and effects.
+
 ## Sensitivity
 
 - Mark every secret-bearing input or output key `sensitive: true`.
@@ -11,6 +18,17 @@ the implementation behind it.
 - A sensitive input alone does not require a sensitive-output variant when the ordinary executor
   protects the input and its output is non-sensitive.
 - Describe a secret's purpose and expected source without including an example secret value.
+
+### Sensitive outputs on read-back
+
+An omitted, null, or masked output can reflect redaction. Check the key's sensitivity and
+the response shape before treating a missing value as an expression failure. Values derived
+from secret-bearing output also require a sensitivity decision; preserve protection while
+diagnosing them rather than assuming that transformation makes them public.
+
+When a value must be checked, validate the necessary property inside the command and report
+the validation outcome. Keep the value, error text, and diagnostic logs protected. A
+successful validation proves its predicate, not that a redacted value was read back.
 
 ## Standard input descriptions
 

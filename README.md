@@ -78,6 +78,7 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 | [**Plan**](skills/automation-pilot-plan/SKILL.md) | Design an automation from settled decisions or an interview, then produce an implementation-ready specification |
 | [**Connection**](skills/automation-pilot-connection/SKILL.md) | Validate the configured connection and report the non-secret account summary (tenant, permissions, plan) |
 | [**Discovery**](skills/automation-pilot-discovery/SKILL.md) | Find and evaluate existing Catalogs, Commands, child dependencies, and reusable Inputs before building |
+| [**Catalogs**](skills/automation-pilot-catalogs/SKILL.md) | Create and manage custom Catalogs with purposeful reuse, capacity checks, and verified metadata changes |
 | [**Command Authoring**](skills/automation-pilot-command-authoring/SKILL.md) | Author and maintain Commands and composite automations — contracts, executor flows, expressions, error handling |
 | [**Inputs**](skills/automation-pilot-inputs/SKILL.md) | Create, rotate, explain, and delete reusable Inputs that store configuration and credentials |
 | [**Executions**](skills/automation-pilot-executions/SKILL.md) | Trigger Commands, monitor status, inspect input/output/logs, diagnose failures, analyze history |

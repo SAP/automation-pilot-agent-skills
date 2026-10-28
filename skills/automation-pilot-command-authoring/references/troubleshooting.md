@@ -9,6 +9,9 @@ than treating this table as another copy of its contract.
 | Validation rejects a key or executor, or returns an issue | Command schema or live child contract mismatch | Read `autopi commands get` issues and compare the affected shape with the command model, composition controls, and the live child contract |
 | Expression is too large or resolves incorrectly | Expression-engine scope, limit, or serialization issue | Reproduce it with the Dynamic Expressions skill against an execution-shaped fixture |
 | A nested field is null after crossing a command or HTTP boundary | Encoded object or array was read without parsing | Apply the boundary rule owned by the command model and the relevant executor reference |
+| A secret-bearing or derived output is omitted, null, or masked | Read-back redaction may hide a valid value | Apply descriptions and sensitivity; inspect metadata and validate the required property inside the command without exposing the value |
+| A child wait succeeds but its output is unavailable | The accepted wait state was failure/cancellation, or output is incomplete | Apply execution orchestration; validate child status and output availability before reading or mapping it |
+| An unattended run remains INPUT_REQUIRED | A runtime human decision is waiting for an answer | Apply human-in-the-loop; identify the intended responder and unanswered-run behavior |
 | A conditionally skipped step has no output | Final mapping assumes every executor ran | Add a fallback of the declared output type using the command model |
 | A generated command uses an SAP catalog suffix | Tenant catalog naming was confused with an SAP-provided catalog | Move it to the intended tenant catalog using the command model |
 | A metadata region ID returns 404 from `autopi commands get` | The ID belongs to a reusable Input | Resolve it with `autopi inputs get` |

@@ -1,9 +1,8 @@
 # Script Execution
 
-Run a shell, Python, Node.js, or PowerShell script inside a command step. Reach for a script
-only when the logic is awkward to express as a dedicated catalog command, a plain `HttpRequest`,
-or an engine expression (its genuine fit is a CLI tool or multi-step glue). The "When to use"
-check below comes first.
+Run a shell, Python, Node.js, or PowerShell script inside a command step. Apply the authoring
+skill's **Native commands first** rule before selecting a runtime. This reference supplies
+executor contracts, encoding, and runtime constraints for a step that needs a script.
 
 Resolve the executor contract live before use (`autopi commands contract`). Field tables are
 a 2026-10-14 snapshot, not proof of the target tenant's contract.
@@ -19,7 +18,6 @@ a 2026-10-14 snapshot, not proof of the target tenant's contract.
 
 ## When to use
 
-- **First, check whether a script is needed at all.** A **dedicated catalog command** (e.g. `utils-sapcp:ParseCertificate:1` for certificate expiry, or another `utils-sapcp:*`/domain command) or a **dynamic expression** (the engine's own functions — `toDate`/`fromDate`, hashing, encoding, string and collection ops) often does the job with no runtime and clearer intent. Run discovery for a fitting command, and consult the dynamic-expressions skill, before hand-rolling a script. Write a script only for the logic that neither covers.
 - Arbitrary shell logic → `scripts-sapcp:ExecuteScript:2` (bash, plain-text script).
 - Python, with pip packages → `ExecutePythonScript:1`.
 - Node.js, with npm packages / a private registry → `ExecuteNodeJsScript:1`.

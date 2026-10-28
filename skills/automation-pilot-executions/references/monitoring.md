@@ -8,7 +8,7 @@ Read this when following a run, interpreting its state, or inspecting its input,
 |---|---|---|
 | `RUNNING` | Executing now. Initial delays, retry backoff, and repeat intervals remain `RUNNING`. | Continue while progress or expected waiting is visible. |
 | `PAUSED` | A user paused the run in the product. | Report attention; use CLI `action --type RESUME` when the user requests resumption. |
-| `INPUT_REQUIRED` | A Confirm step is waiting for a choice. | Inspect userChoice; an authorized choice uses executions action --type CHOOSE with reason/value. |
+| `INPUT_REQUIRED` | A Confirm or runtime human-input step is waiting for an answer. | Inspect userChoice; an authorized answer uses executions action --type CHOOSE with reason/value. |
 | `FAILED` | An error or failed validation stopped the run. The product can retry or reset it. | Stop polling and diagnose or report. |
 | `FINISHED` | The command completed and its output is available. | Stop and report. |
 | `ABORTED` | A user or Auto-Abort cancelled the run. | Stop and report. |

@@ -2,8 +2,8 @@
 
 Patterns for **composing** Automation Pilot commands: how steps chain, branch,
 loop, and recover. For a single executor's full contract (IDs, variants, every input/output,
-gotchas), read the matching core command reference listed in the skill (HTTP, scripting, SQL,
-iteration); this cookbook shows composition rather than restating each contract.
+gotchas), read the matching executor reference in the skill's reference table. This cookbook
+shows composition rather than restating each contract.
 
 Snippets below show the load-bearing executor fields. Copy the shape, choose the service for
 the task, and resolve each executor contract live before use. The skill workflow loads the command

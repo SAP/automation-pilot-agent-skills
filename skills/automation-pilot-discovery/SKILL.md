@@ -76,7 +76,7 @@ Done when every reported catalog is tied to the stated purpose and carries the e
 
 ## Handoffs
 
-Send a direct-use command to executions for triggering. Send command building blocks or a useful command no-result to command authoring. Send an Input no-result to Inputs when a reusable value set must be created. Discovery supplies evidence and IDs; it does not execute, deploy, release, or modify content.
+Send a direct-use command to executions for triggering. Send command building blocks or a useful command no-result to command authoring. Send an Input no-result to Inputs when a reusable value set must be created. Send a request for custom catalog creation or metadata changes to Catalogs with the inspected inventory and placement constraints. Discovery supplies evidence and IDs; it does not execute, deploy, release, or modify content.
 
 ## Error handling
 

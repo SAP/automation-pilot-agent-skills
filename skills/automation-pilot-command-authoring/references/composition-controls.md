@@ -14,6 +14,7 @@ Resolve each executor and Input contract live; snippets define shapes, not tenan
 - [Executors](#executors)
 - [Dynamic expressions](#dynamic-expressions)
 - [Condition blocks](#condition-blocks)
+- [Supported delays](#supported-delays)
 - [Retries](#retries)
 - [Polling](#polling)
 - [Custom errors](#custom-errors)
@@ -122,6 +123,13 @@ documentation rather than extending the set by analogy. The inner case `semantic
 multiple values combine: for example, `CONTAINS` plus `OR` means any value may match, while a
 negative membership check normally needs `AND` to exclude every listed value.
 
+## Supported delays
+
+The pinned API schema accepts `5s`, `10s`, `15s`, `30s`, `1m`, `2m`, and `3m` for
+`autoRetry.delay`, `repeat.delay`, and `initialDelay.interval`. Use one of these values;
+longer retry/poll budgets come from the count and delay together. Distinguish these
+discrete executor delays from other duration fields such as a child's await deadline.
+
 ## Retries
 
 Use `autoRetry` only for a transient, repeat-safe operation:
@@ -164,11 +172,24 @@ fixed-count and wall-clock-budget variants.
 
 ## Custom errors
 
+`validate` determines whether the executor result is acceptable. `errorMessages` selects
+a caller-facing explanation for an existing failure; it does not establish a postcondition.
+Use an explicit matching condition for each message:
+
 ```json
 "errorMessages": [
   {
-    "message": "Operation failed: $(.step.output.body | toObject.error.message)",
-    "when": { "semantic": "OR", "conditions": [] }
+    "message": "The upstream service rejected the request. Check the supplied credentials.",
+    "when": {
+      "semantic": "OR",
+      "conditions": [{
+        "semantic": "OR",
+        "cases": [{
+          "expression": "$(.step.output.status)",
+          "operator": "EQUALS", "semantic": "OR", "values": ["401", "403"]
+        }]
+      }]
+    }
   }
 ]
 ```
