@@ -74,16 +74,21 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 
 | Skill | Description |
 |-------|-------------|
-| [**Command Generation**](.claude/skills/automation-pilot-command-generation/SKILL.md) | Create Commands from natural language descriptions using patterns and best practices |
-| [**Catalog Explorer**](.claude/skills/automation-pilot-catalog-explorer/SKILL.md) | Discover available Commands and executors in your tenant via API |
-| [**Code Review**](.claude/skills/automation-pilot-command-review/SKILL.md) | Validate security, naming conventions, expression sanitization, and best practices |
-| [**Content Management API**](.claude/skills/automation-pilot-content-management-via-api/SKILL.md) | Deploy, update, list, and delete Commands, Inputs, and MCP servers via API |
-| [**Executions API**](.claude/skills/automation-pilot-executions-api/SKILL.md) | Trigger Commands, monitor status, view logs |
-| [**Execution Debugger**](.claude/skills/automation-pilot-debugger/SKILL.md) | Debug failed Executions, error pattern matching, troubleshooting workflows |
-| [**Scheduled Executions API**](.claude/skills/automation-pilot-scheduled-executions-api/SKILL.md) | Create and manage recurring Command schedules |
-| [**MCP Server Generation**](.claude/skills/automation-pilot-mcp-server-generation/SKILL.md) | Create MCP server definitions to expose Commands as AI assistant tools |
-| [**HTTP Executor**](.claude/skills/automation-pilot-executor-httprequest/SKILL.md) | Guidance for HTTP requests with retry, timeout, and error handling |
-| [**Script Executor**](.claude/skills/automation-pilot-executor-executescript/SKILL.md) | Guidance for ExecuteScript with Base64 encoding and language wrappers |
+| [**Automation Pilot CLI**](skills/automation-pilot-cli/SKILL.md) | The `autopi` CLI — the single, dependency-free tool every skill uses to call the API (replaces `curl`); also runs `autopi lint` |
+| [**Plan**](skills/automation-pilot-plan/SKILL.md) | Design an automation from settled decisions or an interview, then produce an implementation-ready specification |
+| [**Connection**](skills/automation-pilot-connection/SKILL.md) | Validate the configured connection and report the non-secret account summary (tenant, permissions, plan) |
+| [**Discovery**](skills/automation-pilot-discovery/SKILL.md) | Find and evaluate existing Catalogs, Commands, child dependencies, and reusable Inputs before building |
+| [**Command Authoring**](skills/automation-pilot-command-authoring/SKILL.md) | Author and maintain Commands and composite automations — contracts, executor flows, expressions, error handling |
+| [**Inputs**](skills/automation-pilot-inputs/SKILL.md) | Create, rotate, explain, and delete reusable Inputs that store configuration and credentials |
+| [**Executions**](skills/automation-pilot-executions/SKILL.md) | Trigger Commands, monitor status, inspect input/output/logs, diagnose failures, analyze history |
+| [**Scheduling**](skills/automation-pilot-scheduling/SKILL.md) | Create and manage one-time and recurring Command schedules |
+| [**MCP Servers**](skills/automation-pilot-mcp-servers/SKILL.md) | Create MCP server definitions that expose Commands as MCP tools for AI assistants |
+| [**Tags**](skills/automation-pilot-tags/SKILL.md) | Validate, apply, and interpret regular, feature, and service tags (priority, retention, auto-abort, logging, lineage) |
+| [**Dynamic Expressions**](skills/automation-pilot-dynamic-expressions/SKILL.md) | The expression engine reference — functions, elements, and engine gotchas |
+
+The CLI covers catalogs, commands, Inputs, MCP servers, webhooks, executions, schedules,
+and triggers. It includes offline request validation, conditional updates, execution
+waiting, and bulk actions; see the [capability map](skills/automation-pilot-cli/references/capabilities.md).
 
 ## Getting started
 
@@ -92,10 +97,13 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 | Tool | Purpose |
 |------|---------|
 | [Claude Code](https://claude.ai/code) | Required to use the skills (VS Code extension, CLI, or desktop app) |
-| `curl` | API calls to SAP Automation Pilot |
-| `jq` | JSON parsing and transformation |
+| `autopi` CLI | All API calls to SAP Automation Pilot — bundled, prebuilt, zero runtime dependencies (see the [`automation-pilot-cli`](skills/automation-pilot-cli/SKILL.md) skill) |
+| `jq` | Optional — JSON shaping when piping CLI output |
 
-You'll also need an SAP Automation Pilot tenant with API credentials.
+You'll also need an SAP Automation Pilot tenant with API credentials. The `autopi` CLI
+ships as committed static binaries for macOS, Linux, and Windows — no `curl` or build
+step required. Add `skills/automation-pilot-cli/scripts` to your `PATH` to run `autopi`
+directly.
 
 ### 1. Clone the repository
 
@@ -110,15 +118,19 @@ Create a `.env` file in the repository root:
 
 ```bash
 # SAP Automation Pilot credentials
-export AUTOPI_HOSTNAME='emea.autopilot.cloud.sap'
-export AUTOPI_USERNAME='your-tenant-technical-user'
-export AUTOPI_PASSWORD='your-password-here'
-export AUTOPI_DEFAULT_CATALOG='your-catalog-id'
+export AUTOMATION_PILOT_HOSTNAME='emea.autopilot.cloud.sap'
+export AUTOMATION_PILOT_TOKEN='your-bearer-token-here'
 ```
 
 **Important notes:**
 
-- **Use single quotes** for `AUTOPI_PASSWORD` if it contains special characters (`$`, `!`, etc.) to prevent shell expansion
+- Set `AUTOMATION_PILOT_TOKEN` to the token without the `Bearer ` prefix; the CLI adds it
+  to the `Authorization` header. Keep the token private.
+- Connection configuration is env-only. Legacy `AUTOPI_*` variables and connection
+  flags are unsupported. Use `--timeout` for a deadline other than the 30-second default.
+- Bearer authentication is the only supported CLI method. Connection configuration
+  reads only `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN`. See the
+  [CLI operating rules](skills/automation-pilot-cli/SKILL.md) for protected credential setup.
 - **Supported hostnames:**
   - `emea.autopilot.cloud.sap` (Europe)
   - `amer.autopilot.cloud.sap` (Americas)
@@ -129,24 +141,53 @@ export AUTOPI_DEFAULT_CATALOG='your-catalog-id'
 
 ### 3. Load environment variables
 
-Before using the API skills, load your credentials:
+Before using the API skills, load your credentials in the process that launches your agent:
 
 ```bash
 source .env
+export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
 ```
+
+The CLI does not load `.env` automatically. Only source a trusted local file. A shell
+environment does not automatically reach an already-running desktop app; configure its
+launch environment or restart the agent from this shell. Plugin manifests do not inject
+credentials. Never commit tokens or print the environment.
+
+On Windows PowerShell, set `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN`
+through your approved local secret source, then set
+`$env:PATH = "$PWD\skills\automation-pilot-cli\scripts;$env:PATH"` and launch the
+agent from that PowerShell session. The launcher is `autopi.cmd`; `.env` shell syntax is
+not PowerShell syntax.
 
 ### 4. Verify connection
 
 Test your setup by listing your Catalogs:
 
 ```bash
-curl -s -u "$AUTOPI_USERNAME:$AUTOPI_PASSWORD" \
-  "https://$AUTOPI_HOSTNAME/api/v1/catalogs?own=true" | jq .
+# add the CLI to your PATH (or call scripts/autopi directly)
+export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
+autopi catalogs list --own
 ```
+
+### 5. Activate the skills
+
+From the configured shell in the repository root, start Claude Code with the local plugin:
+
+```bash
+claude --plugin-dir .
+```
+
+Check `/help` for the `automation-pilot-skills` namespaced skills and invoke, for example,
+`/automation-pilot-skills:automation-pilot-connection`. If a skill is absent, verify the
+plugin directory and restart the session. For other agents, install or register the
+individual folders under `skills/` using that client's documented skill mechanism.
+Opening a clone alone does not register these skills. The ignored `.claude/skills` local
+symlink is a development convenience, not a clean-clone installation step.
 
 ## How to use
 
-Open this repository in Claude Code and start a conversation. The skills are automatically available.
+Start a conversation in the agent session with the plugin loaded. Reviews and local-only
+authoring stay local; deployment and execution follow the scope you request.
 
 #### Generate a Command
 
@@ -194,12 +235,17 @@ Do I have any enabled scheduled executions? List them and disable the ones that 
 
 ## Resources
 
+- [Reusable skills evaluation suite](ci/evals/skills-e2e/README.md) — complex workflows, behavioral scoring, a Go harness, and recorded evaluation results.
+- [Build and validation tools](ci/README.md) — contributor helpers, CLI and harness tests, help parity, and guidance link checks.
+
 **SAP Automation Pilot:**
+
 - [Official Documentation](https://help.sap.com/docs/automation-pilot) — Complete guides, API reference, expression language
 - [SAP Automation Pilot Examples](https://github.com/SAP-samples/automation-pilot-examples) — Ready-to-import examples for HANA Cloud, BTP, Cloud Foundry, Kubernetes, and more
 - [SAP Community](https://community.sap.com/t5/technology-blogs-by-sap/bg-p/technology-blog-sap) — Blog posts, tips, and community discussions
 
 **Claude Code:**
+
 - [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code) — Installation, configuration, and usage guides
 - [Claude Code GitHub](https://github.com/anthropics/claude-code) — Report issues, request features
 

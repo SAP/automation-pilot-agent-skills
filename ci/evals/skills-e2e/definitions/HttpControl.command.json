@@ -1,0 +1,308 @@
+{
+  "catalog": "<OPS>",
+  "name": "HttpControl",
+  "version": 1,
+  "id": "<OPS>:HttpControl:1",
+  "description": "HttpControl for the isolated skills evaluation.",
+  "inputKeys": {
+    "mode": {
+      "type": "string",
+      "description": "Controlled HTTP response sequence.",
+      "required": true,
+      "sensitive": false,
+      "allowedValues": [
+        "retrySuccess",
+        "retryExhausted",
+        "retryPermanent",
+        "pollSuccess",
+        "pollFailure",
+        "pollExhausted"
+      ]
+    },
+    "fixtureConfig": {
+      "type": "object",
+      "description": "Public HTTP status URL and timeout, supplied through an Input.",
+      "required": true,
+      "sensitive": false
+    },
+    "flag": {
+      "type": "boolean",
+      "description": "Boolean false must remain false.",
+      "required": false,
+      "sensitive": false,
+      "defaultValue": "false"
+    }
+  },
+  "outputKeys": {
+    "summary": {
+      "type": "object",
+      "description": "HTTP resilience results, counts, and typed expression checks.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "seed",
+        "execute": "store-sapcp:PutValue:1",
+        "input": {
+          "key": "skills-eval/<RUN>/counter/$(.execution.metadata.executionId)",
+          "value": "0"
+        },
+        "description": "seed",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "retryProbe",
+        "execute": "<OPS>:HttpSequence:1",
+        "input": {
+          "storeKey": "skills-eval/<RUN>/counter/$(.execution.metadata.executionId)",
+          "mode": "$(.execution.input.mode)",
+          "fixtureConfig": "$(.execution.input.fixtureConfig)"
+        },
+        "description": "retryProbe",
+        "progressMessage": null,
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.execution.input.mode)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "retrySuccess",
+                    "retryExhausted",
+                    "retryPermanent"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.retryProbe.output.status)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "200"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "autoRetry": {
+          "maxCount": 2,
+          "delay": "5s",
+          "logic": "INCREMENTAL",
+          "applyOnValidation": true,
+          "when": {
+            "semantic": "OR",
+            "conditions": [
+              {
+                "semantic": "OR",
+                "cases": [
+                  {
+                    "expression": "$(.retryProbe.output.status)",
+                    "operator": "EQUALS",
+                    "semantic": "OR",
+                    "values": [
+                      "503"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": [
+          {
+            "message": "HTTP retry exhausted or permanent status rejected.",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.retryProbe.output.status)",
+                      "operator": "NOT_EQUALS",
+                      "semantic": "OR",
+                      "values": [
+                        "200"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "alias": "pollProbe",
+        "execute": "<OPS>:HttpSequence:1",
+        "input": {
+          "storeKey": "skills-eval/<RUN>/counter/$(.execution.metadata.executionId)",
+          "mode": "$(.execution.input.mode)",
+          "fixtureConfig": "$(.execution.input.fixtureConfig)"
+        },
+        "description": "pollProbe",
+        "progressMessage": null,
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.execution.input.mode)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "pollSuccess",
+                    "pollFailure",
+                    "pollExhausted"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.pollProbe.output.status)",
+                  "operator": "NOT_EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "400"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "autoRetry": null,
+        "repeat": {
+          "maxCount": 2,
+          "delay": "5s",
+          "failOnMaxCount": true,
+          "until": {
+            "semantic": "OR",
+            "conditions": [
+              {
+                "semantic": "OR",
+                "cases": [
+                  {
+                    "expression": "$(.pollProbe.output.status)",
+                    "operator": "EQUALS",
+                    "semantic": "OR",
+                    "values": [
+                      "200"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": [
+          {
+            "message": "HTTP polling reached a terminal failure.",
+            "when": {
+              "semantic": "OR",
+              "conditions": [
+                {
+                  "semantic": "OR",
+                  "cases": [
+                    {
+                      "expression": "$(.pollProbe.output.status)",
+                      "operator": "EQUALS",
+                      "semantic": "OR",
+                      "values": [
+                        "400"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "alias": "expressions",
+        "execute": "utils-sapcp:Void:1",
+        "input": {
+          "message": "{\"ratio\":$(7 / 2),\"emptySum\":$(([] | add) // 0),\"falsePreserved\":$(if .execution.input.flag == null then true else .execution.input.flag end)}"
+        },
+        "description": "expressions",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "summary": "{\"retryStatus\":\"$(.retryProbe.output.status // \"skipped\")\",\"retryCount\":$(.retryProbe.retriesCount // 0),\"pollStatus\":\"$(.pollProbe.output.status // \"skipped\")\",\"expressions\":$(.expressions.output.message)}"
+    },
+    "listeners": [
+      {
+        "status": "FINISHED",
+        "execute": "<OPS>:AuditListener:1",
+        "input": {
+          "parentId": "$(.execution.metadata.executionId)",
+          "outcome": "FINISHED",
+          "storeKey": "skills-eval/<RUN>/counter/$(.execution.metadata.executionId)"
+        },
+        "when": null
+      },
+      {
+        "status": "FAILED",
+        "execute": "<OPS>:AuditListener:1",
+        "input": {
+          "parentId": "$(.execution.metadata.executionId)",
+          "outcome": "FAILED",
+          "storeKey": "skills-eval/<RUN>/counter/$(.execution.metadata.executionId)"
+        },
+        "when": null
+      }
+    ]
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

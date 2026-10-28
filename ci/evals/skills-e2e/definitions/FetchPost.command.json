@@ -1,0 +1,83 @@
+{
+  "catalog": "<CORE>",
+  "name": "FetchPost",
+  "version": 1,
+  "id": "<CORE>:FetchPost:1",
+  "description": "FetchPost for the isolated skills evaluation.",
+  "inputKeys": {
+    "postId": {
+      "type": "number",
+      "description": "JSONPlaceholder post ID between one and one hundred.",
+      "required": true,
+      "sensitive": false,
+      "minValue": 1,
+      "maxValue": 100
+    },
+    "apiConfig": {
+      "type": "object",
+      "description": "Read-only public API endpoint configuration, injected through an Input.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "post": {
+      "type": "object",
+      "description": "Selected post ID, user ID, and title from the public service.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "fetchPost",
+        "execute": "http-sapcp:HttpRequest:1",
+        "input": {
+          "method": "GET",
+          "url": "$(.execution.input.apiConfig | toObject.baseUrl)/posts/$(.execution.input.postId | toUrlEncoded)",
+          "timeout": "$(.execution.input.apiConfig | toObject.timeout)",
+          "successResponseCodes": "[\"200\"]",
+          "headers": "{\"Accept\":\"application/json\"}",
+          "omitBodyInErrorMessage": "true",
+          "responseBodyTransformer": "toObject | {id, userId, title}"
+        },
+        "description": "fetchPost",
+        "progressMessage": null,
+        "when": null,
+        "validate": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.fetchPost.output.body | toObject.id)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "$(.execution.input.postId)"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "post": "$(.fetchPost.output.body | toObject)"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

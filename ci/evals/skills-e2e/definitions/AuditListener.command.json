@@ -1,0 +1,81 @@
+{
+  "catalog": "<OPS>",
+  "name": "AuditListener",
+  "version": 1,
+  "id": "<OPS>:AuditListener:1",
+  "description": "AuditListener for the isolated skills evaluation.",
+  "inputKeys": {
+    "parentId": {
+      "type": "string",
+      "description": "The firing parent execution ID.",
+      "required": true,
+      "sensitive": false
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Observed parent terminal status.",
+      "required": true,
+      "sensitive": false
+    },
+    "storeKey": {
+      "type": "string",
+      "description": "Isolated counter to remove.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "recorded": {
+      "type": "boolean",
+      "description": "Whether the listener recorded the event and removed its counter.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "record",
+        "execute": "store-sapcp:PutValue:1",
+        "input": {
+          "key": "skills-eval/<RUN>/event/$(.execution.input.parentId)",
+          "value": "{\"parentId\":\"$(.execution.input.parentId)\",\"outcome\":\"$(.execution.input.outcome)\"}"
+        },
+        "description": "record",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "cleanup",
+        "execute": "store-sapcp:DeleteValue:1",
+        "input": {
+          "key": "$(.execution.input.storeKey)"
+        },
+        "description": "cleanup",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "recorded": "true"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

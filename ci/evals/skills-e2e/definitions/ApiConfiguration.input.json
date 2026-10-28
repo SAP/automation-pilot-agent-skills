@@ -1,0 +1,19 @@
+{
+  "catalog": "<CORE>",
+  "name": "EvalApiConfiguration",
+  "version": 1,
+  "description": "Reusable ApiConfiguration for the isolated evaluation.",
+  "keys": {
+    "apiConfig": {
+      "type": "object",
+      "description": "Read-only public API endpoint configuration, injected through an Input.",
+      "sensitive": false
+    }
+  },
+  "values": {
+    "apiConfig": "{\"baseUrl\":\"https://jsonplaceholder.typicode.com\",\"timeout\":20}"
+  },
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}

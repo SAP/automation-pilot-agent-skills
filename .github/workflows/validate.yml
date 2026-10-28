@@ -1,0 +1,64 @@
+name: Validate CLI and skills
+on:
+  pull_request:
+  push:
+    branches: [main, development-cli]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - run: go test -race -cover ./...
+        working-directory: cli
+      - run: go vet ./...
+        working-directory: cli
+      - name: Command reference and complete help coverage
+        run: python3 ci/cli/contracts/helpdocs.py --check
+      - name: Guidance links and anchors
+        run: python3 ci/check_links.py
+      - run: test -z "$(gofmt -l cli ci)"
+      - name: Build provenance regression tests
+        run: go test -race ci/cli/buildmeta/main.go ci/cli/buildmeta/main_test.go
+      - run: go vet ci/cli/buildmeta/main.go ci/cli/buildmeta/main_test.go
+      - run: go run ci/cli/buildmeta/main.go verify cli skills/automation-pilot-cli/scripts/bin
+      - name: Rebuild and verify reproducibility
+        run: |
+          skills/automation-pilot-cli/scripts/autopi version | sed -e 's/^autopi //' -e 's/+source\..*$//' > /tmp/autopi-version
+          cp skills/automation-pilot-cli/scripts/bin/SHA256SUMS /tmp/autopi-checksums
+          ci/cli/build.sh "$(cat /tmp/autopi-version)"
+          cmp /tmp/autopi-checksums skills/automation-pilot-cli/scripts/bin/SHA256SUMS
+      - run: skills/automation-pilot-cli/scripts/autopi lint skills/automation-pilot-command-authoring/examples/*.command.json
+      - name: Evaluation harness regression tests
+        run: go test -race ./...
+        working-directory: ci/evals/skills-e2e
+      - name: Evaluation harness static checks
+        run: go vet ./...
+        working-directory: ci/evals/skills-e2e
+      - name: Evaluation candidate offline checks
+        run: go run . check --run ci
+        working-directory: ci/evals/skills-e2e
+      - run: git diff --check
+  smoke:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Native binary smoke
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Windows) cli="skills/automation-pilot-cli/scripts/bin/windows-amd64/autopi.exe" ;;
+            *) cli="skills/automation-pilot-cli/scripts/autopi" ;;
+          esac
+          "$cli" version
+          "$cli" help
+          "$cli" lint --help
+          "$cli" executions trigger --command-id c:C:1 --print-request

@@ -1,0 +1,41 @@
+{
+  "version": "70de08d-dirty+source.8ff5a5198e2ac0eb4a91644a300145d5e366cbb3cbcf74e1bb9784cc51d02571",
+  "revision": "70de08d22807afe378214f8fa2941a64af6bd9c9",
+  "sourceSHA256": "8ff5a5198e2ac0eb4a91644a300145d5e366cbb3cbcf74e1bb9784cc51d02571",
+  "toolchain": "go1.27.2",
+  "cgoEnabled": false,
+  "flags": [
+    "-trimpath",
+    "-buildvcs=false",
+    "-s",
+    "-w",
+    "-X main.Version=70de08d-dirty+source.8ff5a5198e2ac0eb4a91644a300145d5e366cbb3cbcf74e1bb9784cc51d02571"
+  ],
+  "artifacts": [
+    {
+      "target": "darwin-arm64",
+      "path": "darwin-arm64/autopi",
+      "sha256": "87ed81d98b331dfcba1ac9bd87565d7690c587d7317ecea893d60ebf0b4f811e"
+    },
+    {
+      "target": "darwin-amd64",
+      "path": "darwin-amd64/autopi",
+      "sha256": "08896a0aff91c13fd05507f7bca507a5034535ea182984e259529e7652fdb8fb"
+    },
+    {
+      "target": "linux-amd64",
+      "path": "linux-amd64/autopi",
+      "sha256": "32940faf2b830f7c75197470b247e891d87ddcb5b8b000105dd84ebfbc0464a3"
+    },
+    {
+      "target": "linux-arm64",
+      "path": "linux-arm64/autopi",
+      "sha256": "b5d1e09768a3b0c06ccebb3281213c9e220949b9ebd5fec8b3f995915c770747"
+    },
+    {
+      "target": "windows-amd64",
+      "path": "windows-amd64/autopi.exe",
+      "sha256": "8b1a7ae4940a99d3d478371dcc9253be5a39b457d052f0f2a25e65033e512109"
+    }
+  ]
+}

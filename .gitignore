@@ -1,15 +1,29 @@
 # Dependencies
 node_modules/
 
+# Go CLI local build scratch (committed binaries live under skills/automation-pilot-cli/scripts/bin/)
+cli/dist/
+
 # Credentials and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
+
+# Python helper caches
+__pycache__/
+*.py[cod]
 
 # Claude Code local settings (may contain credentials/local paths)
 .claude/settings.local.json
 .claude/projects/
 .claude/memory/
+.claude/*
+
+# Testing
+
+evaluations
+docs
 
 # IDE settings
 .vscode/
@@ -18,3 +32,9 @@ node_modules/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Local convenience symlinks / Claude workspace scratch
+.claude/skills
+
+# local build artifacts directory
+build/

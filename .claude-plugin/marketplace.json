@@ -1,0 +1,16 @@
+{
+  "name": "automation-pilot",
+  "owner": {
+    "name": "SAP"
+  },
+  "metadata": {
+    "description": "Build and operate cloud-operations automations from your coding agent, powered by SAP Automation Pilot."
+  },
+  "plugins": [
+    {
+      "name": "automation-pilot-skills",
+      "source": "./",
+      "description": "Build, operate, and manage cloud operations with SAP Automation Pilot, from your coding agent in plain language."
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "skills-control-<RUN>",
+  "enabled": true,
+  "instructions": "Isolated evaluation tools. validate_items processes bounded strings; probe_binding reveals only fake-secret presence; exercise_http_control writes per-execution scratch counters and event markers. Check execution status independently of JSON-RPC transport success. Input configuration is injected.",
+  "mcpTools": [
+    {
+      "name": "validate_items",
+      "commandId": "<OPS>:ProcessValidatedItems:1",
+      "inputReferences": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "title": "Validate Items",
+      "enabled": true,
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "sync": false,
+      "waitTimeSeconds": null
+    },
+    {
+      "name": "probe_binding",
+      "commandId": "<OPS>:ProbeBinding:1",
+      "inputReferences": [
+        "<OPS>:EvalBindingFixture:1"
+      ],
+      "title": "Probe Binding",
+      "enabled": true,
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "sync": true,
+      "waitTimeSeconds": 1
+    },
+    {
+      "name": "exercise_http_control",
+      "commandId": "<OPS>:HttpControl:1",
+      "inputReferences": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "title": "Exercise Http Control",
+      "enabled": true,
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "sync": false,
+      "waitTimeSeconds": null
+    }
+  ]
+}

@@ -37,3 +37,17 @@ The following rule governs code contributions:
 * We use GitHub issues to track bugs and enhancement requests.
 
 * Please provide as much context as possible when you open an issue. The information you provide must be comprehensive enough to reproduce that issue for the assignee.
+
+## Local validation
+
+Use the toolchain pinned in `cli/.go-version`. From `cli/`, run `go test -race ./...`
+and `go vet ./...`. From repository root, run `ci/cli/build.sh` after source changes and
+`skills/automation-pilot-cli/scripts/autopi lint skills/automation-pilot-command-authoring/examples/*.command.json`.
+Run `python3 ci/check_links.py` for local guidance links and anchors, and
+`python3 ci/cli/contracts/helpdocs.py --check` for generated CLI help parity.
+From `ci/evals/skills-e2e/`, run `go test -race ./...` and `go vet ./...` for the harness.
+CI runs these checks alongside formatting, source/binary checksums, cross-build
+reproducibility, command-example lint, and native platform smoke tests.
+Product-specific template acceptance scenarios live in
+`skills/automation-pilot-command-authoring/references/template-validation.md`; record
+actual service evidence separately from offline validation.

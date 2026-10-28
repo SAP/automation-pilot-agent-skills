@@ -1,0 +1,320 @@
+{
+  "skillRevision": "547613053a4d4d497033d9ca897df5c5f8985d12",
+  "run": "evaluation01",
+  "tenant": "<TENANT_ID>",
+  "catalog": "<EVALUATION_CATALOG>",
+  "resources": {
+    "ApiConfiguration.input.json": "<EVALUATION_CATALOG>:EvalApiConfiguration:1",
+    "AuditListener.command.json": "<EVALUATION_CATALOG>:AuditListener:1",
+    "BindingFixture.input.json": "<EVALUATION_CATALOG>:EvalBindingFixture:1",
+    "CollectionPolicy.input.json": "<EVALUATION_CATALOG>:EvalCollectionPolicy:1",
+    "ComparePosts.command.json": "<EVALUATION_CATALOG>:ComparePosts:1",
+    "EnrichPost.command.json": "<EVALUATION_CATALOG>:EnrichPost:1",
+    "FetchPost.command.json": "<EVALUATION_CATALOG>:FetchPost:1",
+    "GetPostWithFallback.command.json": "<EVALUATION_CATALOG>:GetPostWithFallback:1",
+    "HttpControl.command.json": "<EVALUATION_CATALOG>:HttpControl:1",
+    "HttpFixtures.input.json": "<EVALUATION_CATALOG>:EvalHttpFixtures:1",
+    "HttpSequence.command.json": "<EVALUATION_CATALOG>:HttpSequence:1",
+    "PortfolioReport.command.json": "<EVALUATION_CATALOG>:PortfolioReport:1",
+    "ProbeBinding.command.json": "<EVALUATION_CATALOG>:ProbeBinding:1",
+    "ProcessValidatedItems.command.json": "<EVALUATION_CATALOG>:ProcessValidatedItems:1",
+    "ScheduledArguments.input.json": "<EVALUATION_CATALOG>:EvalScheduledArguments:1",
+    "control.mcp.json": "MCP_SERVER_CONTROL",
+    "core.catalog.json": "<EVALUATION_CATALOG>",
+    "ops.catalog.json": "<EVALUATION_CATALOG>",
+    "public.mcp.json": "MCP_SERVER_PUBLIC",
+    "schedule": "SCHEDULE_001"
+  },
+  "live": {
+    "total": 34,
+    "passed": 34,
+    "cases": [
+      {
+        "id": "enrich-one",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_001",
+        "elapsedSeconds": 6.389682625
+      },
+      {
+        "id": "portfolio-three",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_002",
+        "elapsedSeconds": 40.239439208
+      },
+      {
+        "id": "portfolio-empty",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_003",
+        "elapsedSeconds": 28.346214
+      },
+      {
+        "id": "portfolio-oversize",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_004",
+        "elapsedSeconds": 17.057034708
+      },
+      {
+        "id": "portfolio-bad-member",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_005",
+        "elapsedSeconds": 16.833524833
+      },
+      {
+        "id": "compare-same",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_006",
+        "elapsedSeconds": 6.672167
+      },
+      {
+        "id": "compare-different",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_007",
+        "elapsedSeconds": 6.348833375
+      },
+      {
+        "id": "fallback-primary",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_008",
+        "elapsedSeconds": 6.5199355
+      },
+      {
+        "id": "fallback-missing",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_009",
+        "elapsedSeconds": 6.449181708
+      },
+      {
+        "id": "strings-three",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_010",
+        "elapsedSeconds": 17.122777584
+      },
+      {
+        "id": "strings-empty",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_011",
+        "elapsedSeconds": 17.000458291
+      },
+      {
+        "id": "strings-blank",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_012",
+        "elapsedSeconds": 16.874476209
+      },
+      {
+        "id": "strings-nonstring",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_013",
+        "elapsedSeconds": 16.847219083
+      },
+      {
+        "id": "strings-oversize",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_014",
+        "elapsedSeconds": 16.899497625
+      },
+      {
+        "id": "http-retrySuccess",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_015",
+        "elapsedSeconds": 19.134368
+      },
+      {
+        "id": "http-retryExhausted",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_016",
+        "elapsedSeconds": 24.463042791
+      },
+      {
+        "id": "http-retryPermanent",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_017",
+        "elapsedSeconds": 8.922206125
+      },
+      {
+        "id": "http-pollSuccess",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_018",
+        "elapsedSeconds": 14.365408416
+      },
+      {
+        "id": "http-pollFailure",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_019",
+        "elapsedSeconds": 13.996721666
+      },
+      {
+        "id": "http-pollExhausted",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_020",
+        "elapsedSeconds": 19.252992916
+      },
+      {
+        "id": "binding-before",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_021",
+        "elapsedSeconds": 11.921584875
+      },
+      {
+        "id": "binding-after",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_022",
+        "elapsedSeconds": 6.724251417
+      },
+      {
+        "id": "mcp-enrich",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_023",
+        "elapsedSeconds": 2.319460792
+      },
+      {
+        "id": "mcp-portfolio",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_024",
+        "elapsedSeconds": 41.324725917
+      },
+      {
+        "id": "mcp-compare",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_025",
+        "elapsedSeconds": 7.139475625
+      },
+      {
+        "id": "mcp-fallback",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_026",
+        "elapsedSeconds": 6.7438076670000004
+      },
+      {
+        "id": "mcp-binding-sync-fallback",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_027",
+        "elapsedSeconds": 8.000947125
+      },
+      {
+        "id": "mcp-http-failure-verdict",
+        "expectedStatus": "FAILED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_028",
+        "elapsedSeconds": 8.655337833
+      },
+      {
+        "id": "mcp-validated-items",
+        "expectedStatus": "FINISHED",
+        "status": "PASS",
+        "detail": "Expected terminal state, semantic assertions, and requested lineage matched",
+        "executionId": "EXECUTION_029",
+        "elapsedSeconds": 17.278546833
+      }
+    ],
+    "additionalChecks": [
+      {
+        "id": "schema-public",
+        "status": "PASS",
+        "detail": "Live tools/list exposes precisely the expected business keys; MEDIUM collection advisories are guarded by command validation"
+      },
+      {
+        "id": "schema-control",
+        "status": "PASS",
+        "detail": "Live tools/list exposes precisely the expected business keys; MEDIUM collection advisories are guarded by command validation"
+      },
+      {
+        "id": "mcp-tool-lifecycle",
+        "status": "PASS",
+        "detail": "Disabled tool disappeared; complete original tool array restored"
+      },
+      {
+        "id": "mcp-server-lifecycle",
+        "status": "PASS",
+        "detail": "Server disabled and restored with successful client readiness"
+      },
+      {
+        "id": "schedule-once",
+        "status": "PASS",
+        "detail": "Scheduled execution finished with correct Input and schedule lineage"
+      }
+    ]
+  },
+  "localAcceptanceChecks": 9,
+  "newResourceReadbacks": 17,
+  "firstAttempt": {
+    "commandCreatesPassed": 9,
+    "commandCreatesTotal": 10,
+    "runtimeScenariosPassed": 29,
+    "runtimeScenariosTotal": 29
+  },
+  "repairs": {
+    "generatedCommands": 1,
+    "explanation": "Split HttpSequence status routing after service rejected the original expression for too many elements."
+  },
+  "limitations": [
+    "Fresh catalog creation rejected at the tenant quota; reused dedicated catalog, with catalog creation unscored.",
+    "One agent/session, no no-skill baseline or independent model replicate.",
+    "OAuth, mTLS, destinations, Confirm choices, destructive compensation, recurring/DST delivery, and retention timing untested.",
+    "Namespace option validated offline; current live run used unprefixed Commands and Eval-prefixed Inputs."
+  ],
+  "harnessCorrections": [
+    "Normalize typed Go payloads before comparison with decoded JSON.",
+    "Wait for schedule.state to settle after the FINISHED execution.",
+    "Require the expected diagnostic in negative tests."
+  ],
+  "anonymization": {
+    "identifiers": "Tenant, catalog, MCP server, schedule, execution, and run identifiers are replaced with stable labels that cannot address live resources.",
+    "evidence": "Original run evidence remains local under the Git-ignored runs directory; outcomes, timings, and skill revision are preserved."
+  }
+}
