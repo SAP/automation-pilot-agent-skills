@@ -1,0 +1,157 @@
+name: Validate CLI and skills
+on:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 5 * * 1'
+  pull_request:
+  push:
+    branches: [main, development-cli]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - run: go test -race -cover ./...
+        working-directory: cli
+      - run: go vet ./...
+        working-directory: cli
+      - name: Command reference and complete help coverage
+        run: go run ci/cli/contracts/helpdocs/main.go --check
+      - name: Guidance links and anchors
+        run: go run ci/links/main.go
+      - name: Maintenance tool regressions
+        run: |
+          for tool in ci/links ci/cli/contracts/helpdocs ci/cli/contracts/snapshot; do
+            go test -race "$tool/main.go" "$tool/main_test.go"
+            go vet "$tool/main.go" "$tool/main_test.go"
+          done
+      - run: test -z "$(gofmt -l cli ci)"
+      - name: Build provenance regression tests
+        run: go test -race ci/cli/buildmeta/main.go ci/cli/buildmeta/main_test.go
+      - name: Plugin packaging regression tests
+        run: go test -race ci/plugin/main.go ci/plugin/main_test.go
+      - name: Contract review identity and freshness
+        run: |
+          go test ci/contracts/main.go ci/contracts/main_test.go
+          go run ci/contracts/main.go
+      - run: go vet ci/cli/buildmeta/main.go ci/cli/buildmeta/main_test.go
+      - run: go run ci/cli/buildmeta/main.go verify cli skills/automation-pilot-cli/scripts/bin
+      - name: Rebuild and verify reproducibility
+        run: |
+          skills/automation-pilot-cli/scripts/autopi version | sed -e 's/^autopi //' -e 's/+source\..*$//' > /tmp/autopi-version
+          cp skills/automation-pilot-cli/scripts/bin/SHA256SUMS /tmp/autopi-checksums
+          ci/cli/build.sh "$(cat /tmp/autopi-version)"
+          cmp /tmp/autopi-checksums skills/automation-pilot-cli/scripts/bin/SHA256SUMS
+      - run: skills/automation-pilot-cli/scripts/autopi lint skills/automation-pilot-command-authoring/examples/*.command.json
+      - name: Evaluation harness regression tests
+        run: go test -race ./...
+        working-directory: ci/evals/skills-e2e
+      - name: Evaluation harness static checks
+        run: go vet ./...
+        working-directory: ci/evals/skills-e2e
+      - name: Evaluation candidate offline checks
+        run: go run . check --run ci
+        working-directory: ci/evals/skills-e2e
+      - run: git diff --check
+      - name: Record validation inputs
+        run: |
+          mkdir -p build
+          go run ci/cli/buildmeta/main.go source cli > build/source.sha256
+          go run ci/cli/buildmeta/main.go validation cli > build/validation.sha256
+          git rev-parse HEAD > build/revision.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: validation-inputs
+          path: build/
+  vulnerability:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+      - run: govulncheck ./...
+        working-directory: cli
+      - run: govulncheck ./...
+        working-directory: ci/evals/skills-e2e
+  fuzz:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        target: [FuzzProtectedOutput, FuzzHTTPErrorProtection, FuzzURLProtection]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - run: go test ./internal/client -run '^$' -fuzz '^${{ matrix.target }}$' -fuzztime 30s
+        working-directory: cli
+  plugin-install:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - name: Install pinned plugin validator (contributor tool only)
+        run: |
+          mkdir -p "$RUNNER_TEMP/claude"
+          cp ci/plugin/package.json ci/plugin/package-lock.json "$RUNNER_TEMP/claude/"
+          npm ci --prefix "$RUNNER_TEMP/claude" --ignore-scripts
+          node "$RUNNER_TEMP/claude/node_modules/@anthropic-ai/claude-code/install.cjs"
+          "$RUNNER_TEMP/claude/node_modules/.bin/claude" --version
+      - name: Validate every skill and install from the marketplace
+        run: PATH="$RUNNER_TEMP/claude/node_modules/.bin:$PATH" sh ci/plugin/install-test.sh
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-amd64
+          - os: ubuntu-24.04-arm
+            target: linux-arm64
+          - os: macos-15-intel
+            target: darwin-amd64
+          - os: macos-15
+            target: darwin-arm64
+          - os: windows-2025
+            target: windows-amd64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - name: Confirm native target
+        shell: bash
+        run: test "$(go env GOOS)-$(go env GOARCH)" = '${{ matrix.target }}'
+      - name: Native binary smoke
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Windows) cli="skills/automation-pilot-cli/scripts/autopi.cmd" ;;
+            *) cli="skills/automation-pilot-cli/scripts/autopi" ;;
+          esac
+          "$cli" version
+          "$cli" help
+          "$cli" lint --help
+          "$cli" executions trigger --command-id c:C:1 --print-request
+      - name: Native checksum enforcement
+        run: go test -count=1 -v -run '^TestLauncher' .
+        working-directory: cli
+      - name: Native harness checksum enforcement
+        run: go test -count=1 -v ./...
+        working-directory: ci/evals/skills-e2e

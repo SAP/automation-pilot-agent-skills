@@ -1,0 +1,24 @@
+{
+  "catalog": "<OPS>",
+  "name": "EvalBindingFixture",
+  "version": 1,
+  "description": "Reusable BindingFixture for the isolated evaluation.",
+  "keys": {
+    "apiToken": {
+      "type": "string",
+      "description": "Generated fake secret; never transmitted to a public endpoint.",
+      "sensitive": true
+    },
+    "label": {
+      "type": "string",
+      "description": "Independent fixture label preserved by narrow value patches.",
+      "sensitive": false
+    }
+  },
+  "values": {
+    "label": "original-label"
+  },
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}

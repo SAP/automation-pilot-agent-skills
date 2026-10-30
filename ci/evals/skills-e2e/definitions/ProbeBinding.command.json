@@ -1,0 +1,67 @@
+{
+  "catalog": "<OPS>",
+  "name": "ProbeBinding",
+  "version": 1,
+  "id": "<OPS>:ProbeBinding:1",
+  "description": "ProbeBinding for the isolated skills evaluation.",
+  "inputKeys": {
+    "apiToken": {
+      "type": "string",
+      "description": "Generated fake secret supplied by Input.",
+      "required": true,
+      "sensitive": true
+    },
+    "label": {
+      "type": "string",
+      "description": "Non-secret label preserved across rotation.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "bindingPresent": {
+      "type": "boolean",
+      "description": "Whether the fake secret was injected; no secret is output.",
+      "sensitive": false
+    },
+    "label": {
+      "type": "string",
+      "description": "Non-secret fixture label.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "probe",
+        "execute": "utils-sapcp:Void:1",
+        "input": {
+          "message": "$(.execution.input.apiToken | length > 0)"
+        },
+        "description": "probe",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": {
+          "interval": "5s",
+          "when": null
+        },
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "bindingPresent": "$(.probe.output.message)",
+      "label": "$(.execution.input.label)"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

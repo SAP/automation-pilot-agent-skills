@@ -1,0 +1,144 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:WaitForOperation:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "WaitForOperation",
+    "description": "Polls an asynchronous operation endpoint until it reaches a terminal state, failing if it does not complete within the polling budget",
+    "version": 1,
+    "inputKeys": {
+        "operationUrl": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The absolute URL of the operation status resource to poll"
+        },
+        "authorizationHeader": {
+            "type": "string",
+            "sensitive": true,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The value of the Authorization header sent with each poll request"
+        }
+    },
+    "outputKeys": {
+        "state": {
+            "type": "string",
+            "sensitive": false,
+            "description": "The state of the operation. Examples: COMPLETE, SUCCEEDED, FAILED"
+        }
+    },
+    "configuration": {
+        "values": [],
+        "output": {
+            "state": "$(.poll.output.body | toObject.state)"
+        },
+        "executors": [
+            {
+                "execute": "http-sapcp:HttpRequest:1",
+                "alias": "poll",
+                "input": {
+                    "url": "$(.execution.input.operationUrl)",
+                    "method": "GET",
+                    "headers": "{\"Accept\":\"application/json\"}",
+                    "authorizationHeader": "$(.execution.input.authorizationHeader)",
+                    "timeout": "20"
+                },
+                "description": "Poll the operation status",
+                "progressMessage": "Checking operation status...",
+                "initialDelay": {
+                    "interval": "30s",
+                    "when": null
+                },
+                "pause": null,
+                "when": null,
+                "validate": {
+                    "semantic": "AND",
+                    "conditions": [
+                        {
+                            "semantic": "AND",
+                            "cases": [
+                                {
+                                    "expression": "$(.poll.output.body | toObject.state)",
+                                    "operator": "NOT_EQUALS",
+                                    "semantic": "AND",
+                                    "values": [
+                                        "FAILED"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "autoRetry": null,
+                "repeat": {
+                    "maxCount": 60,
+                    "delay": "15s",
+                    "failOnMaxCount": true,
+                    "until": {
+                        "semantic": "OR",
+                        "conditions": [
+                            {
+                                "semantic": "OR",
+                                "cases": [
+                                    {
+                                        "expression": "$(.poll.output.body | toObject.state)",
+                                        "operator": "EQUALS",
+                                        "semantic": "OR",
+                                        "values": [
+                                            "COMPLETE",
+                                            "SUCCEEDED",
+                                            "FAILED"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "errorMessages": [
+                    {
+                        "message": "Operation failed: $(.poll.output.body | toObject.errors[0].detail // \"unknown error\")",
+                        "when": {
+                            "semantic": "OR",
+                            "conditions": [
+                                {
+                                    "semantic": "OR",
+                                    "cases": [
+                                        {
+                                            "expression": "$(.poll.output.body | toObject.state)",
+                                            "operator": "EQUALS",
+                                            "semantic": "OR",
+                                            "values": [
+                                                "FAILED"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {}
+}

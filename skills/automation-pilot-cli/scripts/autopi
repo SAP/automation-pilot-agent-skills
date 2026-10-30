@@ -1,0 +1,52 @@
+#!/bin/sh
+# Platform selector for the autopi CLI. Detects the OS/arch and execs the matching
+# prebuilt static binary only after checking its SHA-256. No build or network needed.
+set -eu
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+verification_failed() {
+  echo "autopi: binary verification failed: $1" >&2
+  echo "        restore the complete bundle from a trusted source; do not bypass this check" >&2
+  exit 1
+}
+
+os="$(uname -s)"
+case "$os" in
+  Darwin) os="darwin" ;;
+  Linux)  os="linux" ;;
+  *) echo "autopi: unsupported OS '$os' (expected Darwin or Linux; on Windows use autopi.cmd)" >&2; exit 1 ;;
+esac
+
+arch="$(uname -m)"
+case "$arch" in
+  x86_64|amd64) arch="amd64" ;;
+  arm64|aarch64) arch="arm64" ;;
+  *) echo "autopi: unsupported architecture '$arch'" >&2; exit 1 ;;
+esac
+
+target="${os}-${arch}/autopi"
+bin="$DIR/bin/$target"
+if [ ! -x "$bin" ]; then
+  verification_failed "bundled binary is missing or not executable"
+fi
+
+sums="$DIR/bin/SHA256SUMS"
+[ -r "$sums" ] || verification_failed "SHA256SUMS is missing or unreadable"
+expected=$(LC_ALL=C awk -v target="$target" '
+  NF != 2 || length($1) != 64 || $1 !~ /^[0-9a-f]+$/ { invalid = 1 }
+  $2 == target { count++; hash = $1 }
+  END { if (invalid || count != 1) exit 1; print hash }
+' "$sums") || verification_failed "SHA256SUMS must contain one valid entry for $target"
+
+# Hash stdin so paths with whitespace or checksum escape characters stay literal.
+if command -v sha256sum >/dev/null 2>&1; then
+  actual=$(sha256sum < "$bin") || verification_failed "could not hash bundled binary"
+elif command -v shasum >/dev/null 2>&1; then
+  actual=$(shasum -a 256 < "$bin") || verification_failed "could not hash bundled binary"
+else
+  verification_failed "sha256sum or shasum is required"
+fi
+actual=${actual%% *}
+[ "$actual" = "$expected" ] || verification_failed "SHA-256 mismatch for $target"
+
+exec "$bin" "$@"

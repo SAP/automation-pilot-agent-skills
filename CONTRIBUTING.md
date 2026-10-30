@@ -37,3 +37,34 @@ The following rule governs code contributions:
 * We use GitHub issues to track bugs and enhancement requests.
 
 * Please provide as much context as possible when you open an issue. The information you provide must be comprehensive enough to reproduce that issue for the assignee.
+
+## Local validation
+
+Use the toolchain pinned in `cli/.go-version`. From `cli/`, run `go test -race ./...`
+and `go vet ./...`. From repository root, run `ci/cli/build.sh` after source changes and
+`skills/automation-pilot-cli/scripts/autopi lint skills/automation-pilot-command-authoring/examples/*.command.json`.
+Run `go run ci/links/main.go` for local guidance links and anchors, and
+`go run ci/cli/contracts/helpdocs/main.go --check` for generated CLI help parity.
+For each directory under `ci/links` and `ci/cli/contracts/{helpdocs,snapshot}`, run
+`go test main.go main_test.go` to verify the maintenance utilities.
+The Go suite includes native launcher checksum enforcement, covering missing/modified
+binaries, invalid checksum lists, and argument forwarding. To run these checks alone,
+run `go test -count=1 -v -run '^TestLauncher' .` from `cli/`.
+From `ci/evals/skills-e2e/`, run `go test -race ./...` and `go vet ./...` for the harness.
+CI runs these checks alongside formatting, source/binary checksums, cross-build
+reproducibility, command-example lint, and native platform smoke tests.
+Product-specific template acceptance scenarios live in
+`skills/automation-pilot-command-authoring/references/template-validation.md`; record
+actual service evidence separately from offline validation.
+
+For plugin changes, run `sh ci/plugin/install-test.sh` with Claude Code 2.1.308 available.
+It installs into disposable configuration and checks the cached bundle without source
+or build tools. Run `go test ci/plugin/main.go ci/plugin/main_test.go` for packaging,
+`go test ci/contracts/main.go ci/contracts/main_test.go` and `go run ci/contracts/main.go`
+for review freshness. See [agent evaluations](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/evals/agent-skills/README.md) for fresh sessions and a
+baseline; these require evaluator credentials but no Automation Pilot credentials.
+
+Keep tenant-specific reports, session transcripts and development notes out of
+commits. Local review artifacts may be kept in `ci/.local/`; live run state stays in
+`ci/evals/skills-e2e/runs/`. Both directories are ignored and excluded from release
+packages and validation fingerprints. Commit reusable fixtures and tests instead.

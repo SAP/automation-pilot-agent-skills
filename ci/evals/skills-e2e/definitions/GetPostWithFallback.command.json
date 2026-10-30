@@ -1,0 +1,99 @@
+{
+  "catalog": "<CORE>",
+  "name": "GetPostWithFallback",
+  "version": 1,
+  "id": "<CORE>:GetPostWithFallback:1",
+  "description": "GetPostWithFallback for the isolated skills evaluation.",
+  "inputKeys": {
+    "requestedId": {
+      "type": "number",
+      "description": "Requested positive post ID; absent IDs use post one.",
+      "required": true,
+      "sensitive": false,
+      "minValue": 1
+    },
+    "apiConfig": {
+      "type": "object",
+      "description": "Read-only public API endpoint configuration, injected through an Input.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "summary": {
+      "type": "object",
+      "description": "Resolved post and explicit fallback provenance.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "primary",
+        "execute": "http-sapcp:HttpRequest:1",
+        "input": {
+          "method": "GET",
+          "url": "$(.execution.input.apiConfig | toObject.baseUrl)/posts/$(.execution.input.requestedId | toUrlEncoded)",
+          "timeout": "$(.execution.input.apiConfig | toObject.timeout)",
+          "successResponseCodes": "[\"200\",\"404\"]",
+          "headers": "{\"Accept\":\"application/json\"}",
+          "omitBodyInErrorMessage": "true",
+          "responseBodyTransformer": "toObject | {id, userId, title}"
+        },
+        "description": "primary",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "fallback",
+        "execute": "<CORE>:FetchPost:1",
+        "input": {
+          "postId": "1",
+          "apiConfig": "$(.execution.input.apiConfig)"
+        },
+        "description": "fallback",
+        "progressMessage": null,
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.primary.output.status)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "404"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "summary": "{\"source\":\"$(if (.primary.output.status | toNumber) == 404 then \"fallback\" else \"primary\" end)\",\"post\":$(if .fallback.executed then .fallback.output.post | toObject else .primary.output.body | toObject end)}"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

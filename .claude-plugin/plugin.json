@@ -1,0 +1,23 @@
+{
+  "name": "automation-pilot-skills",
+  "displayName": "SAP Automation Pilot",
+  "description": "Build, operate, and manage cloud operations with SAP Automation Pilot, from your coding agent in plain language.",
+  "version": "1.0.0",
+  "author": {
+    "name": "SAP"
+  },
+  "homepage": "https://github.com/SAP/automation-pilot-agent-skills",
+  "repository": "https://github.com/SAP/automation-pilot-agent-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "sap",
+    "automation-pilot",
+    "cloud-operations",
+    "automation",
+    "workflow",
+    "commands",
+    "executions",
+    "scheduling",
+    "cli"
+  ]
+}

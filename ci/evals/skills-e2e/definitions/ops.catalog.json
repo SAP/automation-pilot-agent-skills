@@ -1,0 +1,8 @@
+{
+  "technicalName": "<OPS_PREFIX>",
+  "name": "skills-control-<RUN>",
+  "description": "Isolated deterministic control workflows for <RUN>.",
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}
