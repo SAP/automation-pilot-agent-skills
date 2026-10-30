@@ -9,7 +9,8 @@ Skill usage needs no Go runtime, compiler, package manager, source checkout or b
 The [manifest](../scripts/bin/build-manifest.json) records the source revision,
 source digest, version, platform paths and binary hashes. The corresponding
 [SHA256SUMS](../scripts/bin/SHA256SUMS) file comes from the same distribution.
-macOS/Linux use `shasum` or `sha256sum`; Windows uses PowerShell's `Get-FileHash`.
+macOS/Linux use `shasum` or `sha256sum`; Windows uses built-in Windows PowerShell
+and .NET SHA-256 APIs, with no extra modules.
 The launcher performs the required verification automatically.
 
 Checksums establish consistency with the trusted manifest. Install the complete

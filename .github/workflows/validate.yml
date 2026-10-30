@@ -115,6 +115,7 @@ jobs:
         run: PATH="$RUNNER_TEMP/claude/node_modules/.bin:$PATH" sh ci/plugin/install-test.sh
   smoke:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-24.04
