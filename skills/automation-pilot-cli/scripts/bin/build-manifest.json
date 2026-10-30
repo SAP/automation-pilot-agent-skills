@@ -1,7 +1,7 @@
 {
-  "version": "v1.0.0+source.8a22481bbc10afa796a4905669a587476c034d2cb2711fa6bafa823ad5d3fd1c",
-  "revision": "0e4de79743fa948e9b8f982cb303a1121b6d45bd",
-  "sourceSHA256": "8a22481bbc10afa796a4905669a587476c034d2cb2711fa6bafa823ad5d3fd1c",
+  "version": "v1.0.0+source.1f223506e9b87f05b80c478cd0ab134adf0c9c6b44b63a6e6a76dc21694ed093",
+  "revision": "856a229946868f14e8afec6739f48f655fe24617",
+  "sourceSHA256": "1f223506e9b87f05b80c478cd0ab134adf0c9c6b44b63a6e6a76dc21694ed093",
   "toolchain": "go1.27.3",
   "cgoEnabled": false,
   "flags": [
@@ -9,33 +9,33 @@
     "-buildvcs=false",
     "-s",
     "-w",
-    "-X main.Version=v1.0.0+source.8a22481bbc10afa796a4905669a587476c034d2cb2711fa6bafa823ad5d3fd1c"
+    "-X main.Version=v1.0.0+source.1f223506e9b87f05b80c478cd0ab134adf0c9c6b44b63a6e6a76dc21694ed093"
   ],
   "artifacts": [
     {
       "target": "darwin-arm64",
       "path": "darwin-arm64/autopi",
-      "sha256": "90635d1639ddefdcb4e34d1cb56eb1524c98239387486b417577c9bdeb2946bb"
+      "sha256": "4d85c368800e7804b9b4cc899bfcbd9290fc323aa351b20b1c7384d243a09f5c"
     },
     {
       "target": "darwin-amd64",
       "path": "darwin-amd64/autopi",
-      "sha256": "49cd821c1d2f46a6a1c53865562f8effa75658ee394e37284c8c82d303f3a274"
+      "sha256": "33ff83d27c15b02ee1de77163ebbb8e2abd3b9eee32fc46f47a4a2526a742939"
     },
     {
       "target": "linux-amd64",
       "path": "linux-amd64/autopi",
-      "sha256": "437b385af57f20758f2cbdfb72e5590e52da57a490dd5996010e98cf3d2dbe53"
+      "sha256": "71be286977c185ebadb79a740bbf1eec42e1ddf68a962dbd72deedf0893dfd75"
     },
     {
       "target": "linux-arm64",
       "path": "linux-arm64/autopi",
-      "sha256": "2db7c27b4f1d27a4595b66798d94b8f2425e1daba251b47355cbe43ada984a0b"
+      "sha256": "e4788d4a2389ee3b66302cb538dd135e1cfb20a2c44f6f010eb5ae4ad4635ae5"
     },
     {
       "target": "windows-amd64",
       "path": "windows-amd64/autopi.exe",
-      "sha256": "502cf23f775d95ea65035b0f83b21b455ebf8dc2e209266b96951fcdaebef0c8"
+      "sha256": "1fc9352b77e4647c65d56bfd3259b4d8b1d02a34c7cb5961f78fbc40571f583d"
     }
   ]
 }

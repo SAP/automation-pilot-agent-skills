@@ -34,8 +34,9 @@ is needed. Quote absolute paths that contain spaces.
 
 On Windows, use the absolute path to `scripts/autopi.cmd`; it calls the bundled
 PowerShell verifier first. macOS/Linux need `shasum` or `sha256sum`; Windows uses
-PowerShell's `Get-FileHash`. Skill usage requires no Go runtime, compiler, source
-checkout, or build tools. Use the shipped executable for every operation.
+built-in Windows PowerShell and .NET SHA-256 APIs, with no extra modules. Skill usage
+requires no Go runtime, compiler, source checkout, or build tools. Use the shipped
+executable for every operation.
 
 The checksum list must come from the same trusted distribution as the launcher. For
 [build-manifest](scripts/bin/build-manifest.json) inspection, release verification,

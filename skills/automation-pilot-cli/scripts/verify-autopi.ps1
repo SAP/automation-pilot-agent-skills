@@ -2,8 +2,8 @@
 $ErrorActionPreference = 'Stop'
 try {
     $target = 'windows-amd64/autopi.exe'
-    $binary = Join-Path $PSScriptRoot 'bin\windows-amd64\autopi.exe'
-    $sums = Join-Path $PSScriptRoot 'bin\SHA256SUMS'
+    $binary = [System.IO.Path]::Combine($PSScriptRoot, 'bin\windows-amd64\autopi.exe')
+    $sums = [System.IO.Path]::Combine($PSScriptRoot, 'bin\SHA256SUMS')
     $selectedHashes = @()
     foreach ($line in [System.IO.File]::ReadAllLines($sums)) {
         if ($line -cnotmatch '^([0-9a-f]{64})[ \t]+(\S+)$') {
@@ -16,7 +16,18 @@ try {
     if ($selectedHashes.Count -ne 1) {
         throw "SHA256SUMS must contain one valid entry for $target"
     }
-    $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $binary).Hash.ToLowerInvariant()
+    # Use built-in .NET APIs so inherited PowerShell module paths cannot break hashing.
+    $hasher = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [System.IO.File]::OpenRead($binary)
+        try {
+            $actual = [System.BitConverter]::ToString($hasher.ComputeHash($stream)).Replace('-', '').ToLowerInvariant()
+        } finally {
+            $stream.Dispose()
+        }
+    } finally {
+        $hasher.Dispose()
+    }
     if ($actual -cne $selectedHashes[0]) {
         throw "SHA-256 mismatch for $target"
     }
