@@ -45,7 +45,7 @@ control; rate limiting, outages, or blocked network access are recorded separate
 
 ## Running the supplied candidate
 
-The harness uses Go's standard library and calls the bundled autopi binary. It adds no runtime
+The harness uses Go's standard library and calls the bundled autopi verification launcher. It adds no runtime
 requirement to the skills. From this directory, using the repository's pinned Go toolchain:
 
 ```sh
@@ -54,6 +54,14 @@ go run . deploy --tenant YOUR_TENANT_ID --run run01
 go run . run --tenant YOUR_TENANT_ID --run run01
 go run . report --run run01
 ```
+
+For broader release testing, see [feature coverage and reuse](FEATURE-COVERAGE.md).
+After the core run, `features` exercises lifecycle, expressions, actions, schedule
+definitions, events and runtimes; `measure` compares response sizes and optionally
+extracts model usage counters; `cleanup` removes only this run's recorded resources.
+These modes require the same explicit `--tenant` and `--run`. Run them sequentially
+because they share saved state. The core run continues to retain resources until
+cleanup is explicitly invoked.
 
 `deploy` and `run` require an explicit `--tenant`; there is no real tenant default. Offline
 `check` needs no tenant or credentials, and `report` uses the selected run's saved tenant.
@@ -65,15 +73,16 @@ retrying. `run` resumes only cases without a recorded attempt, and polls an alre
 execution rather than triggering it again. Evidence, resource IDs, candidate hashes, API results,
 terminal states, and scenario verdicts are stored in `runs/<run>/`. Secret-bearing payloads are
 sent through stdin and never saved. No generated Python runs locally; `check` uses autopi lint.
-The published `EVALUATION.md` and `results.json` use anonymized identifiers. Raw run evidence
-contains tenant/resource metadata and stays excluded from Git by the local `.gitignore`.
+Run reports and evidence contain tenant/resource metadata and remain under the
+Git-ignored `runs/` directory. Commit the reusable harness and fixtures; retain
+historical scores and session reports locally.
 
 If catalog quota prevents fresh catalogs, `deploy --catalog EXISTING_EVALUATION_CATALOG`
 can reuse a dedicated catalog covered by the evaluation's scope. Both logical roles use that
 one physical catalog. The harness verifies it, preserves its metadata and existing resources,
 and marks catalog creation REUSED instead of assigning a pass. Ensure candidate resource
-names do not collide with existing content. The current candidate uses Eval-prefixed Input
-names to coexist with the earlier weather evaluation. Never delete unrelated catalogs to make
+names do not collide with existing content. The candidate uses Eval-prefixed Input
+names. Never delete unrelated catalogs to make
 space. A resumed run remembers its chosen catalog without requiring the flag again.
 For another generation in the same catalog, add a distinct `--namespace RoundTwo` when first
 initializing the run. It prefixes all candidate Command/Input names and their references;
@@ -111,6 +120,8 @@ passes only with the specified failed executor; HTTP 200 / MCP isError=false alo
 
 Skill coverage: Planning (delegated design), Connection, Discovery (live contracts), CLI,
 Inputs, Command Authoring, Dynamic Expressions, Executions, Tags, MCP Servers, and Scheduling.
-Untested branches include OAuth/mTLS, SAP destination APIs, Confirm choices, destructive
-compensation, retention timing, recurrence/DST delivery, and catalog deletion. Those branches
-receive no score. This suite is an acceptance test, not proof of general model reliability.
+The core suite leaves OAuth/mTLS, SAP destination APIs, Confirm choices, destructive
+compensation, retention timing, recurrence/DST delivery, and catalog deletion untested.
+The feature and cleanup modes extend this coverage as documented in FEATURE-COVERAGE.md.
+Unexercised branches receive no score. This suite is an acceptance test, not proof of
+general model reliability.

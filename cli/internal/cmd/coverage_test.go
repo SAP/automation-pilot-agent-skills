@@ -45,7 +45,11 @@ func TestContractFeaturesAllSwaggerOperationsHaveWorkingWrappers(t *testing.T) {
 				if actual == nil || actual.Path != op.Path {
 					t.Errorf("expected %s %s, got %s %s", op.Method, op.Path, r.Method, r.URL)
 				}
-				io.WriteString(w, `{"id":"run","results":[{"executionId":"run","succeeded":true}]}`)
+				if op.OperationID == "listInputs" {
+					io.WriteString(w, `[{"id":"c:Hello:1"}]`)
+				} else {
+					io.WriteString(w, `{"id":"run","results":[{"executionId":"run","succeeded":true}]}`)
+				}
 			}, "", args...)
 			if code != 0 || calls != 1 {
 				t.Fatalf("code=%d calls=%d err=%s", code, calls, stderr)

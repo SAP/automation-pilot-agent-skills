@@ -22,5 +22,5 @@ contracts before binding them; unknown permissions or state rules require servic
 | Craft expression | Dynamic Expressions | `lint` heuristics; authorized execution via Executions | None for hand traces | Expression and wire-shaped fixture | Predicted output; record actual engine version/result for runtime proof |
 
 `api` is an authenticated escape hatch, not proof that an undocumented endpoint or action
-exists. It inherits Input response protection and offline preview rules. Planning resolves
+exists. It inherits the shared output policy and offline preview rules. Planning resolves
 consequential choices and feasibility; it has no mutation endpoint of its own.

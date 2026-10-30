@@ -4,7 +4,7 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 .PHONY: all build test vet fmt clean contract-docs
 
 contract-docs:
-	python3 ../ci/cli/contracts/helpdocs.py --check
+	cd .. && go run ci/cli/contracts/helpdocs/main.go --check
 
 ## all: cross-compile every platform into the skill's bin directory
 all: build
@@ -13,7 +13,7 @@ all: build
 build:
 	../ci/cli/build.sh $(VERSION)
 
-## test: run unit tests
+## test: run CLI and native launcher tests
 test:
 	go test ./...
 

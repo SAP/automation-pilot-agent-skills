@@ -1,6 +1,10 @@
 package cmd
 
-import "github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
+import (
+	"net/url"
+
+	"github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
+)
 
 func inputsResource() *resource {
 	return &resource{
@@ -23,8 +27,31 @@ func inputsResource() *resource {
 }
 
 func inputsList(c *cmdContext, args []string) error {
-	return catalogListVerb(c, args, "inputs list", "GET /inputs",
-		"autopi inputs list --catalog my-cat --tag type=credentials", "inputs", false, true)
+	fs, g := newFlagSet(c, "inputs list")
+	fs.StringVar(&g.catalog, "catalog", "", "filter by catalog")
+	var tags stringList
+	var full bool
+	fs.Var(&tags, "tag", "filter by tag key=value (repeatable)")
+	fs.BoolVar(&full, "full", false, "return complete objects instead of the metadata summary")
+	setUsage(fs, "GET /inputs", "inputs list [--catalog C] [--tag k=v]",
+		"autopi inputs list --catalog my-cat --tag type=credentials")
+	if err := parseNoArgs(fs, args); err != nil {
+		return err
+	}
+	cfg, err := g.config()
+	if err != nil {
+		return err
+	}
+	query := url.Values{}
+	if cfg.Catalog != "" {
+		query.Set("catalog", cfg.Catalog)
+	}
+	addTagFilters(query, tags)
+	req := client.Request{Method: "GET", Path: "inputs", Query: query}
+	if !full {
+		req.Project = client.InputList
+	}
+	return execute(c, cfg, req, false)
 }
 
 // inputsGet mirrors the MCP get_input tool: the secret-bearing values block is

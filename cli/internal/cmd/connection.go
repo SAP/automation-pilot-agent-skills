@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
 )
@@ -12,10 +14,40 @@ func connectionResource() *resource {
 		name:    "connection",
 		summary: "inspect the active connection (non-secret identity & permissions)",
 		verbs: []*verb{
+			{"preflight", "check local configuration without connecting or printing values",
+				"local only (no API calls)", connectionPreflight},
 			{"info", "connected URL, tenant, user, permissions, plan",
 				"GET /server-info + /user-information + /tenant", connectionInfo},
 		},
 	}
+}
+
+// Preflight is useful before credentials exist. It checks syntax, not identity
+// or permission; only connection info can establish a live account summary.
+func connectionPreflight(c *cmdContext, args []string) error {
+	fs := flag.NewFlagSet("connection preflight", flag.ContinueOnError)
+	fs.SetOutput(c.stderr)
+	setUsage(fs, "local only (no API calls)", "autopi connection preflight", "autopi connection preflight")
+	if err := parseNoArgs(fs, args); err != nil {
+		return err
+	}
+	cfg := client.FromEnv()
+	err := cfg.Validate()
+	result := map[string]any{
+		"version":            c.version,
+		"hostnamePresent":    strings.TrimSpace(cfg.Host) != "",
+		"tokenPresent":       strings.TrimSpace(cfg.Token) != "",
+		"configurationValid": err == nil,
+		"connectionChecked":  false,
+		"nextStep":           "connection info verifies tenant identity and permissions",
+	}
+	if err != nil {
+		result["configurationError"] = err.Error()
+	}
+	if writeErr := json.NewEncoder(c.stdout).Encode(result); writeErr != nil {
+		return writeErr
+	}
+	return err
 }
 
 // connectionInfo mirrors the MCP get_connection_info tool: it makes three GET

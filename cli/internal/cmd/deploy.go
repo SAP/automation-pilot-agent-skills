@@ -75,6 +75,11 @@ func deployVerb(c *cmdContext, args []string, name, label, collection string) er
 	if identity.ID != "" && id != identity.ID {
 		return usagef("--id disagrees with body id")
 	}
+	if id != "" {
+		if err := validateResourceID(id, "resource id"); err != nil {
+			return err
+		}
+	}
 	if flagSet(fs, "if-match") && ifMatch == "" {
 		return usagef("--if-match requires a non-empty ETag")
 	}

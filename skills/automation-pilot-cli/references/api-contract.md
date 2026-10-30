@@ -6,7 +6,7 @@ for available flags.
 
 ## Contents
 
-- [Provenance and maintenance](#provenance-and-maintenance)
+- [Snapshot provenance](#snapshot-provenance)
 - [Authentication and permissions](#authentication-and-permissions)
 - [Limits and response outcomes](#limits-and-response-outcomes)
 - [Wire values](#wire-values)
@@ -16,18 +16,21 @@ for available flags.
 - [API validation versus authoring policy](#api-validation-versus-authoring-policy)
 - [Conflicts and request quotas](#conflicts-and-request-quotas)
 
-## Provenance and maintenance
+## Snapshot provenance
 
 The CLI embeds a reviewed snapshot of ContentAPI.json, ExecutionsAPI.json, and
 ScheduledExecutionsAPI.json from the autopi-services repository, reviewed 2026-10-28.
 It covers 51 operations and includes the upstream revision and SHA-256 digests of
 the Swagger/schema files. External schema refs are resolved at build time.
-`ci/cli/contracts/snapshot.py SWAGGER_DIR [--check]` updates/checks that snapshot;
-changes require reviewing these service corrections.
+The contributor freshness check binds that review to the snapshot hash and service
+revision and expires after 90 days. Offline checks establish compatibility with this
+snapshot; live behavior requires separately dated tenant evidence.
 
-`ci/cli/contracts/helpdocs.py [--check]` generates/checks the command reference
-against every shipped resource/verb's help. CI exercises all 51 operations through
+The command reference is generated from every shipped resource/verb's help.
+CI exercises all 51 operations through
 in-memory transports and checks command-reference and binary-source parity.
+These checks happen before distribution. Agents use the prebuilt CLI and its embedded
+contracts; no local generation or build step is part of skill usage.
 
 MCP, connection, and tenant APIs are outside these three definitions. Raw `api`
 bypasses the pinned request validator while retaining authentication and Input response
@@ -36,7 +39,7 @@ protection. Use it for evolving contracts supported by current service evidence.
 ## Authentication and permissions
 
 The CLI supports only Bearer authentication through the service's API-token chain.
-Connection setup is defined in the [CLI entrypoint](../SKILL.md#run-the-bundled-cli).
+Connection setup is defined in the [CLI entrypoint](../SKILL.md#run-only-the-verified-bundled-cli).
 The supplied Swagger authentication declaration does not describe the supported
 Bearer path.
 
@@ -111,7 +114,7 @@ view; Input get `--full` includes the API's values block. `commands ids` returns
 and has no --full. Stored sensitive values remain hidden by the service.
 
 Pretty JSON is the default. `--output raw` returns the body for local processing;
-it retains Input response protection. `--response-envelope` returns status, selected
+it retains the [output policy](output-policy.md). `--response-envelope` returns status, selected
 headers, and the protected body, and is mutually exclusive with raw/status-only/ETag
 selectors. Use it when the body and ETag must come from the same read.
 
@@ -136,6 +139,10 @@ Export validates the response before atomically replacing the protected output f
 
 ## Reviewed corrections and additional service rules
 
+- Live reads on 2026-10-30 returned quoted ETags of 38 characters for Command/Input
+  versions and 34 for executions. The snapshot's `If-Match` maxima of 36 and 32
+  exclude HTTP quotes and are not applied to this opaque header. Forward the complete
+  returned ETag unchanged; the service decides whether the precondition matches.
 - Schedules do not require `entityVersion`. The Swagger's undefined required entry
   is stale; ScheduledExecutionsDataConverter.java:55 and scheduled_execution.proto:13
   contain no such field. Conditional writes use the returned ETag.
@@ -150,9 +157,13 @@ Export validates the response before atomically replacing the protected output f
   Its readOnly annotation does not remove the creation requirement. Webhook type is
   the string GENERIC or ALERT_NOTIFICATION; its Swagger object type is erroneous.
   Sources: WebhooksValidator.java:68, DataConverter.java:317, WebhooksRegistry.java:75.
-- The public action set is PAUSE, RESUME, ABORT, RETRY, RESET, CHOOSE, FAIL, COMMENT,
+- The usable public action set is PAUSE, RESUME, ABORT, RETRY, RESET, CHOOSE, COMMENT,
   and SKIP. SUSPEND and EXECUTE_STATUS_LISTENER are internal and rejected by
   ApiControllersUtils.java:62. RESET_AND_RETRY is deprecated; use RESET.
+- FAIL remains in the schema enum but ActionsRegistry.java:150–165 permits it in
+  no public state. Live RUNNING and PAUSED requests returned HTTP 409; the CLI
+  rejects FAIL locally. RUNNING permits PAUSE and COMMENT; an authorized ABORT
+  therefore requires PAUSE and a verified PAUSED state first.
 - RESET/CHOOSE/SKIP require explicit values in the CLI. CHOOSE uses a current userChoice
   option or an authorized free choice. SKIP's string value contains a JSON object with
   executorPath and optional string-valued outputValues/target. State-specific eligibility

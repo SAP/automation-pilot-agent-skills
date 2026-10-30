@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -68,9 +67,9 @@ func runLint(c *cmdContext, args []string) error {
 
 	all := []lint.Finding{}
 	for _, f := range files {
-		b, err := os.ReadFile(f)
+		b, err := readFile(f)
 		if err != nil {
-			return usagef("cannot read %s: %v", f, err)
+			return err
 		}
 		all = append(all, lint.CheckFileOptions(f, b, readBack, kind, mode)...)
 		if python != "" {

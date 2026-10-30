@@ -60,7 +60,14 @@ func init() {
 	}
 	for i := range Data.Operations {
 		for j := range Data.Operations[i].Parameters {
-			normalize(Data.Operations[i].Parameters[j].Schema)
+			p := &Data.Operations[i].Parameters[j]
+			normalize(p.Schema)
+			// The snapshot's UUID-sized limit excludes HTTP entity-tag quotes.
+			// Live ETags are opaque header values (quoted UUIDs are 38 bytes).
+			// Preserve the complete header and let the service match its version.
+			if p.In == "header" && strings.EqualFold(p.Name, "If-Match") {
+				p.MaxLength = nil
+			}
 		}
 	}
 }
@@ -389,6 +396,9 @@ func semantic(kind string, v any, out *[]Finding) {
 	}
 	if kind == "action" {
 		typ, _ := m["type"].(string)
+		if typ == "FAIL" {
+			add(out, "type", "FAIL is not available for public execution states")
+		}
 		if typ == "SUSPEND" || typ == "EXECUTE_STATUS_LISTENER" {
 			add(out, "type", "internal action is not exposed by the public API")
 		}

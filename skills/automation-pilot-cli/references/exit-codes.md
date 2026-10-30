@@ -7,16 +7,17 @@
 |------|------|---------|---------------|
 | 0 | ok | request succeeded (2xx) | — |
 | 1 | usage | bad flags or arguments | missing positional id, both `-f` and `--data`, unknown verb |
-| 2 | config | required configuration missing | `AUTOMATION_PILOT_HOSTNAME`/`AUTOMATION_PILOT_TOKEN` unset |
+| 2 | config | required configuration missing or invalid | malformed hostname/token or unset variable |
 | 3 | network | no HTTP response | DNS failure, TLS error, connection refused, timeout |
 | 4 | http-4xx | server returned 3xx/4xx (redirects are never followed) | 400/401/403/404/409/429 |
 | 5 | http-5xx | server returned 5xx | 500/503 |
 | 6 | lint | `autopi lint` reported findings | a command/input JSON failed a check |
 | 7 | partial-bulk-failure | bulk action contains failed individual results | HTTP 200 with succeeded=false items |
 
-On a non-2xx status (`4`/`5`), `autopi` still prints the response body the API returned,
-except Input paths, whose error bodies are suppressed to prevent secret echoes. Redirects
-are not followed and return exit 4. Output or export failures return exit 1.
+On a non-2xx status (`4`/`5`), `autopi` reports the HTTP status and suppresses response
+bodies to prevent arbitrary secret echoes. `--response-envelope` retains the status and
+selected headers. Redirects are not followed and return exit 4. Output or export failures
+return exit 1. See the [output policy](output-policy.md).
 
 ## HTTP status reference
 
@@ -38,8 +39,9 @@ are not followed and return exit 4. Output or export failures return exit 1.
 
 ## Troubleshooting
 
-**Exit 2 (config).** A required env var is unset. Set `AUTOMATION_PILOT_HOSTNAME` and
-`AUTOMATION_PILOT_TOKEN`. You can still preview any request offline with
+**Exit 2 (config).** Run `connection preflight` to identify missing/invalid configuration
+without printing values. Set `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN`
+through the approved secret source. You can still preview any request offline with
 `--print-request`, which needs no credentials.
 
 **Exit 4, HTTP 401.** The token is invalid or expired for the target host. Verify the token

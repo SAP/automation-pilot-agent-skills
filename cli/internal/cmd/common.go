@@ -312,7 +312,7 @@ func execute(c *cmdContext, cfg client.Config, req client.Request, statusOnly bo
 		return err // config/network errors still surface
 	}
 	if err != nil {
-		// Still render any error body the API returned before failing.
+		// Render the protected result (including an optional status/header envelope).
 		if res != nil {
 			if writeErr := cl.Render(c.stdout, res); writeErr != nil {
 				return writeErr

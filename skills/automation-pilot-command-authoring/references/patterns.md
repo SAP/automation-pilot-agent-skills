@@ -181,11 +181,17 @@ normal step sequence. Define it in `configuration.listeners`; use `[]` when the 
 needs no listeners. A listener entry mirrors an executor with `execute` (command ID), `input` (value
 map), optional `when`, and a `status`:
 
+`SendAnsEvent` sends its body to SAP Alert Notification Service and its configured
+recipients. Use a summary without raw error text, as below. Before enabling the listener,
+verify that its destination and recipients match the requested notification. Original
+errors can contain credentials, response bodies, or personal data; include diagnostic
+details only after selecting and sanitizing fields appropriate for those recipients.
+
 ```json
 "listeners": [
   { "status": "FAILED",
     "execute": "ans-sapcp:SendAnsEvent:1",
-    "input": { "subject": "Workflow failed", "body": "$(.execution.error.originalMessage // \"unknown\")" },
+    "input": { "subject": "Workflow failed", "body": "The workflow failed. Review the execution in Automation Pilot for details." },
     "when": null }
 ]
 ```

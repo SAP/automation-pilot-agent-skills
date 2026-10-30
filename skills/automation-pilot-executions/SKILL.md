@@ -85,13 +85,17 @@ Done when the top-level state, failed executor path, relevant input/output/log e
 
 Read `autopi executions get <id>` and `autopi executions actions <id>` first. Apply only the
 action the user requested to that exact ID: `autopi executions action <id> --type
-PAUSE|RESUME|RETRY|ABORT|RESET|CHOOSE|SKIP|FAIL|COMMENT`, with a required non-secret `--reason`
+PAUSE|RESUME|RETRY|ABORT|RESET|CHOOSE|SKIP|COMMENT`, with a required non-secret `--reason`
 and `--value` for RESET/CHOOSE/SKIP. Pass the fetched execution ETag with --if-match
 when protecting the action against concurrent changes. State eligibility is enforced by the service; do
 not guess a reset path or user choice. RETRY and RESET may repeat side effects, so inspect
 completed steps and idempotency before performing the authorized repeat. Monitoring alone
 does not authorize a repeat, abort, or Confirm choice. On a timeout, inspect action history
 and current state before resending. Read state and actions back to verify the result.
+For an authorized ABORT of a RUNNING execution, PAUSE it first and verify PAUSED
+before requesting ABORT. The same prerequisite applies to bulk ABORT targets.
+FAIL appears in the service schema but is unavailable in every public execution
+state; the CLI rejects it locally.
 
 Delete with `autopi executions delete <id>` only when deletion of that history is requested
 and the exact target is settled. Verify a 404; other failures do not establish deletion.

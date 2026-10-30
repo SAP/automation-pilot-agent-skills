@@ -231,6 +231,11 @@ func execLogs(c *cmdContext, args []string) error {
 	if executor != "" && (page != "" || maxPageSize != "") {
 		return usagef("--executor cannot be combined with paging flags")
 	}
+	if executor != "" {
+		if err := validateExecutorPath(executor); err != nil {
+			return err
+		}
+	}
 	if len(messages) > 0 && executor == "" {
 		return usagef("--messages requires --executor")
 	}
@@ -447,7 +452,7 @@ func knownStatus(value string) bool {
 func execAction(c *cmdContext, args []string) error {
 	fs, g := newFlagSet(c, "executions action")
 	var typ, reason, value, correlationID, ifMatch, file, data string
-	fs.StringVar(&typ, "type", "", "PAUSE|RESUME|RETRY|ABORT|RESET|CHOOSE|SKIP|FAIL|COMMENT")
+	fs.StringVar(&typ, "type", "", "PAUSE|RESUME|RETRY|ABORT|RESET|CHOOSE|SKIP|COMMENT")
 	fs.StringVar(&reason, "reason", "", "human-readable reason")
 	fs.StringVar(&value, "value", "", "target (e.g. step alias for RESET)")
 	fs.StringVar(&correlationID, "correlation-id", "", "action correlation ID")
@@ -470,7 +475,9 @@ func execAction(c *cmdContext, args []string) error {
 		return usagef("--type is required")
 	}
 	switch typ {
-	case "", "PAUSE", "RESUME", "RETRY", "ABORT", "RESET", "COMMENT", "CHOOSE", "SKIP", "FAIL":
+	case "FAIL":
+		return usagef("FAIL is not available for public execution states")
+	case "", "PAUSE", "RESUME", "RETRY", "ABORT", "RESET", "COMMENT", "CHOOSE", "SKIP":
 	default:
 		return usagef("invalid action type %q", typ)
 	}

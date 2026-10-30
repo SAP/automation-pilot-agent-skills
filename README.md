@@ -2,9 +2,9 @@
 
 # <img src="sap-automation-pilot.svg" width="32" height="32" alt="SAP Automation Pilot" valign="middle"> SAP Automation Pilot Agent Skills
 
-### The fastest way to build SAP BTP automations — describe what you want, deploy in minutes.
+### Create and operate SAP BTP automations through your coding agent.
 
-This repository brings **AI-powered development** to [SAP Automation Pilot](https://help.sap.com/docs/automation-pilot). Using [Claude Code](https://claude.ai/code), you can generate production-ready Commands through natural conversation — the AI handles JSON schemas, jq expressions, and best practices while you focus on what to automate. Review code, deploy to your tenant, trigger Executions, and troubleshoot failures — all without leaving your IDE or terminal.
+This repository provides agent skills and a bundled CLI for [SAP Automation Pilot](https://help.sap.com/docs/automation-pilot). Using [Claude Code](https://claude.ai/code), you can author reusable Commands through natural conversation, with guidance for JSON schemas, dynamic expressions, and service contracts. Review definitions, deploy to your tenant, trigger Executions, and troubleshoot failures from your IDE or terminal.
 
 ![Overview](overview.svg)
 
@@ -12,7 +12,7 @@ This repository brings **AI-powered development** to [SAP Automation Pilot](http
 
 - **Instant expertise** — SAP's proven patterns and best practices guide every Command you create
 - **End-to-end workflow** — From "I need an automation that..." to deployed and running
-- **Production quality by default** — Error handling, retry logic, security flags, and validation included automatically
+- **Validation and control** — Guidance for error handling, retries, sensitive values, and verification before deployment
 - **Zero context switching** — Generate, review, deploy, trigger, monitor, and troubleshoot in one place
 
 ## Table of contents
@@ -74,7 +74,7 @@ Think of it as a force multiplier: these skills encode expert-level patterns —
 
 | Skill | Description |
 |-------|-------------|
-| [**Automation Pilot CLI**](skills/automation-pilot-cli/SKILL.md) | The `autopi` CLI — the single, dependency-free tool every skill uses to call the API (replaces `curl`); also runs `autopi lint` |
+| [**Automation Pilot CLI**](skills/automation-pilot-cli/SKILL.md) | The bundled `autopi` CLI with checksum verification — every skill uses it to call the API and run `autopi lint` |
 | [**Plan**](skills/automation-pilot-plan/SKILL.md) | Design an automation from settled decisions or an interview, then produce an implementation-ready specification |
 | [**Connection**](skills/automation-pilot-connection/SKILL.md) | Validate the configured connection and report the non-secret account summary (tenant, permissions, plan) |
 | [**Discovery**](skills/automation-pilot-discovery/SKILL.md) | Find and evaluate existing Catalogs, Commands, child dependencies, and reusable Inputs before building |
@@ -93,97 +93,70 @@ waiting, and bulk actions; see the [capability map](skills/automation-pilot-cli/
 
 ## Getting started
 
-### Prerequisites
+### 1. Install the plugin
 
-| Tool | Purpose |
-|------|---------|
-| [Claude Code](https://claude.ai/code) | Required to use the skills (VS Code extension, CLI, or desktop app) |
-| `autopi` CLI | All API calls to SAP Automation Pilot — bundled, prebuilt, zero runtime dependencies (see the [`automation-pilot-cli`](skills/automation-pilot-cli/SKILL.md) skill) |
-| `jq` | Optional — JSON shaping when piping CLI output |
+In Claude Code 2.1.275 or later, run:
 
-You'll also need an SAP Automation Pilot tenant with API credentials. The `autopi` CLI
-ships as committed static binaries for macOS, Linux, and Windows — no `curl` or build
-step required. Add `skills/automation-pilot-cli/scripts` to your `PATH` to run `autopi`
-directly.
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/SAP/automation-pilot-agent-skills.git
-cd automation-pilot-agent-skills
+```text
+/plugin install automation-pilot-skills --marketplace SAP/automation-pilot-agent-skills
 ```
 
-### 2. Configure authentication
-
-Create a `.env` file in the repository root:
+Or install from your terminal:
 
 ```bash
-# SAP Automation Pilot credentials
-export AUTOMATION_PILOT_HOSTNAME='emea.autopilot.cloud.sap'
-export AUTOMATION_PILOT_TOKEN='your-bearer-token-here'
+claude plugin install automation-pilot-skills --marketplace SAP/automation-pilot-agent-skills
 ```
 
-**Important notes:**
+Restart the session after installation. The plugin includes all 12 skills, their
+references and examples, and prebuilt `autopi` binaries for macOS ARM64/x64,
+Linux ARM64/x64, and Windows x64. There is no repository clone, PATH configuration,
+Go, Python, or build step to complete. The skills resolve their bundled launchers
+inside the installed plugin. `jq` is optional for your own JSON processing.
 
-- Set `AUTOMATION_PILOT_TOKEN` to the token without the `Bearer ` prefix; the CLI adds it
-  to the `Authorization` header. Keep the token private.
-- Connection configuration is env-only. Legacy `AUTOPI_*` variables and connection
-  flags are unsupported. Use `--timeout` for a deadline other than the 30-second default.
-- Bearer authentication is the only supported CLI method. Connection configuration
-  reads only `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN`. See the
-  [CLI operating rules](skills/automation-pilot-cli/SKILL.md) for protected credential setup.
-- **Supported hostnames:**
-  - `emea.autopilot.cloud.sap` (Europe)
-  - `amer.autopilot.cloud.sap` (Americas)
-  - `apac.autopilot.cloud.sap` (Asia Pacific)
-  - `aus.autopilot.cloud.sap` (Australia)
-  - `ksa.autopilot.cloud.sap` (Saudi Arabia)
-- The `.env` file is gitignored — your credentials stay local
+Every CLI invocation verifies the selected binary's SHA-256. macOS/Linux use the
+standard `shasum` or `sha256sum`; Windows uses PowerShell's `Get-FileHash` and honors
+host execution policy. Install from the trusted SAP repository. See
+[bundle provenance](skills/automation-pilot-cli/references/distribution.md)
+for authenticated release archives and checksum-failure recovery.
 
-### 3. Load environment variables
+### 2. Configure credentials when you need tenant access
 
-Before using the API skills, load your credentials in the process that launches your agent:
+Local planning, authoring, help, lint, and request previews work immediately without
+credentials. For tenant operations, provide these variables through your approved
+secret source in the environment that launches your agent:
 
-```bash
-source .env
-export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
+| Variable | Value |
+|---|---|
+| `AUTOMATION_PILOT_HOSTNAME` | Regional hostname without scheme or path, such as `emea.autopilot.cloud.sap` |
+| `AUTOMATION_PILOT_TOKEN` | Your Bearer token without the `Bearer ` prefix |
+
+Supported regions are `emea`, `amer`, `apac`, `aus`, and `ksa` under
+`autopilot.cloud.sap`. Connection configuration is environment-only. The CLI and
+plugin do not load `.env` or inject credentials. If you use a trusted local `.env`,
+protect it, keep it outside version control, and load it in the launching shell.
+On Windows, set the variables in the PowerShell session that launches the agent.
+An already-running desktop app needs its launch environment configured or a restart
+from the configured shell. Never paste tokens into chat or print the environment.
+
+### 3. Check setup
+
+Invoke `/automation-pilot-skills:automation-pilot-connection` or ask:
+
+```text
+Check my Automation Pilot setup and confirm which tenant and permissions are configured.
 ```
 
-The CLI does not load `.env` automatically. Only source a trusted local file. A shell
-environment does not automatically reach an already-running desktop app; configure its
-launch environment or restart the agent from this shell. Plugin manifests do not inject
-credentials. Never commit tokens or print the environment.
+The skill uses the installed verified launcher. `connection preflight` checks local
+configuration without connecting or printing its values; `connection info` verifies
+live tenant identity and access. Missing credentials do not prevent local-only work.
 
-On Windows PowerShell, set `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN`
-through your approved local secret source, then set
-`$env:PATH = "$PWD\skills\automation-pilot-cli\scripts;$env:PATH"` and launch the
-agent from that PowerShell session. The launcher is `autopi.cmd`; `.env` shell syntax is
-not PowerShell syntax.
+### Developing the plugin
 
-### 4. Verify connection
-
-Test your setup by listing your Catalogs:
-
-```bash
-# add the CLI to your PATH (or call scripts/autopi directly)
-export PATH="$PWD/skills/automation-pilot-cli/scripts:$PATH"
-autopi catalogs list --own
-```
-
-### 5. Activate the skills
-
-From the configured shell in the repository root, start Claude Code with the local plugin:
-
-```bash
-claude --plugin-dir .
-```
-
-Check `/help` for the `automation-pilot-skills` namespaced skills and invoke, for example,
-`/automation-pilot-skills:automation-pilot-connection`. If a skill is absent, verify the
-plugin directory and restart the session. For other agents, install or register the
-individual folders under `skills/` using that client's documented skill mechanism.
-Opening a clone alone does not register these skills. The ignored `.claude/skills` local
-symlink is a development convenience, not a clean-clone installation step.
+Contributors can clone this repository and use `claude --plugin-dir .` from its root.
+For other agents, register all folders under `skills/` using that client's skill
+mechanism, retaining their sibling layout and bundled assets. Opening a clone alone
+does not register skills. See [contributor checks](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/README.md), including the real
+marketplace-install acceptance test.
 
 ## How to use
 
@@ -236,8 +209,8 @@ Do I have any enabled scheduled executions? List them and disable the ones that 
 
 ## Resources
 
-- [Reusable skills evaluation suite](ci/evals/skills-e2e/README.md) — complex workflows, behavioral scoring, a Go harness, and recorded evaluation results.
-- [Build and validation tools](ci/README.md) — contributor helpers, CLI and harness tests, help parity, and guidance link checks.
+- [Reusable skills evaluation suite](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/evals/skills-e2e/README.md) — complex workflows, behavioral scoring, a Go harness, cleanup, and efficiency measurements.
+- [Build and validation tools](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/README.md) — contributor helpers, CLI and harness tests, help parity, and guidance link checks.
 
 **SAP Automation Pilot:**
 
@@ -254,7 +227,7 @@ Do I have any enabled scheduled executions? List them and disable the ones that 
 
 This project is open to feature requests, bug reports, and contributions via [GitHub Issues](https://github.com/SAP/automation-pilot-agent-skills/issues).
 
-For contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For contribution guidelines, see [CONTRIBUTING.md](https://github.com/SAP/automation-pilot-agent-skills/blob/main/CONTRIBUTING.md).
 
 ### Security
 

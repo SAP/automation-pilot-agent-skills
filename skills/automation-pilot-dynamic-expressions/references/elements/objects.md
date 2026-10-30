@@ -50,11 +50,17 @@ Case-insensitive header lookup on a parsed object:
 (.getResource.output.headers | toObject) | getCaseInsensitive("content-type")
 ```
 
-Add a value to a nested array without mutating the rest of the object:
+In a `responseBodyTransformer`, append an owner to a JSON response whose
+`configurationParameters` is an object and `owners` is an array:
 
 ```text
-toObject | { "configurationParameters": .configurationParameters + { "owners": .configurationParameters.owners + ["Monica"] } }
+toObject | . + { "configurationParameters": (.configurationParameters + { "owners": (.configurationParameters.owners + ["Monica"]) }) }
 ```
+
+Object `+` merges keys at one level, with the right-hand value winning on a collision.
+The outer merge preserves other top-level fields; the inner merge preserves other
+configuration fields. The [nested owner fixtures](../fixtures.json) predict both
+preservation checks, including an empty owners array.
 
 Mind the direction — `has` takes the key and tests the piped-in object; `valueIn` takes the container and tests the piped-in value:
 

@@ -3,7 +3,7 @@ package domain
 import "testing"
 
 func TestSecretNamePolicy(t *testing.T) {
-	for _, name := range []string{"password", "passphrase", "apiKey", "accessToken", "authorizationHeader", "serviceKey", "clientCert", "X-Api-Key", "client_credentials"} {
+	for _, name := range []string{"password", "passphrase", "apiKey", "accessToken", "authorizationHeader", "serviceKey", "clientCert", "X-Api-Key", "client_credentials", "stdin", "npmrc", "Proxy-Authorization"} {
 		if !SecretKey(name) {
 			t.Errorf("secret %s missed", name)
 		}

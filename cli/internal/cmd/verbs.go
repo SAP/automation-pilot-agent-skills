@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"encoding/json"
-	"github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
 	"net/url"
+	"strings"
+	"unicode"
+
+	"github.com/SAP/automation-pilot-agent-skills/cli/internal/client"
 )
 
 // requireID enforces exactly one non-empty positional argument.
@@ -11,7 +14,34 @@ func requireID(pos []string, label string) (string, error) {
 	if len(pos) != 1 || pos[0] == "" {
 		return "", usagef("expected exactly one %s", label)
 	}
+	if err := validateResourceID(pos[0], label); err != nil {
+		return "", err
+	}
 	return pos[0], nil
+}
+
+// Resource IDs occupy one URL path segment. Accept their literal spelling only:
+// percent escapes and path/query syntax can change routing after URL parsing.
+func validateResourceID(id, label string) error {
+	if id == "" || id == "." || id == ".." {
+		return usagef("%s must be a non-empty, unescaped resource ID", label)
+	}
+	for _, r := range id {
+		if unicode.IsSpace(r) || unicode.IsControl(r) || strings.ContainsRune("/\\?#%;", r) {
+			return usagef("%s must be an unescaped resource ID without URL path or query syntax", label)
+		}
+	}
+	return nil
+}
+
+// Executor paths may contain multiple literal segments, unlike resource IDs.
+func validateExecutorPath(path string) error {
+	for _, segment := range strings.Split(strings.Trim(path, "/"), "/") {
+		if err := validateResourceID(segment, "executor path segment"); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // createVerb implements POST {collection} with a request body (-f/--data).

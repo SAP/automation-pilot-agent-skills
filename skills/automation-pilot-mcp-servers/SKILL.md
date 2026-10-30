@@ -49,7 +49,7 @@ Done when every proposed tool has one exact backing command ID, an inspected liv
 For values Automation Pilot should inject at call time, find reusable Inputs with `autopi inputs list` and confirm their metadata with `autopi inputs get`. Add their IDs to the tool's `inputReferences`. Confirm that the referenced keys match the command's input contract; referenced keys disappear from the client-facing schema. Keep stored values hidden and never inline credentials in the server definition. If no compatible Input exists, hand the required key contract to Inputs for creation before publishing the tool.
 
 Run `autopi mcp-servers validate -f server.mcp.json` against the proposed definition.
-The Go CLI performs metadata-only reads, checks type and sensitivity, rejects overlapping
+The bundled CLI performs metadata-only reads, checks type and sensitivity, rejects overlapping
 bindings and unbound sensitive keys, and prints contract summaries. Use `--metadata metadata.json`
 for offline review; see [binding verification](references/binding-verification.md).
 

@@ -61,16 +61,17 @@ type mcpRestoration struct {
 	Definition map[string]any
 }
 type state struct {
-	Run, Tenant string
-	Catalog     string
-	Namespace   string
-	Variables   map[string]string
-	Resources   map[string]string
-	Attempts    map[string]string
-	Results     map[string]verdict
-	Hashes      map[string]string
-	Revision    string
-	PendingMCP  *mcpRestoration `json:",omitempty"`
+	Run, Tenant     string
+	Catalog         string
+	Namespace       string
+	Variables       map[string]string
+	Resources       map[string]string
+	Attempts        map[string]string
+	Results         map[string]verdict
+	Hashes          map[string]string
+	Revision        string
+	EvidenceSources []string
+	PendingMCP      *mcpRestoration `json:",omitempty"`
 }
 type harness struct {
 	root, cli, dir string
@@ -79,6 +80,9 @@ type harness struct {
 	calls          int
 	names          []string
 	runCommand     func(*exec.Cmd) error // optional process runner for offline failure tests
+	sourceDigest   string
+	featureRound   string
+	quietReport    bool
 }
 type callError struct {
 	code int
@@ -185,10 +189,11 @@ func (h *harness) call(label string, args []string, body any) (any, error) {
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &stdout
 	command.Stderr = &stderr
+	started := time.Now()
 	if h.runCommand != nil {
 		e = h.runCommand(command)
 	} else {
-		e = command.Run()
+		e = runCLI(command)
 	}
 	code := 0
 	if e != nil {
@@ -204,6 +209,11 @@ func (h *harness) call(label string, args []string, body any) (any, error) {
 	}
 	// Neither argv nor stdin is persisted. Input APIs use autopi's metadata projection.
 	record := map[string]any{"operation": label, "exitCode": code, "response": response, "recordedAt": time.Now().UTC().Format(time.RFC3339)}
+	record["sourceDigest"] = h.sourceDigest
+	record["elapsedMilliseconds"] = time.Since(started).Milliseconds()
+	record["stdoutBytes"] = stdout.Len()
+	record["stderrBytes"] = stderr.Len()
+	record["requestBodyBytes"] = len(input)
 	if code != 0 {
 		record["error"] = strings.TrimSpace(stderr.String())
 	}
@@ -1164,7 +1174,7 @@ func (h *harness) report() error {
 		case "BLOCKED":
 			block++
 		}
-		fmt.Fprintf(&b, "| %s | %s | %s |\n", id, v.Status, strings.ReplaceAll(v.Detail, "|", "/"))
+		fmt.Fprintf(&b, "| %s | %s | %s |\n", id, v.Status, strings.NewReplacer("|", "/", "\n", " ", "\r", " ").Replace(v.Detail))
 	}
 	pending := 0
 	for _, c := range h.spec.Cases {
@@ -1181,14 +1191,22 @@ func (h *harness) report() error {
 	}
 	fmt.Fprintf(&b, "Additional live schema/lifecycle/schedule checks without results: %d of 5. Deployment read-backs expected: %d.\n\n", additional, len(h.spec.Resources))
 	b.WriteString("Local lint/binding/negative results do not establish deployed command correctness. Live cases require captured execution IDs and semantic output assertions. Pending cases receive no pass. This is one candidate run, without a no-skill baseline or independent model replicates.\n")
+	fmt.Fprintf(&b, "\nSource snapshots: %s. Per-call evidence identifies the applicable snapshot.\n", strings.Join(h.state.EvidenceSources, ", "))
+	if len(h.state.EvidenceSources) > 1 {
+		b.WriteString("This run spans changed or legacy-unrecorded tooling/skills. Earlier passes do not validate the current snapshot; recovery preserves already accepted execution IDs.\n")
+	}
 	if e := os.WriteFile(filepath.Join(h.dir, "REPORT.md"), []byte(b.String()), 0600); e != nil {
 		return e
 	}
-	fmt.Print(b.String())
+	if h.quietReport {
+		fmt.Printf("Recorded results: %d passed, %d failed, %d blocked. Full evidence: %s\n", pass, fail, block, filepath.Join(h.dir, "REPORT.md"))
+	} else {
+		fmt.Print(b.String())
+	}
 	return nil
 }
 func evaluationTenant(mode, requested, saved string) (string, error) {
-	if mode == "deploy" || mode == "run" {
+	if mode == "deploy" || mode == "run" || mode == "features" || mode == "cleanup" || mode == "measure" {
 		if strings.TrimSpace(requested) == "" {
 			return "", fmt.Errorf("--tenant is required for %s; specify the intended tenant explicitly", mode)
 		}
@@ -1204,7 +1222,7 @@ func evaluationTenant(mode, requested, saved string) (string, error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: go run . check|deploy|run|report --tenant TENANT --run RUN")
+		fmt.Fprintln(os.Stderr, "usage: go run . check|deploy|run|features|measure|cleanup|report --tenant TENANT --run RUN")
 		os.Exit(1)
 	}
 	mode := os.Args[1]
@@ -1213,6 +1231,10 @@ func main() {
 	run := flags.String("run", "local", "new run identifier, 1-24 lowercase alphanumeric characters")
 	catalog := flags.String("catalog", "", "existing dedicated evaluation catalog, for tenants at their catalog quota")
 	namespace := flags.String("namespace", "", "PascalCase prefix for disjoint candidate Commands and Inputs in a reused catalog")
+	only := flags.String("only", "", "optional feature group: content, expressions, actions, schedules, events, scripts, orchestration")
+	round := flags.String("round", "", "PascalCase feature repair round; preserves original verdicts and resources")
+	sessionLog := flags.String("session-log", "", "optional Codex JSONL log, read only for usage counters")
+	since := flags.String("since", "", "RFC3339 start time for model usage measurement")
 	_ = flags.Parse(os.Args[2:])
 	if !regexp.MustCompile(`^[a-z][a-z0-9]{0,23}$`).MatchString(*run) {
 		fmt.Fprintln(os.Stderr, "invalid run identifier")
@@ -1224,9 +1246,15 @@ func main() {
 	}
 	cli := filepath.Join(root, "..", "..", "..", "skills", "automation-pilot-cli", "scripts", "autopi")
 	if os.PathSeparator == '\\' {
-		cli = filepath.Join(root, "..", "..", "..", "skills", "automation-pilot-cli", "scripts", "bin", "windows-amd64", "autopi.exe")
+		cli += ".cmd"
 	}
 	h := harness{root: root, cli: cli, dir: filepath.Join(root, "runs", *run)}
+	h.quietReport = mode != "report"
+	if *round != "" && !regexp.MustCompile("^[A-Z][A-Za-z0-9]{0,7}$").MatchString(*round) {
+		fmt.Fprintln(os.Stderr, "invalid feature round")
+		os.Exit(1)
+	}
+	h.featureRound = *round
 	if e = read(filepath.Join(root, "suite.json"), &h.spec); e != nil {
 		panic(e)
 	}
@@ -1298,6 +1326,12 @@ func main() {
 			h.calls = n
 		}
 	}
+	if mode != "report" {
+		if e = h.captureSources(); e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			os.Exit(1)
+		}
+	}
 	if e = h.save(); e != nil {
 		fmt.Fprintln(os.Stderr, e)
 		os.Exit(1)
@@ -1309,6 +1343,15 @@ func main() {
 		e = h.deploy()
 	case "run":
 		e = h.run()
+	case "features":
+		e = h.features(*only)
+	case "measure":
+		e = h.measure()
+		if e == nil && *sessionLog != "" {
+			e = h.measureModelUsage(*sessionLog, *since)
+		}
+	case "cleanup":
+		e = h.cleanup()
 	case "report":
 		e = h.report()
 	default:

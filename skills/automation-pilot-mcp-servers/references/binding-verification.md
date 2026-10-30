@@ -1,7 +1,7 @@
 # MCP binding verification
 
 Run `autopi mcp-servers validate` before publishing or remapping a tool, and after
-obtaining the client schema. Validation lives in the Go CLI and has no runtime dependencies.
+obtaining the client schema. Validation lives in the prebuilt CLI and has no runtime dependencies.
 It performs reads, never publishes a definition or triggers a command.
 
 ## Live metadata

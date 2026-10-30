@@ -10,7 +10,7 @@ cli/dist/
 !.env.example
 !.env.*.example
 
-# Python helper caches
+# Local caches
 __pycache__/
 *.py[cod]
 
@@ -22,7 +22,13 @@ __pycache__/
 
 # Testing
 
+# Private development reports and historical run summaries
+/ci/.local/
+
 evaluations
+ci/evals/agent-skills/results/
+skills/automation-pilot-cli/scripts/bin.stage.*/
+skills/automation-pilot-cli/scripts/bin.lock/
 docs
 
 # IDE settings

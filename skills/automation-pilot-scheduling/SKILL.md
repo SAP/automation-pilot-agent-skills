@@ -126,7 +126,11 @@ A one-time schedule fires at the next occurrence of its month/day/time, becomes 
 
 Report tool errors without inventing missing state.
 
-For a missed trigger, inspect the schedule's existence, state, configured time, time-zone interpretation, date edge cases, errors, and resolved input metadata. Investigate the execution only when the schedule created one.
+For a missed trigger, inspect the schedule's existence, state, configured time, time-zone
+interpretation, date edge cases, errors, and resolved input metadata. If an execution was
+created, report that the schedule triggered and include the execution ID. Use the
+[Executions skill](../automation-pilot-executions/SKILL.md) for command-run troubleshooting
+when that is part of the user's request.
 
 ## Definition of done
 

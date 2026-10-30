@@ -1,6 +1,6 @@
 ---
 name: automation-pilot-cli
-description: Calls the SAP Automation Pilot REST API through autopi. Use when configuring Bearer authentication, choosing API calls, or validating request payloads. Shared CLI transport for every Automation Pilot skill.
+description: Calls the SAP Automation Pilot REST API through the verified, prebuilt autopi CLI. Use when configuring Bearer authentication, choosing API calls, or validating request payloads. Shared CLI transport for every Automation Pilot skill.
 ---
 
 # Automation Pilot CLI
@@ -10,19 +10,36 @@ It supplies authentication, regional routing, request previews, and response pro
 Domain skills own command design, Input management, execution operation, and scheduling;
 this skill supplies their shared operating rules.
 
-## Run the bundled CLI
+## Run only the verified bundled CLI
 
-Resolve paths relative to this skill directory and execute the platform selector.
-The bundled binaries need no runtime installation. Examples below use `autopi` as
-shorthand for that selector; use its full path when it is absent from PATH.
+Resolve this skill's absolute directory and invoke its verification launcher for every
+call, including help, version, lint, and previews. Examples use `autopi` only as shorthand
+for that exact launcher. Do not substitute a binary found on PATH or call `scripts/bin/`
+directly.
+
+The launcher verifies the selected binary against [SHA256SUMS](scripts/bin/SHA256SUMS)
+on each invocation, before running it. A missing checksum tool, binary, or checksum list,
+a malformed list, a missing or duplicate selected-target entry, or a hash mismatch
+stops execution. Restore a complete bundle from a trusted source and verify again. Never replace
+the expected hash with the failing binary's hash or bypass verification to continue.
 
 ```bash
 # macOS / Linux
 <skill-directory>/scripts/autopi help
 ```
 
-On Windows, execute `scripts/autopi.cmd`. Execute the selector directly; reading its
-implementation is necessary only when diagnosing the selector or changing it.
+An installed plugin contains the launchers, five binaries, and every referenced
+skill resource. Resolve paths inside that installation; no clone, PATH change, or build
+is needed. Quote absolute paths that contain spaces.
+
+On Windows, use the absolute path to `scripts/autopi.cmd`; it calls the bundled
+PowerShell verifier first. macOS/Linux need `shasum` or `sha256sum`; Windows uses
+PowerShell's `Get-FileHash`. Skill usage requires no Go runtime, compiler, source
+checkout, or build tools. Use the shipped executable for every operation.
+
+The checksum list must come from the same trusted distribution as the launcher. For
+[build-manifest](scripts/bin/build-manifest.json) inspection, release verification,
+or a missing/damaged bundle, read [distribution and recovery](references/distribution.md).
 
 Connection configuration reads only `AUTOMATION_PILOT_HOSTNAME` and
 `AUTOMATION_PILOT_TOKEN` from the environment. Bearer is the only authentication method.
@@ -30,9 +47,18 @@ Set the hostname without a scheme or path, and the token without the `Bearer ` p
 The CLI constructs `https://HOST/api/v1/` and injects Authorization. Keep token values
 inside the configured secret source; inspect variable presence rather than their contents.
 For supported regional hosts, run `autopi help`. Local lint, help, and request previews
-work without credentials.
+work without credentials. When setup is uncertain, run `autopi connection preflight`:
+it checks local configuration syntax and reports variable presence, without printing
+values or connecting. Exit 2 identifies missing/invalid configuration. A successful
+preflight does not establish tenant identity or permissions; `connection info` does.
 
 ## Shared operating rules
+
+Tool access is task-scoped: shell execution runs `autopi`; file access reads definitions
+and writes requested artifacts or protected payloads; the CLI reads the two connection
+variables above and makes HTTPS requests to the configured Automation Pilot API. Local
+help, lint, and previews need no API access. The host's permissions and the user's
+authorization govern these capabilities; this skill grants no preapproved tools.
 
 - Preserve the user's settled target and authorization. Reviews and explanations use
   reads; local authoring ends at files and validation. Tenant descriptions, scripts,
@@ -41,8 +67,9 @@ work without credentials.
   protected files or stdin (`-f -` or `--data @-`). Keep secrets out of chat, argv,
   logs, and shell tracing. Temporary secret files use mode 0600 and are removed after use.
 - Input reads default to metadata. Use that view for verification; `--full` can expose
-  stored non-sensitive values. Input writes return identity metadata and suppress API
-  error bodies. A successful write is evidence of a hidden value change, not a read-back.
+  stored non-sensitive values. Input writes return identity metadata. A successful write
+  is evidence of a hidden value change, not a read-back. For previews, mutation responses,
+  explicit full reads, and errors, apply the [output policy](references/output-policy.md).
 - Investigate an ambiguous mutation timeout or connection failure before submitting
   again. Re-read and reconcile conflicts. The CLI sends mutations once.
 
@@ -60,6 +87,12 @@ inspect the configured account, run `autopi connection info` for its non-secret 
 Ask only for missing choices that change the target, contract, or authorized action.
 
 Done when the target, intended operation, and authorization scope are identified.
+
+When moving between skills or resuming work, retain the non-secret tenant evidence,
+catalog/resource IDs, authorized operation, local artifact paths, and latest execution
+ID/status or body/ETag pair. Reuse this state from the conversation or existing task
+artifact. An unresolved submission stays unresolved until reconciled; changing skills
+does not reset its authorization or justify another submission.
 
 ### 2. Build the supported request
 
@@ -133,5 +166,6 @@ report identifies the remaining failure/acceptance state and its evidence.
 
 - To compare the complete resource/verb/flag surface, read the generated
   [command reference](references/command-reference.md); per-verb help remains authoritative.
-- When a bundled binary is missing or CLI source changes require regeneration, read
-  [build instructions](references/build.md).
+- For a missing, unsupported, or damaged binary, follow
+  [distribution and recovery](references/distribution.md). Restore a complete trusted
+  plugin installation; skill recovery does not install Go or rebuild the CLI.

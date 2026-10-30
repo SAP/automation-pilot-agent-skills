@@ -37,7 +37,7 @@ func SecretKey(name string) bool {
 	if strings.HasSuffix(n, "url") || strings.HasSuffix(n, "uri") || strings.HasSuffix(n, "id") || strings.HasSuffix(n, "name") || strings.HasSuffix(n, "type") || strings.HasSuffix(n, "count") {
 		return false
 	}
-	return secretWords.MatchString(name) || strings.HasSuffix(n, "token") || n == "authorization" || n == "authorizationheader" || n == "servicekey" || n == "clientcert" || n == "certificate" || n == "cookie" || n == "setcookie"
+	return secretWords.MatchString(name) || strings.HasSuffix(n, "token") || n == "authorization" || n == "authorizationheader" || n == "proxyauthorization" || n == "servicekey" || n == "clientcert" || n == "certificate" || n == "cookie" || n == "setcookie" || n == "stdin" || n == "npmrc"
 }
 
 func ValidDuration(value string) bool {

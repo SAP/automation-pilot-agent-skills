@@ -131,9 +131,7 @@ func commandsContract(c *cmdContext, args []string) error {
 		return err
 	}
 	req := client.Request{Method: "GET", Path: client.JoinPath("commands", id)}
-	req.Project = func(b []byte) ([]byte, error) {
-		return client.ProjectObject(b, "id", "catalog", "name", "description", "version", "inputKeys", "outputKeys", "tags")
-	}
+	req.Project = client.CommandContract
 	return execute(c, cfg, req, false)
 }
 

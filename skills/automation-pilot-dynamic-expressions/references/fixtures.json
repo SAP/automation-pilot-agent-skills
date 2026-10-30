@@ -1,6 +1,6 @@
 {
   "provenance": {
-    "reviewed": "2026-10-22",
+    "reviewed": "2026-10-30",
     "source": "Repository expression documentation and repaired templates",
     "validation": "Predicted outputs; not evaluated by the SAP engine",
     "serviceVersion": null
@@ -13,6 +13,29 @@
     {"name":"fallback stream","fixture":{},"expression":"(null, 1, null, 2) // \"fb\"","expectedWire":"12"},
     {"name":"all null fallback","fixture":{},"expression":"(null, false) // \"fb\"","expectedWire":"fb"},
     {"name":"comparison precedence","fixture":{"n":5},"expression":".n == 5 // false","expectedWire":"true"},
-    {"name":"executor retry path","fixture":{"getResource":{"retriesCount":2,"output":{"status":"200"}}},"expression":"(.getResource.retriesCount // 0) == 0","expectedWire":"false"}
+    {"name":"executor retry path","fixture":{"getResource":{"retriesCount":2,"output":{"status":"200"}}},"expression":"(.getResource.retriesCount // 0) == 0","expectedWire":"false"},
+    {
+      "name": "nested owner preserves unrelated fields",
+      "placement": "responseBodyTransformer",
+      "fixture": "{\"id\":\"resource-1\",\"enabled\":false,\"labels\":{\"team\":\"platform\"},\"configurationParameters\":{\"owners\":[\"Alex\"],\"region\":\"eu\",\"retryLimit\":0}}",
+      "expression": "toObject | . + { \"configurationParameters\": (.configurationParameters + { \"owners\": (.configurationParameters.owners + [\"Monica\"]) }) }",
+      "expectedSemantic": {
+        "id": "resource-1",
+        "enabled": false,
+        "labels": {"team": "platform"},
+        "configurationParameters": {"owners": ["Alex", "Monica"], "region": "eu", "retryLimit": 0}
+      }
+    },
+    {
+      "name": "nested owner appends to an empty array",
+      "placement": "responseBodyTransformer",
+      "fixture": "{\"id\":\"resource-2\",\"description\":null,\"configurationParameters\":{\"owners\":[],\"region\":\"us\",\"enabled\":false}}",
+      "expression": "toObject | . + { \"configurationParameters\": (.configurationParameters + { \"owners\": (.configurationParameters.owners + [\"Monica\"]) }) }",
+      "expectedSemantic": {
+        "id": "resource-2",
+        "description": null,
+        "configurationParameters": {"owners": ["Monica"], "region": "us", "enabled": false}
+      }
+    }
   ]
 }

@@ -45,8 +45,8 @@ type Result struct {
 	Header http.Header
 }
 
-// HTTPError is returned for non-2xx responses so callers can map the status
-// class to an exit code while still surfacing the API's error body.
+// HTTPError classifies non-2xx responses by status. Do suppresses server error
+// bodies because free-form diagnostics can echo submitted credentials.
 type HTTPError struct {
 	Status int
 	Body   []byte
@@ -182,14 +182,17 @@ func (c *Client) Do(req Request) (*Result, error) {
 	}
 	res := &Result{Status: resp.StatusCode, Body: body, Header: resp.Header}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		if protectedInput(req.Path) {
-			res.Body = nil
-			body = nil
-		}
-		return res, &HTTPError{Status: resp.StatusCode, Body: body}
+		// Free-form errors can echo arbitrary submitted credentials. Retain
+		// status and headers; field-name masking cannot protect error prose.
+		res.Body = nil
+		return res, &HTTPError{Status: resp.StatusCode}
 	}
-	if protectedInput(req.Path) && req.Method != "GET" && req.Method != "HEAD" {
-		res.Body = inputMetadata(body)
+	if req.Method != "GET" && req.Method != "HEAD" {
+		if protectedInput(req.Path) {
+			res.Body = inputMetadata(body)
+		} else if len(body) > 0 && !mcpProtocol(req) {
+			res.Body = redactBody(body)
+		}
 	}
 	if req.Project != nil {
 		res.Body, err = req.Project(res.Body)

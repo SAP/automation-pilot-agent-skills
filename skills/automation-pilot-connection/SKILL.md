@@ -10,13 +10,17 @@ description: >
 
 # SAP Automation Pilot Connection
 
-Call `autopi connection info` and report its non-secret summary. The command composes
+Resolve the installed verification launcher through the shared
+`automation-pilot-cli` skill. For missing/invalid setup, run `autopi connection preflight`
+first; it reports local variable presence and syntax without making API calls. Local
+lint and authoring remain available without credentials. To test the connection,
+call `autopi connection info` and report its non-secret summary. The command composes
 `GET /server-info`, `/user-information`, and `/tenant` into `{connected, url, tenantId,
 username, permissions, plan}` and never prints the credential. Setup through
 `AUTOMATION_PILOT_HOSTNAME` and `AUTOMATION_PILOT_TOKEN` lives in
 [`../automation-pilot-cli/SKILL.md`](../automation-pilot-cli/SKILL.md). Bearer is the
 only supported authentication method. A `config error` (exit 2) means a required
-connection variable is unset.
+connection variable is missing or invalid.
 
 ## Verdict
 

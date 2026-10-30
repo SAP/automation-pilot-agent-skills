@@ -88,6 +88,9 @@ func fetchBindingMetadata(cl *client.Client, server lint.MCPServer) (lint.Bindin
 	metadata := lint.BindingMetadata{Commands: map[string]lint.BindingContract{}, Inputs: map[string]lint.BindingContract{}}
 	read := func(resource, identity string) (lint.BindingContract, error) {
 		var contract lint.BindingContract
+		if err := validateResourceID(identity, resource+" id"); err != nil {
+			return contract, err
+		}
 		res, err := cl.Do(client.Request{Method: "GET", Path: client.JoinPath(resource, identity)})
 		if err != nil {
 			// A command error can echo data; preserve HTTP classification without the body.
