@@ -1,0 +1,19 @@
+{
+  "catalog": "<CORE>",
+  "name": "EvalScheduledArguments",
+  "version": 1,
+  "description": "Reusable ScheduledArguments for the isolated evaluation.",
+  "keys": {
+    "postId": {
+      "type": "number",
+      "description": "JSONPlaceholder post ID between one and one hundred.",
+      "sensitive": false
+    }
+  },
+  "values": {
+    "postId": "1"
+  },
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "catalog": "<CORE>",
+  "name": "EnrichPost",
+  "version": 1,
+  "id": "<CORE>:EnrichPost:1",
+  "description": "EnrichPost for the isolated skills evaluation.",
+  "inputKeys": {
+    "postId": {
+      "type": "number",
+      "description": "JSONPlaceholder post ID between one and one hundred.",
+      "required": true,
+      "sensitive": false,
+      "minValue": 1,
+      "maxValue": 100
+    },
+    "apiConfig": {
+      "type": "object",
+      "description": "Read-only public API endpoint configuration, injected through an Input.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "summary": {
+      "type": "object",
+      "description": "Post identity joined to its public author and company.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "post",
+        "execute": "<CORE>:FetchPost:1",
+        "input": {
+          "postId": "$(.execution.input.postId)",
+          "apiConfig": "$(.execution.input.apiConfig)"
+        },
+        "description": "post",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "author",
+        "execute": "http-sapcp:HttpRequest:1",
+        "input": {
+          "method": "GET",
+          "url": "$(.execution.input.apiConfig | toObject.baseUrl)/users/$(.post.output.post | toObject.userId | toUrlEncoded)",
+          "timeout": "$(.execution.input.apiConfig | toObject.timeout)",
+          "successResponseCodes": "[\"200\"]",
+          "headers": "{\"Accept\":\"application/json\"}",
+          "omitBodyInErrorMessage": "true",
+          "responseBodyTransformer": "toObject | {id, name, company}"
+        },
+        "description": "author",
+        "progressMessage": null,
+        "when": null,
+        "validate": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.author.output.body | toObject.id)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "$(.post.output.post | toObject.userId)"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "summary": "$({postId: (.post.output.post | toObject.id), userId: (.author.output.body | toObject.id), title: (.post.output.post | toObject.title), author: (.author.output.body | toObject.name), company: (.author.output.body | toObject.company.name)})"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

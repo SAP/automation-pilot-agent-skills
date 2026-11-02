@@ -1,0 +1,805 @@
+{
+  "version": 1,
+  "domain": "JSONPlaceholder content operations and real HTTP resilience",
+  "resources": [
+    {
+      "file": "core.catalog.json",
+      "resource": "catalogs"
+    },
+    {
+      "file": "ops.catalog.json",
+      "resource": "catalogs"
+    },
+    {
+      "file": "ApiConfiguration.input.json",
+      "resource": "inputs"
+    },
+    {
+      "file": "CollectionPolicy.input.json",
+      "resource": "inputs"
+    },
+    {
+      "file": "HttpFixtures.input.json",
+      "resource": "inputs"
+    },
+    {
+      "file": "ScheduledArguments.input.json",
+      "resource": "inputs"
+    },
+    {
+      "file": "BindingFixture.input.json",
+      "resource": "inputs"
+    },
+    {
+      "file": "FetchPost.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "EnrichPost.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "PortfolioReport.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "ComparePosts.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "GetPostWithFallback.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "ProcessValidatedItems.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "HttpSequence.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "AuditListener.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "HttpControl.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "ProbeBinding.command.json",
+      "resource": "commands"
+    },
+    {
+      "file": "public.mcp.json",
+      "resource": "mcp-servers"
+    },
+    {
+      "file": "control.mcp.json",
+      "resource": "mcp-servers"
+    }
+  ],
+  "cases": [
+    {
+      "id": "enrich-one",
+      "command": "<CORE>:EnrichPost:1",
+      "values": {
+        "postId": "1"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.postId",
+          "eq": 1
+        },
+        {
+          "path": "summary.userId",
+          "eq": 1
+        },
+        {
+          "path": "summary.author",
+          "nonempty": true
+        }
+      ]
+    },
+    {
+      "id": "portfolio-three",
+      "command": "<CORE>:PortfolioReport:1",
+      "values": {
+        "postIds": "[1,11,21]"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1",
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.count",
+          "eq": 3
+        },
+        {
+          "path": "summary.posts",
+          "length": 3
+        },
+        {
+          "path": "summary.executions",
+          "length": 3
+        },
+        {
+          "path": "summary.posts.0.postId",
+          "eq": 1
+        },
+        {
+          "path": "summary.posts.1.postId",
+          "eq": 11
+        },
+        {
+          "path": "summary.posts.2.postId",
+          "eq": 21
+        }
+      ],
+      "children": 3
+    },
+    {
+      "id": "portfolio-empty",
+      "command": "<CORE>:PortfolioReport:1",
+      "values": {
+        "postIds": "[]"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1",
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.count",
+          "eq": 0
+        },
+        {
+          "path": "summary.posts",
+          "length": 0
+        },
+        {
+          "path": "summary.executions",
+          "length": 0
+        }
+      ],
+      "skipped": "enrichPosts"
+    },
+    {
+      "id": "portfolio-oversize",
+      "command": "<CORE>:PortfolioReport:1",
+      "values": {
+        "postIds": "[1,2,3,4,5,6]"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1",
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "failedExecutor": "checkIds"
+    },
+    {
+      "id": "portfolio-bad-member",
+      "command": "<CORE>:PortfolioReport:1",
+      "values": {
+        "postIds": "[1,\"two\"]"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1",
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "failedExecutor": "checkIds"
+    },
+    {
+      "id": "compare-same",
+      "command": "<CORE>:ComparePosts:1",
+      "values": {
+        "firstId": "1",
+        "secondId": "2"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.sameAuthor",
+          "eq": true
+        },
+        {
+          "path": "summary.users",
+          "length": 2
+        }
+      ]
+    },
+    {
+      "id": "compare-different",
+      "command": "<CORE>:ComparePosts:1",
+      "values": {
+        "firstId": "1",
+        "secondId": "11"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.sameAuthor",
+          "eq": false
+        },
+        {
+          "path": "summary.users",
+          "length": 2
+        }
+      ]
+    },
+    {
+      "id": "fallback-primary",
+      "command": "<CORE>:GetPostWithFallback:1",
+      "values": {
+        "requestedId": "1"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.source",
+          "eq": "primary"
+        },
+        {
+          "path": "summary.post.id",
+          "eq": 1
+        }
+      ]
+    },
+    {
+      "id": "fallback-missing",
+      "command": "<CORE>:GetPostWithFallback:1",
+      "values": {
+        "requestedId": "9999"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.source",
+          "eq": "fallback"
+        },
+        {
+          "path": "summary.post.id",
+          "eq": 1
+        }
+      ]
+    },
+    {
+      "id": "strings-three",
+      "command": "<OPS>:ProcessValidatedItems:1",
+      "values": {
+        "items": "[\"alpha-long\",\"beta-long\",\"gamma-long\"]"
+      },
+      "references": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "processedCount",
+          "eq": 3
+        },
+        {
+          "path": "results",
+          "length": 3
+        }
+      ]
+    },
+    {
+      "id": "strings-empty",
+      "command": "<OPS>:ProcessValidatedItems:1",
+      "values": {
+        "items": "[]"
+      },
+      "references": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "processedCount",
+          "eq": 0
+        },
+        {
+          "path": "results",
+          "length": 0
+        }
+      ],
+      "skipped": "processItems"
+    },
+    {
+      "id": "strings-blank",
+      "command": "<OPS>:ProcessValidatedItems:1",
+      "values": {
+        "items": "[\"alpha\", \" \"]"
+      },
+      "references": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "failedExecutor": "checkItems"
+    },
+    {
+      "id": "strings-nonstring",
+      "command": "<OPS>:ProcessValidatedItems:1",
+      "values": {
+        "items": "[\"alpha\", 3]"
+      },
+      "references": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "failedExecutor": "checkItems"
+    },
+    {
+      "id": "strings-oversize",
+      "command": "<OPS>:ProcessValidatedItems:1",
+      "values": {
+        "items": "[\"a\",\"b\",\"c\",\"d\",\"e\",\"f\"]"
+      },
+      "references": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "failedExecutor": "checkItems"
+    },
+    {
+      "id": "http-retrySuccess",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "retrySuccess"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.retryStatus",
+          "eq": "200"
+        },
+        {
+          "path": "summary.retryCount",
+          "eq": 1
+        },
+        {
+          "path": "summary.expressions.ratio",
+          "eq": 3.5
+        },
+        {
+          "path": "summary.expressions.falsePreserved",
+          "eq": false
+        }
+      ],
+      "listener": true
+    },
+    {
+      "id": "http-retryExhausted",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "retryExhausted"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "listener": true,
+      "failedExecutor": "retryProbe"
+    },
+    {
+      "id": "http-retryPermanent",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "retryPermanent"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "listener": true,
+      "failedExecutor": "retryProbe"
+    },
+    {
+      "id": "http-pollSuccess",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "pollSuccess"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.expressions.ratio",
+          "eq": 3.5
+        },
+        {
+          "path": "summary.expressions.emptySum",
+          "eq": 0
+        },
+        {
+          "path": "summary.expressions.falsePreserved",
+          "eq": false
+        },
+        {
+          "path": "summary.pollStatus",
+          "eq": "200"
+        }
+      ],
+      "listener": true
+    },
+    {
+      "id": "http-pollFailure",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "pollFailure"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "listener": true,
+      "failedExecutor": "pollProbe"
+    },
+    {
+      "id": "http-pollExhausted",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "pollExhausted"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "listener": true,
+      "failedExecutor": "pollProbe"
+    },
+    {
+      "id": "binding-before",
+      "command": "<OPS>:ProbeBinding:1",
+      "values": {},
+      "references": [
+        "<OPS>:EvalBindingFixture:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "bindingPresent",
+          "eq": true
+        },
+        {
+          "path": "label",
+          "eq": "original-label"
+        }
+      ]
+    },
+    {
+      "id": "binding-after",
+      "command": "<OPS>:ProbeBinding:1",
+      "values": {},
+      "references": [
+        "<OPS>:EvalBindingFixture:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "bindingPresent",
+          "eq": true
+        },
+        {
+          "path": "label",
+          "eq": "original-label"
+        }
+      ],
+      "rotate": true
+    },
+    {
+      "id": "mcp-enrich",
+      "command": "<CORE>:EnrichPost:1",
+      "values": {
+        "postId": "1"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.postId",
+          "eq": 1
+        },
+        {
+          "path": "summary.userId",
+          "eq": 1
+        },
+        {
+          "path": "summary.author",
+          "nonempty": true
+        }
+      ],
+      "mcp": "public",
+      "tool": "enrich_post",
+      "arguments": {
+        "postId": 1
+      }
+    },
+    {
+      "id": "mcp-portfolio",
+      "command": "<CORE>:PortfolioReport:1",
+      "values": {
+        "postIds": "[1,11,21]"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1",
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.count",
+          "eq": 3
+        },
+        {
+          "path": "summary.posts",
+          "length": 3
+        },
+        {
+          "path": "summary.executions",
+          "length": 3
+        },
+        {
+          "path": "summary.posts.0.postId",
+          "eq": 1
+        },
+        {
+          "path": "summary.posts.1.postId",
+          "eq": 11
+        },
+        {
+          "path": "summary.posts.2.postId",
+          "eq": 21
+        }
+      ],
+      "children": 3,
+      "mcp": "public",
+      "tool": "report_portfolio",
+      "arguments": {
+        "postIds": [
+          1,
+          11,
+          21
+        ]
+      }
+    },
+    {
+      "id": "mcp-compare",
+      "command": "<CORE>:ComparePosts:1",
+      "values": {
+        "firstId": "1",
+        "secondId": "11"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.sameAuthor",
+          "eq": false
+        },
+        {
+          "path": "summary.users",
+          "length": 2
+        }
+      ],
+      "mcp": "public",
+      "tool": "compare_posts",
+      "arguments": {
+        "firstId": 1,
+        "secondId": 11
+      }
+    },
+    {
+      "id": "mcp-fallback",
+      "command": "<CORE>:GetPostWithFallback:1",
+      "values": {
+        "requestedId": "9999"
+      },
+      "references": [
+        "<CORE>:EvalApiConfiguration:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "summary.source",
+          "eq": "fallback"
+        },
+        {
+          "path": "summary.post.id",
+          "eq": 1
+        }
+      ],
+      "mcp": "public",
+      "tool": "get_post_with_fallback",
+      "arguments": {
+        "requestedId": 9999
+      }
+    },
+    {
+      "id": "mcp-binding-sync-fallback",
+      "command": "<OPS>:ProbeBinding:1",
+      "values": {},
+      "references": [
+        "<OPS>:EvalBindingFixture:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "bindingPresent",
+          "eq": true
+        },
+        {
+          "path": "label",
+          "eq": "original-label"
+        }
+      ],
+      "mcp": "control",
+      "tool": "probe_binding",
+      "arguments": {},
+      "expectAsync": true
+    },
+    {
+      "id": "mcp-http-failure-verdict",
+      "command": "<OPS>:HttpControl:1",
+      "values": {
+        "mode": "retryPermanent"
+      },
+      "references": [
+        "<OPS>:EvalHttpFixtures:1"
+      ],
+      "status": "FAILED",
+      "assertions": [],
+      "listener": true,
+      "failedExecutor": "retryProbe",
+      "mcp": "control",
+      "tool": "exercise_http_control",
+      "arguments": {
+        "mode": "retryPermanent"
+      }
+    },
+    {
+      "id": "mcp-validated-items",
+      "command": "<OPS>:ProcessValidatedItems:1",
+      "values": {
+        "items": "[\"alpha-long\",\"beta-long\",\"gamma-long\"]"
+      },
+      "references": [
+        "<OPS>:EvalCollectionPolicy:1"
+      ],
+      "status": "FINISHED",
+      "assertions": [
+        {
+          "path": "processedCount",
+          "eq": 3
+        },
+        {
+          "path": "results",
+          "length": 3
+        }
+      ],
+      "mcp": "control",
+      "tool": "validate_items",
+      "arguments": {
+        "items": [
+          "alpha-long",
+          "beta-long",
+          "gamma-long"
+        ]
+      }
+    }
+  ],
+  "negative": [
+    {
+      "id": "lint-bad-catalog",
+      "source": "core.catalog.json",
+      "patch": {
+        "technicalName": "prefix-too-long"
+      },
+      "expectedExit": 6,
+      "findingContains": "catalog technicalName must contain 1-10"
+    },
+    {
+      "id": "lint-bad-retry",
+      "source": "HttpControl.command.json",
+      "edit": "retry-enum",
+      "expectedExit": 6,
+      "findingContains": "retry logic must be FIXED or INCREMENTAL"
+    },
+    {
+      "id": "lint-bad-wire",
+      "source": "CollectionPolicy.input.json",
+      "edit": "wire-number",
+      "expectedExit": 6,
+      "findingContains": "wire value must be a JSON string"
+    },
+    {
+      "id": "lint-reserved-tag",
+      "source": "FetchPost.command.json",
+      "edit": "service-tag",
+      "expectedExit": 6,
+      "findingContains": "reserved autopi: service prefix"
+    },
+    {
+      "id": "mcp-overlap",
+      "source": "public.mcp.json",
+      "edit": "binding-overlap",
+      "expectedExit": 6,
+      "findingContains": "overlapping Input bindings"
+    },
+    {
+      "id": "mcp-unbound-secret",
+      "source": "control.mcp.json",
+      "edit": "unbound-secret",
+      "expectedExit": 6,
+      "findingContains": "bind sensitive caller key through a reusable Input"
+    }
+  ],
+  "mcpLifecycle": true,
+  "schedule": true,
+  "contractExpected": {
+    "public": {
+      "enrich_post": [
+        "postId"
+      ],
+      "report_portfolio": [
+        "postIds"
+      ],
+      "compare_posts": [
+        "firstId",
+        "secondId"
+      ],
+      "get_post_with_fallback": [
+        "requestedId"
+      ]
+    },
+    "control": {
+      "validate_items": [
+        "items"
+      ],
+      "probe_binding": [],
+      "exercise_http_control": [
+        "flag",
+        "mode"
+      ]
+    }
+  }
+}

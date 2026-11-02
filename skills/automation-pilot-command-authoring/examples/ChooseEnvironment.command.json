@@ -1,0 +1,61 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:ChooseEnvironment:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "ChooseEnvironment",
+    "description": "Collects a runtime environment choice and returns its technical key without modifying the selected environment",
+    "version": 1,
+    "inputKeys": {},
+    "outputKeys": {
+        "environment": {
+            "type": "string",
+            "sensitive": false,
+            "description": "The selected environment key: dev, staging, or prod"
+        }
+    },
+    "configuration": {
+        "values": [],
+        "output": {
+            "environment": "$(.askEnv.output.selection)"
+        },
+        "executors": [
+            {
+                "execute": "utils-sapcp:GetUserChoice:1",
+                "alias": "askEnv",
+                "input": {
+                    "title": "Select the environment for the requested workflow",
+                    "options": "{\"dev\":\"Development\",\"staging\":\"Staging\",\"prod\":\"Production\"}"
+                },
+                "description": "Ask for the intended environment",
+                "progressMessage": null,
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": {
+                    "semantic": "AND",
+                    "conditions": [
+                        {
+                            "semantic": "AND",
+                            "cases": [
+                                {
+                                    "expression": "$(.askEnv.output.selection)",
+                                    "operator": "EQUALS",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "dev",
+                                        "staging",
+                                        "prod"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {}
+}

@@ -1,0 +1,172 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:ProcessAppsBatch:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "ProcessAppsBatch",
+    "description": "Lists the applications in a Cloud Foundry space and passes each application name through the existing Void command one at a time via ForEach",
+    "version": 1,
+    "inputKeys": {
+        "user": {
+            "type": "string",
+            "sensitive": false,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The user ID or the email of a Cloud Foundry user to be used for authentication"
+        },
+        "password": {
+            "type": "string",
+            "sensitive": true,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
+        },
+        "subAccount": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The name or the ID of the Cloud Foundry organization. Examples: my-org-name-1, 0ffeb410-5f78-0000-af5c-5b26baf46623"
+        },
+        "space": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The name of the Cloud Foundry space"
+        },
+        "region": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": [
+                "metadata-sapcp:CfRegionData:1"
+            ],
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
+        }
+    },
+    "outputKeys": {
+        "processedCount": {
+            "type": "number",
+            "sensitive": false,
+            "description": "The number of applications processed"
+        },
+        "results": {
+            "type": "array",
+            "sensitive": false,
+            "description": "The result of processing each application"
+        }
+    },
+    "configuration": {
+        "values": [],
+        "output": {
+            "processedCount": "$((.processApps.output.outputs | toArray) // [] | length)",
+            "results": "$(.processApps.output.outputs // [])"
+        },
+        "executors": [
+            {
+                "execute": "applm-sapcp:ListCfApps:1",
+                "alias": "listApps",
+                "input": {
+                    "resourceGroup": "$(.execution.input.space)",
+                    "subAccount": "$(.execution.input.subAccount)",
+                    "region": "$(.execution.input.region)",
+                    "user": "$(.execution.input.user)",
+                    "password": "$(.execution.input.password)",
+                    "pageSize": "100"
+                },
+                "description": "List applications in the space",
+                "progressMessage": null,
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": null,
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            },
+            {
+                "execute": "utils-sapcp:ForEach:2",
+                "alias": "processApps",
+                "input": {
+                    "command": "utils-sapcp:Void:1",
+                    "inputs": "$(.listApps.output.resourceNames)",
+                    "inputMapping": "{\"message\":\"$(.processApps.current.item)\"}"
+                },
+                "description": "Pass each application name through Void in sequence",
+                "progressMessage": "Processing $(.listApps.output.resourceNames | toArray | length) application(s)...",
+                "initialDelay": null,
+                "pause": null,
+                "when": {
+                    "semantic": "OR",
+                    "conditions": [
+                        {
+                            "semantic": "OR",
+                            "cases": [
+                                {
+                                    "expression": "$(.listApps.output.resourceNames | toArray | length)",
+                                    "operator": "GREATER_THAN",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "0"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "validate": null,
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {
+        "env": "cf"
+    }
+}

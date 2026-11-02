@@ -1,0 +1,19 @@
+{
+  "catalog": "<OPS>",
+  "name": "EvalHttpFixtures",
+  "version": 1,
+  "description": "Reusable HttpFixtures for the isolated evaluation.",
+  "keys": {
+    "fixtureConfig": {
+      "type": "object",
+      "description": "Public status endpoint and timeout for controlled real HTTP tests.",
+      "sensitive": false
+    }
+  },
+  "values": {
+    "fixtureConfig": "{\"baseUrl\":\"https://httpbingo.org\",\"timeout\":15}"
+  },
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}

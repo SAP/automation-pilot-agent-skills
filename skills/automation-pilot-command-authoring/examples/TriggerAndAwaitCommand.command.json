@@ -1,0 +1,106 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:TriggerAndAwaitCommand:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "TriggerAndAwaitCommand",
+    "description": "Retrieves a public example page in a separate execution, requires successful completion, and returns the child ID and output",
+    "version": 1,
+    "inputKeys": {},
+    "outputKeys": {
+        "execution": {
+            "type": "string",
+            "sensitive": false,
+            "description": "The ID of the child execution"
+        },
+        "childStatus": {
+            "type": "string",
+            "sensitive": false,
+            "description": "The final child status, FINISHED on successful parent completion"
+        },
+        "childOutput": {
+            "type": "object",
+            "sensitive": false,
+            "description": "The non-sensitive output returned by the completed child command"
+        }
+    },
+    "configuration": {
+        "values": [],
+        "output": {
+            "execution": "$(.trigger.output.execution)",
+            "childStatus": "$(.await.output.status)",
+            "childOutput": "$(.childOutput.output.output | toObject)"
+        },
+        "executors": [
+            {
+                "execute": "utils-sapcp:TriggerExecution:1",
+                "alias": "trigger",
+                "input": {
+                    "command": "http-sapcp:HttpRequest:1",
+                    "values": "{\"url\":\"https://example.com\",\"method\":\"GET\",\"timeout\":\"20\"}"
+                },
+                "description": "Start the native HTTP child once",
+                "progressMessage": null,
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": null,
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            },
+            {
+                "execute": "utils-sapcp:AwaitExecution:1",
+                "alias": "await",
+                "input": {
+                    "execution": "$(.trigger.output.execution)",
+                    "statuses": "[\"FINISHED\",\"FAILED\",\"ABORTED\",\"SUSPENDED\"]",
+                    "deadline": "5",
+                    "succeedOnNotFound": "false"
+                },
+                "description": "Wait and require successful child completion",
+                "progressMessage": null,
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": {
+                    "semantic": "AND",
+                    "conditions": [
+                        {
+                            "semantic": "AND",
+                            "cases": [
+                                {
+                                    "expression": "$(.await.output.status)",
+                                    "operator": "EQUALS",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "FINISHED"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            },
+            {
+                "execute": "utils-sapcp:GetExecutionOutput:1",
+                "alias": "childOutput",
+                "input": {
+                    "execution": "$(.trigger.output.execution)"
+                },
+                "description": "Read output after successful completion",
+                "progressMessage": null,
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": null,
+                "autoRetry": null,
+                "repeat": null,
+                "errorMessages": []
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {}
+}

@@ -1,0 +1,19 @@
+{
+  "commands": {
+    "ops-TENANT:FindResource:1": {
+      "inputKeys": {
+        "resourceName": {"type": "string", "required": true, "sensitive": false},
+        "apiConfig": {"type": "object", "required": true, "sensitive": false},
+        "apiToken": {"type": "string", "required": true, "sensitive": true}
+      }
+    }
+  },
+  "inputs": {
+    "ops-TENANT:ApiConfiguration:1": {
+      "keys": {
+        "apiConfig": {"type": "object", "sensitive": false},
+        "apiToken": {"type": "string", "sensitive": true}
+      }
+    }
+  }
+}

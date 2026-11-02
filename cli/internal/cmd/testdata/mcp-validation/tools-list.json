@@ -1,0 +1,14 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "tools": [
+      {
+        "name": "find_resource",
+        "inputSchema": {"type": "object", "properties": {"resourceName": {"type": "string"}, "apiToken": {"type": "string"}}, "required": ["resourceName"]},
+        "annotations": {"readOnlyHint": true, "destructiveHint": false, "idempotentHint": true, "openWorldHint": true}
+      },
+      {"name": "get_execution", "inputSchema": {"type": "object", "properties": {"executionId": {"type": "string"}}, "required": ["executionId"]}}
+    ]
+  }
+}

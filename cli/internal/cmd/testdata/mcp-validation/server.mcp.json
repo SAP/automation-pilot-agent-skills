@@ -1,0 +1,20 @@
+{
+  "name": "resource-lookup",
+  "enabled": true,
+  "instructions": "Find a resource by name using prefilled API configuration. Inspect the returned execution status before claiming success.",
+  "mcpTools": [
+    {
+      "name": "find_resource",
+      "title": "Find Resource",
+      "commandId": "ops-TENANT:FindResource:1",
+      "inputReferences": ["ops-TENANT:ApiConfiguration:1"],
+      "enabled": true,
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": true,
+      "sync": false,
+      "waitTimeSeconds": null
+    }
+  ]
+}

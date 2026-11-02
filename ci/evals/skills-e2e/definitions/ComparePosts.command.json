@@ -1,0 +1,70 @@
+{
+  "catalog": "<CORE>",
+  "name": "ComparePosts",
+  "version": 1,
+  "id": "<CORE>:ComparePosts:1",
+  "description": "ComparePosts for the isolated skills evaluation.",
+  "inputKeys": {
+    "firstId": {
+      "type": "number",
+      "description": "JSONPlaceholder post ID between one and one hundred.",
+      "required": true,
+      "sensitive": false,
+      "minValue": 1,
+      "maxValue": 100
+    },
+    "secondId": {
+      "type": "number",
+      "description": "JSONPlaceholder post ID between one and one hundred.",
+      "required": true,
+      "sensitive": false,
+      "minValue": 1,
+      "maxValue": 100
+    },
+    "apiConfig": {
+      "type": "object",
+      "description": "Read-only public API endpoint configuration, injected through an Input.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "summary": {
+      "type": "object",
+      "description": "Both post IDs, their user IDs, and whether they share an author.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "fetchPosts",
+        "execute": "utils-sapcp:ForEach:2",
+        "input": {
+          "command": "<CORE>:FetchPost:1",
+          "inputs": "$([.execution.input.firstId, .execution.input.secondId])",
+          "inputMapping": "{\"postId\":\"$(.fetchPosts.current.item)\",\"apiConfig\":\"$(.execution.input.apiConfig)\"}"
+        },
+        "description": "fetchPosts",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "summary": "{\"postIds\":$([.execution.input.firstId, .execution.input.secondId]),\"users\":$(.fetchPosts.output.outputs | toArray | map(.post | toObject.userId)),\"sameAuthor\":$(.fetchPosts.output.outputs | toArray | map(.post | toObject.userId) | .[0] == .[1])}"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

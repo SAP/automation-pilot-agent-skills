@@ -1,0 +1,107 @@
+{
+  "id": "<OPS>:ProcessValidatedItems:1",
+  "catalog": "<OPS>",
+  "name": "ProcessValidatedItems",
+  "description": "Validate a bounded list of nonblank strings before processing each item sequentially with Void; an empty list returns no results.",
+  "version": 1,
+  "inputKeys": {
+    "items": {
+      "type": "array",
+      "description": "Nonblank strings to process; empty lists are allowed and skip processing.",
+      "required": true,
+      "sensitive": false,
+      "minSize": null,
+      "maxSize": null,
+      "defaultValue": null
+    },
+    "maxItems": {
+      "type": "number",
+      "description": "Positive integer workload limit checked before processing. The example defaults to five items; bind this policy through an Input when exposing the command as an MCP tool.",
+      "required": true,
+      "sensitive": false,
+      "defaultValue": null,
+      "minValue": 1
+    }
+  },
+  "outputKeys": {
+    "results": {
+      "type": "array",
+      "sensitive": false,
+      "description": "Void output for each item in input order; empty when there are no items."
+    },
+    "processedCount": {
+      "type": "number",
+      "sensitive": false,
+      "description": "Number of processed items, including zero for an empty list."
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "execute": "scripts-sapcp:ExecutePythonScript:1",
+        "alias": "checkItems",
+        "input": {
+          "script": "import json\nimport sys\n\nitems = json.loads(sys.stdin.readline())\nlimit = json.loads(sys.stdin.readline())\nif type(limit) is not int or limit < 1:\n    raise ValueError('maxItems must be a positive integer')\nif not isinstance(items, list):\n    raise ValueError('items must be an array')\nif len(items) > limit:\n    raise ValueError('items exceeds maxItems')\nif any(not isinstance(item, str) or not item.strip() for item in items):\n    raise ValueError('Every item must be a nonblank string')\nprint('items validated')\n",
+          "stdin": "$(.execution.input.items)\n$(.execution.input.maxItems)",
+          "packages": "[]",
+          "timeout": "60"
+        },
+        "description": "Validate count and all member shapes before any iteration.",
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "progressMessage": null,
+        "errorMessages": []
+      },
+      {
+        "execute": "utils-sapcp:ForEach:2",
+        "alias": "processItems",
+        "input": {
+          "command": "utils-sapcp:Void:1",
+          "inputs": "$(.execution.input.items | toArray)",
+          "inputMapping": "{\"message\":\"$(.processItems.current.item)\"}"
+        },
+        "description": "Process validated items sequentially, preserving their order.",
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.execution.input.items | toArray | length)",
+                  "operator": "GREATER_THAN",
+                  "semantic": "OR",
+                  "values": [
+                    "0"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "progressMessage": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "results": "$(.processItems.output.outputs // [] | toArray)",
+      "processedCount": "$(.execution.input.items | toArray | length)"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

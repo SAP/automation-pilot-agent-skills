@@ -1,0 +1,217 @@
+{
+    "id": "welcome-<<<TENANT_ID>>>:GetResourceWithRetry:1",
+    "catalog": "welcome-<<<TENANT_ID>>>",
+    "name": "GetResourceWithRetry",
+    "description": "Retrieves a Cloud Foundry resource over the CF API with OAuth, transient-failure retry, response validation, and status-specific error messages",
+    "version": 1,
+    "inputKeys": {
+        "user": {
+            "type": "string",
+            "sensitive": false,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The user ID or the email of a Cloud Foundry user to be used for authentication"
+        },
+        "password": {
+            "type": "string",
+            "sensitive": true,
+            "required": false,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The password for the specified technical user or the client secret for the specified OAuth 2.0 client ID to be used for authentication. Related input keys: 'user' or 'tokenUrl'"
+        },
+        "region": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": [
+                "metadata-sapcp:CfRegionData:1"
+            ],
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The technical name of the Cloud Foundry region. Example: cf-eu10, cf-eu10-002"
+        },
+        "resourceName": {
+            "type": "string",
+            "sensitive": false,
+            "required": true,
+            "minSize": null,
+            "maxSize": null,
+            "minValue": null,
+            "maxValue": null,
+            "allowedValues": null,
+            "allowedValuesFromInputKeys": null,
+            "suggestedValues": null,
+            "suggestedValuesFromInputKeys": null,
+            "defaultValue": null,
+            "defaultValueFromInput": null,
+            "description": "The technical name of the application. Example: my-app"
+        }
+    },
+    "outputKeys": {
+        "status": {
+            "type": "number",
+            "sensitive": false,
+            "description": "The status code of the response. Examples: 200, 301, 404, 503. In case of no response or a timeout, the status codes may be 0 and -1."
+        },
+        "result": {
+            "type": "array",
+            "sensitive": false,
+            "description": "The result of the resource lookup"
+        }
+    },
+    "configuration": {
+        "values": [
+            {
+                "alias": "regionData",
+                "valueFrom": {
+                    "inputReference": "metadata-sapcp:CfRegionData:1",
+                    "inputKey": "$(.execution.input.region)"
+                }
+            }
+        ],
+        "output": {
+            "status": "$(.getResource.output.status)",
+            "result": "$(.getResource.output.body | toObject.resources // [])"
+        },
+        "executors": [
+            {
+                "execute": "http-sapcp:HttpRequest:1",
+                "alias": "getResource",
+                "input": {
+                    "url": "$(.regionData.cfApiUrl)/v3/apps?names=$(.execution.input.resourceName | toUrlEncoded)",
+                    "method": "GET",
+                    "headers": "{\"Accept\":\"application/json\"}",
+                    "user": "$(.execution.input.user)",
+                    "password": "$(.execution.input.password)",
+                    "tokenUrl": "$(.regionData.uaaTokenUrl)",
+                    "clientId": "cf",
+                    "timeout": "20",
+                    "succeedOnTimeout": "true",
+                    "successResponseCodes": "[\"2xx\",\"404\",\"401\",\"403\",\"408\",\"429\",\"500\",\"502\",\"503\",\"504\"]"
+                },
+                "description": "Look up the application by name",
+                "progressMessage": "Retrieving '$(.execution.input.resourceName)'...",
+                "initialDelay": null,
+                "pause": null,
+                "when": null,
+                "validate": {
+                    "semantic": "OR",
+                    "conditions": [
+                        {
+                            "semantic": "OR",
+                            "cases": [
+                                {
+                                    "expression": "$(.getResource.output.status)",
+                                    "operator": "EQUALS",
+                                    "semantic": "OR",
+                                    "values": [
+                                        "200"
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "autoRetry": {
+                    "maxCount": 3,
+                    "delay": "5s",
+                    "logic": "INCREMENTAL",
+                    "applyOnValidation": true,
+                    "when": {
+                        "semantic": "OR",
+                        "conditions": [
+                            {
+                                "semantic": "OR",
+                                "cases": [
+                                    {
+                                        "expression": "$(.getResource.output.status | toNumber | valueIn([408, 429, 500, 502, 503, 504, -1]))",
+                                        "operator": "EQUALS",
+                                        "semantic": "OR",
+                                        "values": [
+                                            "true"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "repeat": null,
+                "errorMessages": [
+                    {
+                        "message": "Resource '$(.execution.input.resourceName)' not found.",
+                        "when": {
+                            "semantic": "OR",
+                            "conditions": [
+                                {
+                                    "semantic": "OR",
+                                    "cases": [
+                                        {
+                                            "expression": "$(.getResource.output.status)",
+                                            "operator": "EQUALS",
+                                            "semantic": "OR",
+                                            "values": [
+                                                "404"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "message": "Authentication failed. Check 'user' and 'password'.",
+                        "when": {
+                            "semantic": "OR",
+                            "conditions": [
+                                {
+                                    "semantic": "OR",
+                                    "cases": [
+                                        {
+                                            "expression": "$(.getResource.output.status)",
+                                            "operator": "EQUALS",
+                                            "semantic": "OR",
+                                            "values": [
+                                                "401",
+                                                "403"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ],
+        "listeners": []
+    },
+    "tags": {
+        "env": "cf"
+    }
+}

@@ -1,0 +1,127 @@
+{
+  "catalog": "<CORE>",
+  "name": "PortfolioReport",
+  "version": 1,
+  "id": "<CORE>:PortfolioReport:1",
+  "description": "PortfolioReport for the isolated skills evaluation.",
+  "inputKeys": {
+    "postIds": {
+      "type": "array",
+      "description": "Ordered integer post IDs from one to one hundred; empty allowed; count checked against maxItems.",
+      "required": true,
+      "sensitive": false
+    },
+    "maxItems": {
+      "type": "number",
+      "description": "Positive integer maximum number of items, enforced before iteration.",
+      "required": true,
+      "sensitive": false,
+      "minValue": 1
+    },
+    "apiConfig": {
+      "type": "object",
+      "description": "Read-only public API endpoint configuration, injected through an Input.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "summary": {
+      "type": "object",
+      "description": "Ordered enriched posts and parallel child execution metadata.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "checkIds",
+        "execute": "scripts-sapcp:ExecutePythonScript:1",
+        "input": {
+          "script": "import json\nimport sys\nitems = json.loads(sys.stdin.readline())\nlimit = json.loads(sys.stdin.readline())\nif type(limit) is not int or limit < 1:\n    raise ValueError(\"maxItems must be a positive integer\")\nif not isinstance(items, list) or len(items) > limit:\n    raise ValueError(\"postIds must be an array within maxItems\")\nif any(type(item) is not int or not 1 <= item <= 100 for item in items):\n    raise ValueError(\"Every post ID must be an integer from one to one hundred\")\nprint(\"items validated\")\n",
+          "stdin": "$(.execution.input.postIds)\n$(.execution.input.maxItems)",
+          "packages": "[]",
+          "timeout": "60"
+        },
+        "description": "checkIds",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "enrichPosts",
+        "execute": "utils-sapcp:ParallelForEach:1",
+        "input": {
+          "command": "<CORE>:EnrichPost:1",
+          "inputs": "$(.execution.input.postIds | toArray)",
+          "inputMapping": "{\"postId\":\"$(.enrichPosts.current.item)\",\"apiConfig\":\"$(.execution.input.apiConfig)\"}",
+          "batchSize": "2",
+          "deadline": "5",
+          "mode": "trigger, poll, and collect",
+          "statuses": "[\"FINISHED\"]",
+          "tags": "{\"evaluation\":\"<RUN>\",\"role\":\"post-child\",\"feature:logs\":\"\"}"
+        },
+        "description": "enrichPosts",
+        "progressMessage": null,
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.execution.input.postIds | toArray | length)",
+                  "operator": "GREATER_THAN",
+                  "semantic": "OR",
+                  "values": [
+                    "0"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "summarize",
+        "execute": "scripts-sapcp:ExecutePythonScript:1",
+        "input": {
+          "script": "import json\nimport sys\nrows = json.loads(sys.stdin.readline())\nmetadata = json.loads(sys.stdin.readline())\nposts = [json.loads(row[\"summary\"]) if isinstance(row[\"summary\"], str) else row[\"summary\"] for row in rows]\nprint(json.dumps({\"count\": len(posts), \"posts\": posts, \"executions\": metadata}, separators=(\",\", \":\")))\n",
+          "stdin": "$(.enrichPosts.output.outputs // [])\n$(.enrichPosts.output.executionsMetadata // [])",
+          "packages": "[]",
+          "timeout": "60"
+        },
+        "description": "summarize",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "summary": "$(.summarize.output.result | toArray | .[0] | toObject)"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "catalog": "<OPS>",
+  "name": "EvalCollectionPolicy",
+  "version": 1,
+  "description": "Reusable CollectionPolicy for the isolated evaluation.",
+  "keys": {
+    "maxItems": {
+      "type": "number",
+      "description": "Positive integer maximum number of items, enforced before iteration.",
+      "sensitive": false
+    }
+  },
+  "values": {
+    "maxItems": "5"
+  },
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}

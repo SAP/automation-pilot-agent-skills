@@ -1,0 +1,49 @@
+name: Attested plugin release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  validate:
+    uses: ./.github/workflows/validate.yml
+  release:
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version-file: cli/.go-version
+          cache: false
+      - name: Verify release identity and committed bundle
+        run: |
+          test "$GITHUB_REF_NAME" = "v$(go run ci/plugin/main.go version .)"
+          test -z "$(git status --porcelain)"
+          go run ci/cli/buildmeta/main.go verify cli skills/automation-pilot-cli/scripts/bin
+      - name: Package complete plugin
+        run: |
+          mkdir build
+          go run ci/plugin/main.go stage . "$RUNNER_TEMP/plugin"
+          go run ci/plugin/main.go zip "$RUNNER_TEMP/plugin" build/automation-pilot-skills.zip
+          go run ci/cli/buildmeta/main.go source cli > build/source.sha256
+          go run ci/cli/buildmeta/main.go validation cli > build/validation.sha256
+          git rev-parse HEAD > build/revision.txt
+          cd build
+          sha256sum automation-pilot-skills.zip > SHA256SUMS
+      - name: Authenticate archive and evidence with GitHub provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: build/*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: automation-pilot-skills
+          path: build/
+      - name: Prepare a draft for maintainer publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build/* --verify-tag --draft --generate-notes

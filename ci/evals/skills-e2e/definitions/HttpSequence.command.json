@@ -1,0 +1,179 @@
+{
+  "catalog": "<OPS>",
+  "name": "HttpSequence",
+  "version": 1,
+  "id": "<OPS>:HttpSequence:1",
+  "description": "HttpSequence for the isolated skills evaluation.",
+  "inputKeys": {
+    "storeKey": {
+      "type": "string",
+      "description": "Per-parent execution counter key.",
+      "required": true,
+      "sensitive": false
+    },
+    "mode": {
+      "type": "string",
+      "description": "Controlled HTTP response sequence.",
+      "required": true,
+      "sensitive": false,
+      "allowedValues": [
+        "retrySuccess",
+        "retryExhausted",
+        "retryPermanent",
+        "pollSuccess",
+        "pollFailure",
+        "pollExhausted"
+      ]
+    },
+    "fixtureConfig": {
+      "type": "object",
+      "description": "Public HTTP status URL and timeout, supplied through an Input.",
+      "required": true,
+      "sensitive": false
+    }
+  },
+  "outputKeys": {
+    "status": {
+      "type": "number",
+      "description": "Observed status from the real HTTP executor.",
+      "sensitive": false
+    }
+  },
+  "configuration": {
+    "values": [],
+    "executors": [
+      {
+        "alias": "counter",
+        "execute": "store-sapcp:GetValue:1",
+        "input": {
+          "key": "$(.execution.input.storeKey)"
+        },
+        "description": "counter",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "advance",
+        "execute": "store-sapcp:PutValue:1",
+        "input": {
+          "key": "$(.execution.input.storeKey)",
+          "value": "$((.counter.output.value | toNumber) + 1)"
+        },
+        "description": "advance",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "retryStatus",
+        "execute": "utils-sapcp:Void:1",
+        "input": {
+          "message": "$(if .execution.input.mode == \"retryPermanent\" then 401 else if .execution.input.mode == \"retrySuccess\" and (.counter.output.value | toNumber) > 0 then 200 else 503 end end)"
+        },
+        "description": "Select the retry response in a bounded expression.",
+        "progressMessage": null,
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.execution.input.mode)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "retrySuccess",
+                    "retryExhausted",
+                    "retryPermanent"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "pollStatus",
+        "execute": "utils-sapcp:Void:1",
+        "input": {
+          "message": "$(if .execution.input.mode == \"pollFailure\" then 400 else if .execution.input.mode == \"pollSuccess\" and (.counter.output.value | toNumber) > 0 then 200 else 202 end end)"
+        },
+        "description": "Select the polling response in a bounded expression.",
+        "progressMessage": null,
+        "when": {
+          "semantic": "OR",
+          "conditions": [
+            {
+              "semantic": "OR",
+              "cases": [
+                {
+                  "expression": "$(.execution.input.mode)",
+                  "operator": "EQUALS",
+                  "semantic": "OR",
+                  "values": [
+                    "pollSuccess",
+                    "pollFailure",
+                    "pollExhausted"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      },
+      {
+        "alias": "request",
+        "execute": "http-sapcp:HttpRequest:1",
+        "input": {
+          "method": "GET",
+          "url": "$(.execution.input.fixtureConfig | toObject.baseUrl)/status/$(if .retryStatus.executed then .retryStatus.output.message else .pollStatus.output.message end)",
+          "timeout": "$(.execution.input.fixtureConfig | toObject.timeout)",
+          "successResponseCodes": "[\"200\",\"202\",\"400\",\"401\",\"503\"]",
+          "omitBodyInErrorMessage": "true"
+        },
+        "description": "request",
+        "progressMessage": null,
+        "when": null,
+        "validate": null,
+        "autoRetry": null,
+        "repeat": null,
+        "initialDelay": null,
+        "pause": null,
+        "errorMessages": []
+      }
+    ],
+    "output": {
+      "status": "$(.request.output.status)"
+    },
+    "listeners": []
+  },
+  "tags": {
+    "evaluation": "<RUN>",
+    "feature:logs": "",
+    "feature:autoAbort": "1"
+  }
+}

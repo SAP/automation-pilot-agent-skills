@@ -1,0 +1,8 @@
+{
+  "technicalName": "<CORE_PREFIX>",
+  "name": "skills-core-<RUN>",
+  "description": "Isolated public content workflows for <RUN>.",
+  "tags": {
+    "evaluation": "<RUN>"
+  }
+}
