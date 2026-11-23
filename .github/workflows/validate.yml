@@ -78,10 +78,15 @@ jobs:
         with:
           go-version-file: cli/.go-version
           cache: false
-      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
-      - run: govulncheck ./...
+      - name: Install vulnerability scanner
+        id: install_govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+      - name: Scan CLI vulnerabilities
+        run: govulncheck ./...
         working-directory: cli
-      - run: govulncheck ./...
+      - name: Scan evaluation harness vulnerabilities
+        if: ${{ !cancelled() && steps.install_govulncheck.outcome == 'success' }}
+        run: govulncheck ./...
         working-directory: ci/evals/skills-e2e
   fuzz:
     runs-on: ubuntu-24.04
