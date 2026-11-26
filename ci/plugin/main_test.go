@@ -18,7 +18,7 @@ func TestPackagedPluginIsCompleteAndRejectsDamagedAssets(t *testing.T) {
 		t.Fatal(err)
 	}
 	dest := filepath.Join(t.TempDir(), "plugin")
-	if err := stage(root, dest, false); err != nil {
+	if err := stage(root, dest); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := os.Stat(filepath.Join(dest, "cli")); !os.IsNotExist(err) {
@@ -55,17 +55,6 @@ func TestPackagedPluginIsCompleteAndRejectsDamagedAssets(t *testing.T) {
 	if err != nil || bytes.Contains(manifest, []byte("experimental")) {
 		t.Fatal("runtime manifest contains development-only configuration", err)
 	}
-	evaluation := filepath.Join(t.TempDir(), "evaluation")
-	if err := stage(root, evaluation, true); err != nil {
-		t.Fatal(err)
-	}
-	manifest, err = os.ReadFile(filepath.Join(evaluation, ".claude-plugin", "plugin.json"))
-	if err != nil || !bytes.Contains(manifest, []byte("ci/evals/agent-skills")) {
-		t.Fatal("evaluation fixture missing cases", err)
-	}
-	if _, err := os.Stat(filepath.Join(evaluation, "ci", "evals", "agent-skills", "local-authoring", "prompt.md")); err != nil {
-		t.Fatal(err)
-	}
 	first, second := filepath.Join(t.TempDir(), "first.zip"), filepath.Join(t.TempDir(), "second.zip")
 	if err := archive(dest, first); err != nil {
 		t.Fatal(err)
@@ -86,7 +75,7 @@ func TestPackagedPluginIsCompleteAndRejectsDamagedAssets(t *testing.T) {
 		t.Fatal("rejected archive created an output file")
 	}
 	nested := filepath.Join(dest, "skills", "nested")
-	if err := stage(dest, nested, false); err == nil {
+	if err := stage(dest, nested); err == nil {
 		t.Fatal("recursive staging was accepted")
 	}
 	if _, err := os.Stat(nested); !os.IsNotExist(err) {

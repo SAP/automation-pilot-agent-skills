@@ -50,15 +50,23 @@ jobs:
           ci/cli/build.sh "$(cat /tmp/autopi-version)"
           cmp /tmp/autopi-checksums skills/automation-pilot-cli/scripts/bin/SHA256SUMS
       - run: skills/automation-pilot-cli/scripts/autopi lint skills/automation-pilot-command-authoring/examples/*.command.json
-      - name: Evaluation harness regression tests
-        run: go test -race ./...
-        working-directory: ci/evals/skills-e2e
-      - name: Evaluation harness static checks
-        run: go vet ./...
-        working-directory: ci/evals/skills-e2e
-      - name: Evaluation candidate offline checks
-        run: go run . check --run ci
-        working-directory: ci/evals/skills-e2e
+      - name: Evaluation isolation dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Unified evaluator offline checks
+        env:
+          AUTOPI_EVAL_LIVE_HOST_PROBE: ''
+          AUTOMATION_PILOT_HOSTNAME: ''
+          AUTOMATION_PILOT_TOKEN: ''
+        run: |
+          go test -race -count=1 ./...
+          go vet ./...
+          sh evals.sh check
+        working-directory: ci/evals
       - run: git diff --check
       - name: Record validation inputs
         run: |
@@ -82,7 +90,7 @@ jobs:
       - run: govulncheck ./...
         working-directory: cli
       - run: govulncheck ./...
-        working-directory: ci/evals/skills-e2e
+        working-directory: ci/evals
   fuzz:
     runs-on: ubuntu-24.04
     strategy:
@@ -153,5 +161,5 @@ jobs:
         run: go test -count=1 -v -run '^TestLauncher' .
         working-directory: cli
       - name: Native harness checksum enforcement
-        run: go test -count=1 -v ./...
-        working-directory: ci/evals/skills-e2e
+        run: go test -count=1 -v ./e2e
+        working-directory: ci/evals

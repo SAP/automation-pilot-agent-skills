@@ -50,7 +50,7 @@ For each directory under `ci/links` and `ci/cli/contracts/{helpdocs,snapshot}`, 
 The Go suite includes native launcher checksum enforcement, covering missing/modified
 binaries, invalid checksum lists, and argument forwarding. To run these checks alone,
 run `go test -count=1 -v -run '^TestLauncher' .` from `cli/`.
-From `ci/evals/skills-e2e/`, run `go test -race ./...` and `go vet ./...` for the harness.
+From `ci/evals/`, run `go test -race ./...` and `go vet ./...` for the harness.
 CI runs these checks alongside formatting, source/binary checksums, cross-build
 reproducibility, command-example lint, and native platform smoke tests.
 Product-specific template acceptance scenarios live in
@@ -61,10 +61,9 @@ For plugin changes, run `sh ci/plugin/install-test.sh` with Claude Code 2.1.308 
 It installs into disposable configuration and checks the cached bundle without source
 or build tools. Run `go test ci/plugin/main.go ci/plugin/main_test.go` for packaging,
 `go test ci/contracts/main.go ci/contracts/main_test.go` and `go run ci/contracts/main.go`
-for review freshness. See [agent evaluations](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/evals/agent-skills/README.md) for fresh sessions and a
-baseline; these require evaluator credentials but no Automation Pilot credentials.
+for review freshness. See [agent evaluations](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/evals/readme.md) for fresh sessions, presets and baseline comparison. Model sessions use the configured Claude/Codex login; engine and E2E checks use the configured Automation Pilot destination. Full always includes E2E.
 
 Keep tenant-specific reports, session transcripts and development notes out of
 commits. Local review artifacts may be kept in `ci/.local/`; live run state stays in
-`ci/evals/skills-e2e/runs/`. Both directories are ignored and excluded from release
+`ci/evals/runs/`. Both directories are ignored and excluded from release
 packages and validation fingerprints. Commit reusable fixtures and tests instead.

@@ -35,7 +35,7 @@ func TestSourceDigestIncludesRelocatedBuildTools(t *testing.T) {
 	}
 	writeFile(".github/workflows/validate.yml", "validation")
 	writeFile(".claude-plugin/plugin.json", "plugin")
-	writeFile("ci/evals/agent-skills/case/prompt.md", "evaluation")
+	writeFile("ci/evals/cases/bank.json", "evaluation")
 	before, err := sourceDigest(module)
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +64,7 @@ func TestSourceDigestIncludesRelocatedBuildTools(t *testing.T) {
 	if err != nil || validationWithPrivate != validationAfter {
 		t.Fatal("private notes changed validation provenance", err)
 	}
-	for _, name := range []string{"cli/dist/scratch.go", "ci/links/main.go", "ci/evals/skills-e2e/main.go", "ci/evals/skills-e2e/runs/local/state.json", "skills/automation-pilot-cli/scripts/bin/build-manifest.json", "skills/automation-pilot-cli/scripts/bin.stage.fixture/build-manifest.json"} {
+	for _, name := range []string{"cli/dist/scratch.go", "ci/links/main.go", "ci/evals/e2e/harness.go", "ci/evals/runs/local/state.json", "skills/automation-pilot-cli/scripts/bin/build-manifest.json", "skills/automation-pilot-cli/scripts/bin.stage.fixture/build-manifest.json"} {
 		writeFile(name, "unrelated to binary build")
 	}
 	after, err := sourceDigest(module)

@@ -72,6 +72,5 @@ Use `go tool dist list` for supported toolchain target names.
 
 The release workflow checks the tag against the plugin version, packages the
 runtime assets with `ci/plugin/main.go stage` and `zip`, and produces attestations
-before creating a draft release. `stage-evals` is reserved for disposable evaluation
-fixtures and is never used by the release job. Native Windows skill usage remains
+before creating a draft release. Evaluation cases and harness source are excluded from the runtime package. Native Windows skill usage remains
 independent of these contributor tools.

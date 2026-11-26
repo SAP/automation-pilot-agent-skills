@@ -7,8 +7,7 @@ install_plugin_fixture() {
   fixture_work="$2"
   export CLAUDE_CONFIG_DIR="$fixture_work/config"
   mkdir -p "$CLAUDE_CONFIG_DIR" "$fixture_work/workspace"
-  fixture_mode="${3:-stage}"
-  go run "$fixture_root/ci/plugin/main.go" "$fixture_mode" "$fixture_root" "$fixture_work/marketplace"
+  go run "$fixture_root/ci/plugin/main.go" stage "$fixture_root" "$fixture_work/marketplace"
   claude plugin validate "$fixture_work/marketplace/.claude-plugin/plugin.json" --strict --json
   git -C "$fixture_work/marketplace" init -q --template=
   git -C "$fixture_work/marketplace" -c core.excludesFile=/dev/null -c core.autocrlf=false add --all

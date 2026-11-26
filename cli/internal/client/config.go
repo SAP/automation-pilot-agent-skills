@@ -13,9 +13,10 @@ import (
 // Config holds everything needed to talk to a SAP Automation Pilot tenant.
 // Connection fields come only from the environment; operational options use flags.
 type Config struct {
-	Host    string // AUTOMATION_PILOT_HOSTNAME, e.g. emea.autopilot.cloud.sap
-	Token   string // AUTOMATION_PILOT_TOKEN, without the Bearer prefix (never logged)
-	Catalog string // --catalog filter for commands/inputs list verbs (no env default)
+	Host       string // AUTOMATION_PILOT_HOSTNAME, e.g. emea.autopilot.cloud.sap
+	Token      string // AUTOMATION_PILOT_TOKEN, without the Bearer prefix (never logged)
+	Catalog    string // --catalog filter for commands/inputs list verbs (no env default)
+	CACertFile string // optional SSL_CERT_FILE bundle, including on macOS
 
 	Timeout          time.Duration
 	Output           string            // "json" (pretty) or "raw" (passthrough)
@@ -47,10 +48,11 @@ func NewConfigError(msg string) *ConfigError { return &ConfigError{msg: msg} }
 // FromEnv reads the two connection variables and defaults operational options.
 func FromEnv() Config {
 	return Config{
-		Host:    os.Getenv("AUTOMATION_PILOT_HOSTNAME"),
-		Token:   os.Getenv("AUTOMATION_PILOT_TOKEN"),
-		Timeout: 30 * time.Second,
-		Output:  "json",
+		Host:       os.Getenv("AUTOMATION_PILOT_HOSTNAME"),
+		Token:      os.Getenv("AUTOMATION_PILOT_TOKEN"),
+		CACertFile: os.Getenv("SSL_CERT_FILE"),
+		Timeout:    30 * time.Second,
+		Output:     "json",
 	}
 }
 

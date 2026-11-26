@@ -209,7 +209,7 @@ Do I have any enabled scheduled executions? List them and disable the ones that 
 
 ## Resources
 
-- [Reusable skills evaluation suite](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/evals/skills-e2e/README.md) — complex workflows, behavioral scoring, a Go harness, cleanup, and efficiency measurements.
+- [Unified skills evaluations](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/evals/readme.md) — smoketest/minimal/full presets, Claude/Codex, live E2E, reports and cleanup.
 - [Build and validation tools](https://github.com/SAP/automation-pilot-agent-skills/tree/main/ci/README.md) — contributor helpers, CLI and harness tests, help parity, and guidance link checks.
 
 **SAP Automation Pilot:**

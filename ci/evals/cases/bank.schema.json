@@ -1,0 +1,867 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "cases": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact": {
+                "type": "string"
+              },
+              "assertions": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "max": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "min": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "operator": {
+                          "type": "string"
+                        },
+                        "pointer": {
+                          "type": "string"
+                        },
+                        "source": {
+                          "type": "string"
+                        },
+                        "value": {},
+                        "where": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": {},
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "source",
+                        "operator"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "criteria": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "requirement": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "requirement"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "difficulty": {
+                "type": "string"
+              },
+              "domain": {
+                "type": "string"
+              },
+              "engine": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "output_key": {
+                        "type": "string"
+                      },
+                      "partitions": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "expected": {},
+                                "id": {
+                                  "type": "string"
+                                },
+                                "input_values": {
+                                  "anyOf": [
+                                    {
+                                      "additionalProperties": {
+                                        "type": "string"
+                                      },
+                                      "type": "object"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "input_values",
+                                "expected"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "reference_expression": {
+                        "type": "string"
+                      },
+                      "result_type": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "result_type",
+                      "reference_expression",
+                      "partitions"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "family": {
+                "type": "string"
+              },
+              "fixture": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "allowed_writes": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "max_calls": {
+                                  "type": "integer"
+                                },
+                                "method": {
+                                  "type": "string"
+                                },
+                                "path": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "method",
+                                "path",
+                                "max_calls"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "credentials": {
+                        "type": "string"
+                      },
+                      "resources": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {},
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "routes": {
+                        "anyOf": [
+                          {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "method": {
+                                  "type": "string"
+                                },
+                                "path": {
+                                  "type": "string"
+                                },
+                                "responses": {
+                                  "anyOf": [
+                                    {
+                                      "items": {
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "body": {},
+                                          "headers": {
+                                            "anyOf": [
+                                              {
+                                                "additionalProperties": {
+                                                  "type": "string"
+                                                },
+                                                "type": "object"
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "status": {
+                                            "type": "integer"
+                                          }
+                                        },
+                                        "required": [
+                                          "status"
+                                        ],
+                                        "type": "object"
+                                      },
+                                      "type": "array"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "method",
+                                "path",
+                                "responses"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "tenant": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "tenant",
+                      "resources",
+                      "allowed_writes"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "max_seconds": {
+                "type": "integer"
+              },
+              "max_turns": {
+                "type": "integer"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "mutants": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "evidence": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "answer": {
+                              "type": "string"
+                            },
+                            "artifact": {},
+                            "engine_results": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": {},
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "hard_failures": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "lint_exit": {
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "requests": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "body": {},
+                                      "headers": {
+                                        "anyOf": [
+                                          {
+                                            "additionalProperties": {
+                                              "type": "string"
+                                            },
+                                            "type": "object"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "method": {
+                                        "type": "string"
+                                      },
+                                      "path": {
+                                        "type": "string"
+                                      },
+                                      "query": {
+                                        "anyOf": [
+                                          {
+                                            "additionalProperties": {
+                                              "anyOf": [
+                                                {
+                                                  "items": {
+                                                    "type": "string"
+                                                  },
+                                                  "type": "array"
+                                                },
+                                                {
+                                                  "type": "null"
+                                                }
+                                              ]
+                                            },
+                                            "type": "object"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "response_body": {},
+                                      "sequence": {
+                                        "type": "integer"
+                                      },
+                                      "status": {
+                                        "type": "integer"
+                                      },
+                                      "unauthorized": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "sequence",
+                                      "method",
+                                      "path",
+                                      "status"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "state": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": {},
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "trace": {
+                              "anyOf": [
+                                {
+                                  "items": {},
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "workspace_changed": {
+                              "anyOf": [
+                                {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "answer",
+                            "requests",
+                            "state",
+                            "trace"
+                          ],
+                          "type": "object"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "violates": {
+                          "anyOf": [
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "violates",
+                        "evidence"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "origin": {
+                "type": "string"
+              },
+              "primary_skill": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "public_files": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "reference": {
+                "additionalProperties": false,
+                "properties": {
+                  "answer": {
+                    "type": "string"
+                  },
+                  "artifact": {},
+                  "engine_results": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "hard_failures": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lint_exit": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "requests": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "body": {},
+                            "headers": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "method": {
+                              "type": "string"
+                            },
+                            "path": {
+                              "type": "string"
+                            },
+                            "query": {
+                              "anyOf": [
+                                {
+                                  "additionalProperties": {
+                                    "anyOf": [
+                                      {
+                                        "items": {
+                                          "type": "string"
+                                        },
+                                        "type": "array"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "type": "object"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "response_body": {},
+                            "sequence": {
+                              "type": "integer"
+                            },
+                            "status": {
+                              "type": "integer"
+                            },
+                            "unauthorized": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "sequence",
+                            "method",
+                            "path",
+                            "status"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "state": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "trace": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "workspace_changed": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "answer",
+                  "requests",
+                  "state",
+                  "trace"
+                ],
+                "type": "object"
+              },
+              "review_status": {
+                "type": "string"
+              },
+              "scripted_user_replies": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "question_pattern": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "question_pattern",
+                        "text"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "secondary_skills": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sources": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "evidence": {
+                          "type": "string"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "repository": {
+                          "type": "string"
+                        },
+                        "revision": {
+                          "type": "string"
+                        },
+                        "sha256": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "repository",
+                        "revision",
+                        "path",
+                        "sha256",
+                        "evidence"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "split": {
+                "enum": [
+                  "development",
+                  "holdout"
+                ],
+                "type": "string"
+              },
+              "suites": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "enum": [
+                        "smoketest",
+                        "minimal",
+                        "full",
+                        "e2e",
+                        "pilot",
+                        "smoke",
+                        "regression",
+                        "release",
+                        "all"
+                      ],
+                      "type": "string"
+                    },
+                    "type": "array",
+                    "uniqueItems": true
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tier": {
+                "enum": [
+                  "local",
+                  "fixture",
+                  "engine"
+                ],
+                "type": "string"
+              },
+              "version": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "version",
+              "family",
+              "primary_skill",
+              "domain",
+              "origin",
+              "mode",
+              "tier",
+              "difficulty",
+              "split",
+              "suites",
+              "prompt",
+              "public_files",
+              "sources",
+              "criteria",
+              "assertions",
+              "reference",
+              "mutants",
+              "review_status",
+              "max_turns",
+              "max_seconds"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "cases"
+  ],
+  "title": "Automation Pilot evaluator-only task bank",
+  "type": "object"
+}

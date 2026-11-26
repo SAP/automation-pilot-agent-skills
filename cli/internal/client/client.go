@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -77,14 +79,31 @@ func (e *NetworkError) Unwrap() error { return e.err }
 
 // Client is a thin typed wrapper over net/http for the Automation Pilot API.
 type Client struct {
-	cfg  Config
-	http *http.Client
-	out  io.Writer
+	cfg       Config
+	http      *http.Client
+	out       io.Writer
+	configErr error
 }
 
 // New builds a Client. out receives --print-request output; pass os.Stdout.
 func New(cfg Config, out io.Writer) *Client {
 	tr := http.DefaultTransport.(*http.Transport).Clone()
+	var configErr error
+	if cfg.CACertFile != "" {
+		// Load an explicit CA without modifying system/keychain trust or disabling
+		// certificate and hostname verification. Go's macOS verifier otherwise
+		// ignores SSL_CERT_FILE. Preserve system roots for other HTTPS endpoints.
+		roots, err := x509.SystemCertPool()
+		if err != nil {
+			roots = x509.NewCertPool()
+		}
+		certs, err := os.ReadFile(cfg.CACertFile)
+		if err != nil || !roots.AppendCertsFromPEM(certs) {
+			configErr = NewConfigError("SSL_CERT_FILE must contain readable PEM certificates")
+		} else {
+			tr.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
+		}
+	}
 	if cfg.Insecure {
 		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // #nosec G402 — opt-in escape hatch
 	}
@@ -93,9 +112,10 @@ func New(cfg Config, out io.Writer) *Client {
 		transport = cfg.Transport
 	}
 	return &Client{
-		cfg:  cfg,
-		http: &http.Client{Timeout: cfg.Timeout, Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
-		out:  out,
+		cfg:       cfg,
+		http:      &http.Client{Timeout: cfg.Timeout, Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
+		out:       out,
+		configErr: configErr,
 	}
 }
 
@@ -125,6 +145,9 @@ func (c *Client) buildURL(req Request) string {
 // and returns nil without touching the network. Otherwise it validates config,
 // sends the request, and returns a Result or a typed error.
 func (c *Client) Do(req Request) (*Result, error) {
+	if c.configErr != nil && !c.cfg.PrintRequest {
+		return nil, c.configErr
+	}
 	if len(req.Body) > 32<<20 {
 		return nil, NewConfigError("request body exceeds 32 MiB limit")
 	}

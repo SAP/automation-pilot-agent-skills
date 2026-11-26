@@ -1,0 +1,1096 @@
+{
+  "status": "planning evidence; no evaluator or fixture implementation",
+  "snapshot_date": "2026-11-19",
+  "source_repository": "autopi-content",
+  "source_git_revision": "6e2ecef00a2bfac89dd949a69182966a4db91315",
+  "source_working_tree_clean": true,
+  "skills_git_revision": "189914f7f7ee45be9bf71cb4caea0da6cd367979",
+  "scanned_file_set_sha256": "cefae464d0bf04f9455bcb671d8c0ec77b71530ae8f65c5acbe7458f7c8695b3",
+  "digest_definition": "SHA-256 of sorted repository-relative JSON path, NUL, file SHA-256 hex, LF; catalogs JSON and public test command JSON only; Input values are never exported",
+  "counts": {
+    "catalog_definitions": 33,
+    "command_definitions": 523,
+    "input_definitions": 9,
+    "command_families_by_catalog_and_name": 503,
+    "composite_configurations": 479,
+    "deprecated_command_definitions": 62,
+    "hidden_command_definitions": 76,
+    "hidden_and_deprecated": 4,
+    "visible_nondeprecated_command_definitions": 389,
+    "public_test_command_definitions": 651,
+    "OQ_or_OQSuite_named_files": 309,
+    "OQ_or_OQSuite_named_files_outside_resources": 276
+  },
+  "commands_with_controls": {
+    "when": 166,
+    "validate": 144,
+    "autoRetry": 253,
+    "repeat": 50,
+    "initialDelay": 15
+  },
+  "catalog_inventory": [
+    {
+      "path": "content/public/catalogs/aicore/aicore.catalog.json",
+      "command_definitions": 5,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/ans/ans.catalog.json",
+      "command_definitions": 3,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/applm/applm.catalog.json",
+      "command_definitions": 56,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/autopi/autopi.catalog.json",
+      "command_definitions": 15,
+      "input_definitions": 2
+    },
+    {
+      "path": "content/public/catalogs/calmhm/calmhm.catalog.json",
+      "command_definitions": 10,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/cf/cf.catalog.json",
+      "command_definitions": 38,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/cis/cis.catalog.json",
+      "command_definitions": 43,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/cls/cls.catalog.json",
+      "command_definitions": 1,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/concourse/concourse.catalog.json",
+      "command_definitions": 20,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/ctms/ctms.catalog.json",
+      "command_definitions": 16,
+      "input_definitions": 1
+    },
+    {
+      "path": "content/public/catalogs/dblm/dblm.catalog.json",
+      "command_definitions": 36,
+      "input_definitions": 2
+    },
+    {
+      "path": "content/public/catalogs/dest/dest.catalog.json",
+      "command_definitions": 16,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/dynatrace/dynatrace.catalog.json",
+      "command_definitions": 6,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/email/email.catalog.json",
+      "command_definitions": 1,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/github/github.catalog.json",
+      "command_definitions": 7,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/hanacloud/hanacloud.catalog.json",
+      "command_definitions": 47,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/http/http.catalog.json",
+      "command_definitions": 9,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/instance/instance.catalog.json",
+      "command_definitions": 3,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/is/is.catalog.json",
+      "command_definitions": 21,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/jenkins/jenkins.catalog.json",
+      "command_definitions": 4,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/jira/jira.catalog.json",
+      "command_definitions": 22,
+      "input_definitions": 1
+    },
+    {
+      "path": "content/public/catalogs/kubernetes/kubernetes.catalog.json",
+      "command_definitions": 29,
+      "input_definitions": 1
+    },
+    {
+      "path": "content/public/catalogs/mcp/mcp.catalog.json",
+      "command_definitions": 6,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/metadata/metadata.catalog.json",
+      "command_definitions": 0,
+      "input_definitions": 2
+    },
+    {
+      "path": "content/public/catalogs/monitoring/monitoring.catalog.json",
+      "command_definitions": 10,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/scripts/scripts.catalog.json",
+      "command_definitions": 18,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/sha/sha.catalog.json",
+      "command_definitions": 3,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/sm/sm.catalog.json",
+      "command_definitions": 23,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/sql/sql.catalog.json",
+      "command_definitions": 2,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/store/store.catalog.json",
+      "command_definitions": 5,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/utils/utils.catalog.json",
+      "command_definitions": 25,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/vault/vault.catalog.json",
+      "command_definitions": 3,
+      "input_definitions": 0
+    },
+    {
+      "path": "content/public/catalogs/xsuaa/xsuaa.catalog.json",
+      "command_definitions": 20,
+      "input_definitions": 0
+    }
+  ],
+  "candidate_source_dossiers": [
+    {
+      "path": "content/public/catalogs/applm/RestartCfApp.command.json",
+      "sha256": "a9f5c83aaca03cd3b603255497b891285bdeef6d71c4ec9cef16831c3dc406c4",
+      "id_normalized_for_analysis": "applm-sapcp:RestartCfApp:1",
+      "description": "Restarts a Cloud Foundry application in a rolling manner or quickly, by stopping all instances simultaneously",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 4,
+      "controls": {
+        "when": 2,
+        "validate": 1,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/applm/CfAppLmOQP2.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiCommandsV2Scenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiOq.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScenarios.command.json",
+        "content/public/tests/autopi/gen-ai/ExecutorConfigurationsPlaceholderOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/applm/RollingRestartCfApp.command.json",
+      "sha256": "2f66a83fcab79ea982a5ac6bcc3e744c013b53a46a9cb9d54c3b898ea03183a8",
+      "id_normalized_for_analysis": "applm-sapcp:RollingRestartCfApp:1",
+      "description": "Restarts a Cloud Foundry application in a rolling manner, without causing downtime",
+      "hidden": true,
+      "deprecated": false,
+      "executor_count": 6,
+      "controls": {
+        "when": 2,
+        "validate": 2,
+        "autoRetry": 2,
+        "repeat": 2,
+        "initialDelay": 2
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": []
+    },
+    {
+      "path": "content/public/catalogs/cf/ResolveCfIds.command.json",
+      "sha256": "3a588323b91cccb9623d037acae231ea409f47b758523247bc0e4579058d0b06",
+      "id_normalized_for_analysis": "cf-sapcp:ResolveCfIds:1",
+      "description": "Resolve Cloud Foundry org, space and app GUIDs by providing technical names or GUIDs",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 4,
+      "controls": {
+        "when": 4,
+        "validate": 4,
+        "autoRetry": 4,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/applm/CfAppLmOQP2.command.json",
+        "content/public/tests/cf/CloudFoundryOQSuiteP1.command.json",
+        "content/public/tests/cf/CloudFoundryOQSuiteP2.command.json",
+        "content/public/tests/core-functionality/actions/skip/SkipActionTestSubject.command.json",
+        "content/public/tests/core-functionality/ans/ExecutionStatusNotificationsOQ.command.json",
+        "content/public/tests/resources/commands/CheckCfRoleExistence.command.json",
+        "content/public/tests/resources/commands/CreateCfApp.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/cf/CreateCfServiceInstance.command.json",
+      "sha256": "820b359490375e1a0f67d1a92bedaadca4e0b0daa89f1fccfedbadf2f621c5f5",
+      "id_normalized_for_analysis": "cf-sapcp:CreateCfServiceInstance:1",
+      "description": "Create a new service instance within a selected Cloud Foundry space.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 6,
+      "controls": {
+        "when": 3,
+        "validate": 1,
+        "autoRetry": 3,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/cf/CloudFoundryOQSuiteP1.command.json",
+        "content/public/tests/cf/CloudFoundryOQSuiteP2.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/hanacloud/UpgradeHanaCloudInstanceByScope.command.json",
+      "sha256": "0e0e304a8061b06a249ca87a6cc57c0d76a20dd8f349cf7c73b13d284def892c",
+      "id_normalized_for_analysis": "hanacloud-sapcp:UpgradeHanaCloudInstanceByScope:1",
+      "description": "Upgrade an SAP HANA Cloud instance to a target version determined by the chosen upgrade scope on its current release cycle. Optionally rotates a snapshot beforehand for a fresh restore point. If no version matches the chosen scope, no changes are made.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 9,
+      "controls": {
+        "when": 7,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": []
+    },
+    {
+      "path": "content/public/catalogs/hanacloud/RotateHanaCloudSnapshot.command.json",
+      "sha256": "ad27107009ff6a4dd0685f6734c2aac2f4b127ae6358323956ea01ff2fbbfaef",
+      "id_normalized_for_analysis": "hanacloud-sapcp:RotateHanaCloudSnapshot:1",
+      "description": "Rotate a single snapshot on an SAP HANA Cloud instance: deletes the oldest existing snapshot (if any), then creates a new one. Useful for keeping the snapshot up to date with the current database state. If the instance has no snapshots, only the new one is created.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 4,
+      "controls": {
+        "when": 2,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": []
+    },
+    {
+      "path": "content/public/catalogs/hanacloud/DeleteHanaCloudInstance.command.json",
+      "sha256": "8a4ccd0039ed463468e5ed64b85cac763fdc2d565e618c2afad08fa2d9013450",
+      "id_normalized_for_analysis": "hanacloud-sapcp:DeleteHanaCloudInstance:1",
+      "description": "Delete an SAP HANA Cloud instance. By default, deletion is blocked if any service bindings are present. Optionally, you can remove all bindings first and then delete the instance.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 7,
+      "controls": {
+        "when": 5,
+        "validate": 1,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": []
+    },
+    {
+      "path": "content/public/catalogs/hanacloud/ObtainHanaCloudManagedAdminApiBinding.command.json",
+      "sha256": "470a9284e6f303a710af3c53a802e611179a752a34a960fd4660168fe3a5e3b9",
+      "id_normalized_for_analysis": "hanacloud-sapcp:ObtainHanaCloudManagedAdminApiBinding:1",
+      "description": "Obtain mTLS credentials for the SAP HANA Cloud administration APIs. SAP Automation Pilot manages the admin-api-access service instance and binding lifecycle, creating them if needed and periodically rotating the binding. Repeated runs return the same binding until rotation is due.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 23,
+      "controls": {
+        "when": 22,
+        "validate": 0,
+        "autoRetry": 14,
+        "repeat": 2,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [
+        "serviceKey"
+      ],
+      "direct_test_reference_paths": [
+        "content/public/tests/hana-cloud-and-sensitive-commands/HanaCloudAdminApiBindingOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/kubernetes/RestartKubernetesDeployment.command.json",
+      "sha256": "8698e978d5066a16d472b65cbfe4fca09b66e578a539ac79fb96f0a1c83c98ef",
+      "id_normalized_for_analysis": "kubernetes-sapcp:RestartKubernetesDeployment:1",
+      "description": "Used for rolling restart of Kubernetes deployment.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/kubernetes/RestartKubernetesResourcesOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/kubernetes/PollRestartKubernetesResource.command.json",
+      "sha256": "0e9f4aa9acbffb2f1c4617f61dce98f07f13eb9b44542d5cf133cec301b10f76",
+      "id_normalized_for_analysis": "kubernetes-sapcp:PollRestartKubernetesResource:1",
+      "description": "Polls rolling restart process for specific Kubernetes resource until it is done.",
+      "hidden": true,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 0,
+        "validate": 1,
+        "autoRetry": 0,
+        "repeat": 1,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": []
+    },
+    {
+      "path": "content/public/catalogs/kubernetes/DeleteK8sResource.command.json",
+      "sha256": "0e6f04d30d855441bb8354f68beaff568b0d7b04a88bade6073c480678686b2d",
+      "id_normalized_for_analysis": "kubernetes-sapcp:DeleteK8sResource:1",
+      "description": "Used to delete a Kubernetes resource.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 1,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/core-functionality/content-connectors/backup/TriggerGithubReconcilerTask.command.json",
+        "content/public/tests/core-functionality/service-accounts/TriggerServiceAccountExpirationTask.command.json",
+        "content/public/tests/kubernetes/ManageK8sResourcesOQ.command.json",
+        "content/public/tests/operators/CleanupOperatorResources.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/sm/CreateServiceInstance.command.json",
+      "sha256": "0b885c2646fd3336eb25d74b4eae6f8c8ab3964647509c80654853955bb8333c",
+      "id_normalized_for_analysis": "sm-sapcp:CreateServiceInstance:1",
+      "description": "Creates a new service instance",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 5,
+      "controls": {
+        "when": 1,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/cis/AccountsServiceSubAccountsOQ.command.json",
+        "content/public/tests/cis/SubscriptionUpdateOQSuite.command.json",
+        "content/public/tests/core-functionality/service-instance/InstanceUpdateOQSuite.command.json",
+        "content/public/tests/core-functionality/service-instance/InstancesOQPart1.command.json",
+        "content/public/tests/core-functionality/service-instance/InstancesOQPart2.command.json",
+        "content/public/tests/ctms/CtmsOQSuite.command.json",
+        "content/public/tests/sm/SMInstanceWithWriteOnlyParametersOQ.command.json",
+        "content/public/tests/sm/SmLmOQP1.command.json",
+        "content/public/tests/sm/SmLmOQP3.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/sm/WaitServiceInstanceOperation.command.json",
+      "sha256": "f3b2cb3f6b0c4740ee1ec5f4ac58f31600baf9cf9bcb25a92ab8057769036930",
+      "id_normalized_for_analysis": "sm-sapcp:WaitServiceInstanceOperation:1",
+      "description": "Wait for an operation to finish successfully",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 5,
+      "controls": {
+        "when": 3,
+        "validate": 3,
+        "autoRetry": 3,
+        "repeat": 3,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/sm/ModifyServiceInstanceOQ.command.json",
+        "content/public/tests/sm/SmLmOQP2.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/cis/SetEntitlement.2.command.json",
+      "sha256": "44dc2be91bb7dc5f9d38a8dcc717d761ac74398a327ed325f197855fcc62b5d4",
+      "id_normalized_for_analysis": "cis-sapcp:SetEntitlement:2",
+      "description": "Enable service plan assignment with unlimited and numeric quota usage to specified subaccount",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/cis/EntitlementsServiceDirectoryOQP1.command.json",
+        "content/public/tests/cis/EntitlementsServiceOQP1.command.json",
+        "content/public/tests/cis/EntitlementsServiceOQP2.command.json",
+        "content/public/tests/cis/EntitlementsServiceOQP3.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/xsuaa/AssignRoleCollections.command.json",
+      "sha256": "48dde424a6165020b96cf69971b89719ffac06b88e6af8aa5d6c78326c907f27",
+      "id_normalized_for_analysis": "xsuaa-sapcp:AssignRoleCollections:1",
+      "description": "Assign role collections to the specified user, group or attribute. If missing, the user will be added to the subaccount.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 1,
+        "validate": 1,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/autopi/cross-consumption/CrossRegionOQ.command.json",
+        "content/public/tests/core-functionality/service-instance/AssignRolesAndAssertUserAccess.command.json",
+        "content/public/tests/xsuaa/XsuaaRoleCollectionsAttributeAssignmentOQ.command.json",
+        "content/public/tests/xsuaa/XsuaaRoleCollectionsGroupAssignmentOQ.command.json",
+        "content/public/tests/xsuaa/XsuaaRoleCollectionsUserAssignmentOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/http/HttpRequest.command.json",
+      "sha256": "2bfac7ad68f194f83f0eb6b318632bd44699fd3c6f343751de5cd720a872c1cb",
+      "id_normalized_for_analysis": "http-sapcp:HttpRequest:1",
+      "description": "Execute an HTTP request. Supported authentication methods: Custom Authorization Header; OAuth 2.0 Client Credentials, Password, and Refresh Token Grant Flows; Basic Authentication; IAS Technical User Certificate Authentication; no authentication.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 0,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/applm/CfAppLmOQP2.command.json",
+        "content/public/tests/applm/CfAppLmOQP3.command.json",
+        "content/public/tests/automations/CleanupScheduledExecutions.command.json",
+        "content/public/tests/autopi/AutoPilotCatalogFastDeletedExecutionsOQ.command.json",
+        "content/public/tests/autopi/AutoPilotCatalogOQSuite.command.json",
+        "content/public/tests/autopi/cross-consumption/CrossRegionOQ.command.json",
+        "content/public/tests/autopi/gen-ai/AIQuotaFeatureToggleOQ.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsAPIEnablementOQ.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiApplyChangeOQ.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiCommandsV2Scenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiOq.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScheduledExecutionScenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiSearchCustomContent.command.json",
+        "content/public/tests/autopi/gen-ai/ExecutorConfigurationsPlaceholderOQ.command.json",
+        "content/public/tests/autopi/gen-ai/GenAndValidateCommandViaScript.command.json",
+        "content/public/tests/autopi/gen-ai/GenerateAndValidateExecutor.command.json",
+        "content/public/tests/autopi/gen-ai/GenerateAndValidateInput.command.json",
+        "content/public/tests/autopi/gen-ai/GenerateAndValidateScheduledExecution.command.json",
+        "content/public/tests/autopi/gen-ai/GenerateCommand.command.json",
+        "content/public/tests/autopi/gen-ai/VectorizationCommandsOQ.command.json",
+        "content/public/tests/autopi/gen-ai/VectorizationInputsOQ.command.json",
+        "content/public/tests/autopi/gen-ai/cleanup/DeleteCommandsForGeneration.command.json",
+        "content/public/tests/autopi/gen-ai/cleanup/DeleteInputsForGeneration.command.json",
+        "content/public/tests/cis/AccountsServiceDirectoriesOQ.command.json",
+        "content/public/tests/cis/AccountsServiceManagedDirectoriesOQ.command.json",
+        "content/public/tests/cis/AccountsServiceSubAccountsOQ.command.json",
+        "content/public/tests/cis/EntitlementsServiceDirectoryOQP1.command.json",
+        "content/public/tests/cis/EntitlementsServiceDirectoryOQP2.command.json",
+        "content/public/tests/cis/EntitlementsServiceOQ.command.json",
+        "content/public/tests/cis/EntitlementsServiceOQP2.command.json",
+        "content/public/tests/cis/EntitlementsServiceOQP3.command.json",
+        "content/public/tests/cleanup/AbortStaleExecutions.command.json",
+        "content/public/tests/cloud-connector/SccHttpRequestOQ.command.json",
+        "content/public/tests/cloud-connector/SccOAuthFlowsOQ.command.json",
+        "content/public/tests/cloud-connector/ValidateLatestSccMail.command.json",
+        "content/public/tests/concourse/SetConcoursePipeline.command.json",
+        "content/public/tests/core-functionality/actions/etag/ActionsETagOQ.command.json",
+        "content/public/tests/core-functionality/actions/log/ActionsLogOQSuite.command.json",
+        "content/public/tests/core-functionality/actions/pause/ManualPauseAbortOQ.command.json",
+        "content/public/tests/core-functionality/actions/pause/ManualPauseResumeOQ.command.json",
+        "content/public/tests/core-functionality/actions/reset/ResetOQSuite.command.json",
+        "content/public/tests/core-functionality/actions/reset-retry/FailingResetRetryOQ.command.json",
+        "content/public/tests/core-functionality/actions/reset-retry/GetShouldFail.command.json",
+        "content/public/tests/core-functionality/actions/reset-retry/RetriesCountResetOQ.command.json",
+        "content/public/tests/core-functionality/actions/reset-retry/SuccessfulResetRetryOQ.command.json",
+        "content/public/tests/core-functionality/actions/skip/SkipActionAssertions.command.json",
+        "content/public/tests/core-functionality/actions/skip/SkipActionTestSubject.command.json",
+        "content/public/tests/core-functionality/actions/skip/SkipOQSuite.command.json",
+        "content/public/tests/core-functionality/actions/skip/SkipParallelForEachOQ.command.json",
+        "content/public/tests/core-functionality/ans/DestinationsOQ.command.json",
+        "content/public/tests/core-functionality/ans/EventTriggerOQ.command.json",
+        "content/public/tests/core-functionality/ans/ExecutionActionPerformedOQ.command.json",
+        "content/public/tests/core-functionality/ans/ExecutionStatusNotificationsOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/CommandsBulkApiOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/ExecutionDeletionOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/ExecutionStatusCountValidationOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/ExecutionsAPIValidationOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/ExpressionsApiValidationOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/FilterByTagsOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/FilterExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/InputsBulkApiOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/KeysLimitOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/ScheduledExecutionsAPIValidationOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/SensitiveDataHandlingOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/SetupFilterExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/SyncExecutionOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/TenantIdPlaceholderOQ.command.json",
+        "content/public/tests/core-functionality/archived-executions/ArchivedExecutionsOQSuite.command.json",
+        "content/public/tests/core-functionality/archived-executions/TriggerExecutionsForArchival.command.json",
+        "content/public/tests/core-functionality/archived-executions/ValidateArchivedExecutionListing.command.json",
+        "content/public/tests/core-functionality/archived-executions/ValidateArchivedObjects.command.json",
+        "content/public/tests/core-functionality/archived-executions/ValidateArchivedOverviews.command.json",
+        "content/public/tests/core-functionality/archived-executions/ValidateFallbackToArchive.command.json",
+        "content/public/tests/core-functionality/archived-executions/anonymization/VerifyAnonymizationArchivedExecutions.command.json",
+        "content/public/tests/core-functionality/commands/CommandSuggestionsOQ.command.json",
+        "content/public/tests/core-functionality/commands/CommandTaggingOQ.command.json",
+        "content/public/tests/core-functionality/commands/CreateCommandWithExecutorsOQ.command.json",
+        "content/public/tests/core-functionality/content-connectors/backup/AssertContentInGithub.command.json",
+        "content/public/tests/core-functionality/content-connectors/backup/AssertContentInGithubSeparate.command.json",
+        "content/public/tests/core-functionality/content-connectors/backup/AssertContentInGithubSeparateOnlyTags.command.json",
+        "content/public/tests/core-functionality/content-connectors/backup/ContentConnectorsOQSuite.command.json",
+        "content/public/tests/core-functionality/content-connectors/backup/ScheduledConnectorsOQ.command.json",
+        "content/public/tests/core-functionality/content-connectors/restore/AssertImportedContent.command.json",
+        "content/public/tests/core-functionality/content-connectors/restore/ContentConnectorsImportOQSuite.command.json",
+        "content/public/tests/core-functionality/content-connectors/restore/PrepareGithubForImport.command.json",
+        "content/public/tests/core-functionality/dry-run/DryRunExpressions.command.json",
+        "content/public/tests/core-functionality/dry-run/DryRunOQSuite.command.json",
+        "content/public/tests/core-functionality/executions/ExecutionTaggingOQ.command.json",
+        "content/public/tests/core-functionality/executions/ExecutionsTenancyOQ.command.json",
+        "content/public/tests/core-functionality/executions/VerifyExecutionDeletionWithRetentionPeriodZeroOQ.command.json",
+        "content/public/tests/core-functionality/executions/logs/AssertSensitiveExecutionLogs.command.json",
+        "content/public/tests/core-functionality/executions/logs/ExecutionLogsOQ.command.json",
+        "content/public/tests/core-functionality/executors/AutoRetryOQ.command.json",
+        "content/public/tests/core-functionality/executors/BodyTransformerMemLimitsOQ.command.json",
+        "content/public/tests/core-functionality/executors/CurrentExecutorPathOQ.command.json",
+        "content/public/tests/core-functionality/executors/ExpressionOQ.command.json",
+        "content/public/tests/core-functionality/executors/LongRunningExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/executors/MaxSizeExceedingExecutionOQ.command.json",
+        "content/public/tests/core-functionality/executors/ParametersValidationOQ.command.json",
+        "content/public/tests/core-functionality/executors/QuotaSizeOQ.command.json",
+        "content/public/tests/core-functionality/executors/statuses/VerifyExecutorStatuses.command.json",
+        "content/public/tests/core-functionality/executors/statuses/VerifyExecutorTimestamps.command.json",
+        "content/public/tests/core-functionality/executors/statuses/commands/VoidsAndFailingForeach.command.json",
+        "content/public/tests/core-functionality/feature-toggles/ApisFeatureTogglesOQ.command.json",
+        "content/public/tests/core-functionality/feature-toggles/AssertForcedStatusFeatureToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/ChangeCommandLowerMaxTimeoutToggleOQ.command.json",
+        "content/public/tests/core-functionality/feature-toggles/ChangeCommandMaxTimeoutToggleOQ.command.json",
+        "content/public/tests/core-functionality/feature-toggles/ChangeLongRunningCutoffToggleOQ.command.json",
+        "content/public/tests/core-functionality/feature-toggles/ChangeParallelForEachBatchSizeToggleOQ.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteCatalogsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteCommandsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteExecutionsHistoryQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteInputLimitsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteRunningExecutionsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteScheduledExecutionsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteTriggerExecutionsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/feature-toggles/PsaHttpRequestFeatureToggleOQ.command.json",
+        "content/public/tests/core-functionality/general/GetGcpObjectStoreFiles.command.json",
+        "content/public/tests/core-functionality/inputs/InputTaggingOQ.command.json",
+        "content/public/tests/core-functionality/inputs/PersonalInputsOQ.command.json",
+        "content/public/tests/core-functionality/mcp-servers/McpServerETagOQ.command.json",
+        "content/public/tests/core-functionality/mcp-servers/McpServersInvalidCreateOrUpdate.command.json",
+        "content/public/tests/core-functionality/mcp-servers/McpServersOQSuite.command.json",
+        "content/public/tests/core-functionality/mcp-servers/SyncMcpToolOQ.command.json",
+        "content/public/tests/core-functionality/scheduled-executions/AppointScheduledExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/scheduled-executions/CreateThenDeleteScheduledExecution.command.json",
+        "content/public/tests/core-functionality/scheduled-executions/DeleteCompletedScheduledExecutionOQ.command.json",
+        "content/public/tests/core-functionality/scheduled-executions/PersonalScheduledExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/scheduled-executions/ScheduleExecutionCommandOQ.command.json",
+        "content/public/tests/core-functionality/scheduled-executions/TriggerScheduledExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/CleanUpServiceAccountsResources.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsApiTokenAuthOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsBasicAuthOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsCatalogLevelPermissionsOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsExpirationEventsOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsMcpScopingOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsOQSuite.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsSapPkiCertsOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsUpdateRequestOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/SetUpServiceAccountsResources.command.json",
+        "content/public/tests/core-functionality/service-accounts/SpringMVCAuthCompletionsAPIOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/SpringMVCAuthOQ.command.json",
+        "content/public/tests/core-functionality/service-instance/AssertAllServiceKeyTypesAccess.command.json",
+        "content/public/tests/core-functionality/service-instance/AssignRolesAndAssertUserAccess.command.json",
+        "content/public/tests/core-functionality/service-instance/InstancesOQPart1.command.json",
+        "content/public/tests/core-functionality/service-instance/InstancesOQPart2.command.json",
+        "content/public/tests/core-functionality/service-instance/onboarding/SetupOnboardingData.command.json",
+        "content/public/tests/core-functionality/status-listeners/StatusListenersOQSuite.command.json",
+        "content/public/tests/dynatrace/DynatraceCatalogOQSuite.command.json",
+        "content/public/tests/email/CheckSentMail.command.json",
+        "content/public/tests/general/SecurityTxtFileOQ.command.json",
+        "content/public/tests/github/GitHubFilesOQ.command.json",
+        "content/public/tests/http/HTTPTrustedCertOQ.command.json",
+        "content/public/tests/http/HttpClientCertAuthOQ.command.json",
+        "content/public/tests/http/HttpErrorMessagesOQ.command.json",
+        "content/public/tests/http/HttpIgnoreResponseBodyOQ.command.json",
+        "content/public/tests/http/HttpOQSuite.command.json",
+        "content/public/tests/http/HttpRequestAccessOQ.command.json",
+        "content/public/tests/http/HttpRequestViaDestinationOQ.command.json",
+        "content/public/tests/http/HttpRequestsOQ.command.json",
+        "content/public/tests/http/HttpResponseBodyTransformerOQ.command.json",
+        "content/public/tests/http/HttpTimeoutsOQ.command.json",
+        "content/public/tests/http/IasAuthOQ.command.json",
+        "content/public/tests/http/MtlsAuthOQ.command.json",
+        "content/public/tests/http/OAuthErrorMessagesOQ.command.json",
+        "content/public/tests/http/OAuthIdTokenTypeOQ.command.json",
+        "content/public/tests/http/OAuthTokenOQ.command.json",
+        "content/public/tests/issue-detection/InputKeysWithNoDescriptionOQ.command.json",
+        "content/public/tests/issue-detection/MissingOutputValueExpressionOQ.command.json",
+        "content/public/tests/issue-detection/OptionalInputKeysWithNoDefaultValueOQ.command.json",
+        "content/public/tests/issue-detection/UndefinedRequiredInputKeysOQ.command.json",
+        "content/public/tests/jira/CompareClonedJiraIssue.command.json",
+        "content/public/tests/jira/JiraOQ.command.json",
+        "content/public/tests/operators/CleanupOperatorResources.command.json",
+        "content/public/tests/operators/HttpRequestWithRetry.command.json",
+        "content/public/tests/operators/StandaloneOperatorOQ.command.json",
+        "content/public/tests/resources/RunTests.command.json",
+        "content/public/tests/resources/commands/AssertActionsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertAnsNotificationsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertCatalogsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertCommandsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertCompletionsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertExecutionsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertExpressionsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertInputsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertInvalidExpression.command.json",
+        "content/public/tests/resources/commands/AssertMcpCase.command.json",
+        "content/public/tests/resources/commands/AssertNotifications.command.json",
+        "content/public/tests/resources/commands/AssertScheduledExecutionsApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertSubscriptionStatus.command.json",
+        "content/public/tests/resources/commands/AssertTriggersApiIsDisabled.command.json",
+        "content/public/tests/resources/commands/AssertUserChoiceWithSensitiveTitle.command.json",
+        "content/public/tests/resources/commands/AutoConfirmCommandExecution.command.json",
+        "content/public/tests/resources/commands/BackupDataReconciliationIssueGCPRequests.command.json",
+        "content/public/tests/resources/commands/CatalogTagsValidation.command.json",
+        "content/public/tests/resources/commands/CommandETagOQ.command.json",
+        "content/public/tests/resources/commands/CommandModificationEventsOQ.command.json",
+        "content/public/tests/resources/commands/DeleteK8sResourceWrapper.command.json",
+        "content/public/tests/resources/commands/DeprecateResourceOQ.command.json",
+        "content/public/tests/resources/commands/DestinationsETagOQ.command.json",
+        "content/public/tests/resources/commands/ETagOQBase.command.json",
+        "content/public/tests/resources/commands/ErrorMessageScenarios.command.json",
+        "content/public/tests/resources/commands/ExecuteActionOQ.command.json",
+        "content/public/tests/resources/commands/ExecuteBulkAction.command.json",
+        "content/public/tests/resources/commands/ExecuteBulkActionOQ.command.json",
+        "content/public/tests/resources/commands/ExecuteCommand.command.json",
+        "content/public/tests/resources/commands/ExecuteMcpCommand.command.json",
+        "content/public/tests/resources/commands/FilterResourceByTags.command.json",
+        "content/public/tests/resources/commands/ForceDeleteCatalogOQ.command.json",
+        "content/public/tests/resources/commands/GetExecutionLogs.command.json",
+        "content/public/tests/resources/commands/GetMockedAccessTokenWithRetry.command.json",
+        "content/public/tests/resources/commands/HttpRequestSensitiveTokenUrl.command.json",
+        "content/public/tests/resources/commands/InnerSuccessfulResetAndRetry.command.json",
+        "content/public/tests/resources/commands/InputETagOQ.command.json",
+        "content/public/tests/resources/commands/InputModificationEventsOQ.command.json",
+        "content/public/tests/resources/commands/LongRunningGsubTester.command.json",
+        "content/public/tests/resources/commands/LongRunningSubTester.command.json",
+        "content/public/tests/resources/commands/MultipleHttpRequests.command.json",
+        "content/public/tests/resources/commands/ParallelForEachFailingHttpSubject.command.json",
+        "content/public/tests/resources/commands/PreparedKubernetesApiRequest.command.json",
+        "content/public/tests/resources/commands/RunAllStatusesCommandWrapper.command.json",
+        "content/public/tests/resources/commands/ScheduledExecutionETagOQ.command.json",
+        "content/public/tests/resources/commands/SuccessfulResetRetry.command.json",
+        "content/public/tests/resources/commands/TryUpdateSubscription.command.json",
+        "content/public/tests/resources/commands/UpdateCatalogOQ.command.json",
+        "content/public/tests/resources/commands/UserChoiceWithSensitiveValuesOQ.command.json",
+        "content/public/tests/resources/commands/ValidateAvailabilityCheckData.command.json",
+        "content/public/tests/resources/commands/ValidateCatalogTagsFiltering.command.json",
+        "content/public/tests/resources/commands/WaitLowExecutionsLoad.command.json",
+        "content/public/tests/resources/commands/WebhooksOQSuite.command.json",
+        "content/public/tests/resources/test-catalog/TestCompositeCommandFail.command.json",
+        "content/public/tests/scripts/ScriptValuesAuthOQ.command.json",
+        "content/public/tests/sm/SmLmOQP1.command.json",
+        "content/public/tests/sm/SmLmOQP2.command.json",
+        "content/public/tests/sm/SmLmOQP3.command.json",
+        "content/public/tests/store/RuntimeStoreOQ.command.json",
+        "content/public/tests/utils/ExecutionUtilsOQ.command.json",
+        "content/public/tests/utils/ForEachV2CurrentsOQ.command.json",
+        "content/public/tests/utils/ForEachV2OQ.command.json",
+        "content/public/tests/utils/ForEachV2Sensitivity.command.json",
+        "content/public/tests/utils/LocksOQ.command.json",
+        "content/public/tests/utils/ParallelForEachOQ.command.json",
+        "content/public/tests/vault/VaultVisibilityOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/http/SensitiveHttpRequest.command.json",
+      "sha256": "9b603de24d88218dc095267fb1655cd117f57006d36a0f906f2dfb9c8d867a98",
+      "id_normalized_for_analysis": "http-sapcp:SensitiveHttpRequest:1",
+      "description": "Execute an HTTP request. The HTTP response is treated as a sensitive value.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 0,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [
+        "body",
+        "headers",
+        "url"
+      ],
+      "direct_test_reference_paths": [
+        "content/public/tests/autopi/gen-ai/CompletionsApiOq.command.json",
+        "content/public/tests/cloud-connector/SccOAuthFlowsOQ.command.json",
+        "content/public/tests/dest/DestinationCertificateOQ.command.json",
+        "content/public/tests/email/CheckSentMail.command.json",
+        "content/public/tests/hana-cloud-and-sensitive-commands/SensitiveCommandsOQ.command.json",
+        "content/public/tests/http/HttpIgnoreResponseBodyOQ.command.json",
+        "content/public/tests/http/HttpResponseBodyTransformerOQ.command.json",
+        "content/public/tests/http/MtlsAuthOQ.command.json",
+        "content/public/tests/http/OAuthIdTokenTypeOQ.command.json",
+        "content/public/tests/http/SensitiveHttpErrorMessagesOQ.command.json",
+        "content/public/tests/http/SensitiveOAuthErrorMessagesOQ.command.json",
+        "content/public/tests/operators/StandaloneOperatorOQ.command.json",
+        "content/public/tests/resources/commands/BackupDataReconciliationGetGCPToken.command.json",
+        "content/public/tests/resources/commands/GetHanaClientCertificate.command.json",
+        "content/public/tests/resources/commands/SensitiveHttpRequestSensitiveTokenUrl.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/dest/DestinationRequest.command.json",
+      "sha256": "0ef33bcfa29e4ad927d9f2a07dec77daaa8c1dce4e7d866f8b6d4eafa5d700f1",
+      "id_normalized_for_analysis": "dest-sapcp:DestinationRequest:1",
+      "description": "Manage stored BTP destinations, including optional identity certificate reads using the selected tenant context or service key.",
+      "hidden": true,
+      "deprecated": false,
+      "executor_count": 0,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [
+        "properties",
+        "certificates"
+      ],
+      "direct_test_reference_paths": []
+    },
+    {
+      "path": "content/public/catalogs/is/BulkPromoteIFlowToEnvironment.command.json",
+      "sha256": "308cee5be5cdabc782cbd36bf804bcc7509b29c968b77190f022924d6210c960",
+      "id_normalized_for_analysis": "is-sapcp:BulkPromoteIFlowToEnvironment:1",
+      "description": "Promote an integration flow to a target environment by updating externalized parameters and upserting Partner Directory string parameters, then restarting the flow. Both parameter lists are optional. Omitting both simply restarts the flow.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 3,
+      "controls": {
+        "when": 2,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [
+        "parameterUpdateResults"
+      ],
+      "direct_test_reference_paths": [
+        "content/public/tests/is/IsOQSuite.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/ctms/ImportTransportRequests.command.json",
+      "sha256": "1d3e969f9fa2591401f0483bf037fba9bb884222457024752ef3e65f01e95ecb",
+      "id_normalized_for_analysis": "ctms-sapcp:ImportTransportRequests:1",
+      "description": "Import specified transport requests in Cloud Transport Management service for a given transport node",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 1,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 1,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/ctms/CtmsTransportRequestsOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/github/CreateOrUpdateGitHubFile.command.json",
+      "sha256": "690ab070f6e8ab8c47b659d41b6f643f64787c17e4a33c8990b02cdd48e4e1a9",
+      "id_normalized_for_analysis": "github-sapcp:CreateOrUpdateGitHubFile:1",
+      "description": "Creates a new file or replaces an existing file in a GitHub repository",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 0,
+        "validate": 1,
+        "autoRetry": 2,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/autopi/gen-ai/CompletionsApiCommandsV2Scenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScenarios.command.json",
+        "content/public/tests/github/GitHubFilesOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/jira/CloneJiraIssue.command.json",
+      "sha256": "12734c276763760d660e468e99c6134989349b635f7030edb495a6d3ca02af16",
+      "id_normalized_for_analysis": "jira-sapcp:CloneJiraIssue:1",
+      "description": "Clone a Jira issue",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 17,
+      "controls": {
+        "when": 6,
+        "validate": 1,
+        "autoRetry": 3,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/jira/CloneJiraIssueOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/jenkins/WaitJenkinsBuild.command.json",
+      "sha256": "52b35bba86082ecd4a9213d7126703c0a0fad8fc79ebbdbce05624473ec94ac6",
+      "id_normalized_for_analysis": "jenkins-sapcp:WaitJenkinsBuild:1",
+      "description": "Monitors an already started Jenkins build until it reaches a desired status",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 1,
+      "controls": {
+        "when": 0,
+        "validate": 1,
+        "autoRetry": 0,
+        "repeat": 1,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/jenkins/JenkinsOQSuite.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/concourse/MonitorConcourseBuild.command.json",
+      "sha256": "399b11d96efc0c190302bb1ed1d905bd47219e5100ca46f6b49da5d19e451d90",
+      "id_normalized_for_analysis": "concourse-sapcp:MonitorConcourseBuild:1",
+      "description": "Poll a Concourse build every 30 seconds until it reaches a terminal state (succeeded, failed, errored, or aborted). Fails if the build does not complete within the polling window of 45 minutes (90 polls).",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 1,
+        "validate": 1,
+        "autoRetry": 1,
+        "repeat": 1,
+        "initialDelay": 1
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/concourse/ConcourseOQSuite.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/cls/GetLogs.command.json",
+      "sha256": "f295203bc08490ee1d8baf10a5bbb64e8826a92d26eb6b084ea34dc877b28bb2",
+      "id_normalized_for_analysis": "cls-sapcp:GetLogs:1",
+      "description": "Retrieve log entries from SAP Cloud Logging for a given time range. Supports both JSON and OpenTelemetry log formats. Optionally filter results by using an OpenSearch domain-specific language (DSL) query clause.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 17,
+      "controls": {
+        "when": 6,
+        "validate": 2,
+        "autoRetry": 1,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/cls/GetLogsOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/mcp/CallMcpTool.command.json",
+      "sha256": "d4da4532ec901279c2827dd12ff849f0dacd2e027bf492b2230eb8699ee6669f",
+      "id_normalized_for_analysis": "mcp-sapcp:CallMcpTool:1",
+      "description": "Invoke a tool on a remote MCP server.",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 2,
+      "controls": {
+        "when": 0,
+        "validate": 1,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/mcp/CallMcpToolOQ.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/utils/ForEach.2.command.json",
+      "sha256": "2756b87639d19a3112b188404148cef3911672be8fbeb247cd38c5bc334434cd",
+      "id_normalized_for_analysis": "utils-sapcp:ForEach:2",
+      "description": "Execute a command multiple times and provide a different input for each execution",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 0,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/automations/CleanupScheduledExecutions.command.json",
+        "content/public/tests/autopi/AutoPilotCatalogFastDeletedExecutionsOQ.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScheduledExecutionScenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiSearchCustomContent.command.json",
+        "content/public/tests/autopi/gen-ai/ExecutorConfigurationsPlaceholderOQ.command.json",
+        "content/public/tests/autopi/gen-ai/VectorizationCommandsOQ.command.json",
+        "content/public/tests/autopi/gen-ai/VectorizationInputsOQ.command.json",
+        "content/public/tests/autopi/gen-ai/cleanup/DeleteCommandsForGeneration.command.json",
+        "content/public/tests/autopi/gen-ai/cleanup/DeleteInputsForGeneration.command.json",
+        "content/public/tests/cis/AccountsServiceManagedDirectoriesOQ.command.json",
+        "content/public/tests/cleanup/AbortStaleExecutions.command.json",
+        "content/public/tests/core-functionality/actions/skip/SkipActionForEachTestSubject.command.json",
+        "content/public/tests/core-functionality/api-validation/ExecutionStatusCountValidationOQ.command.json",
+        "content/public/tests/core-functionality/api-validation/FilterExecutionsOQ.command.json",
+        "content/public/tests/core-functionality/commands/CommandSuggestionsOQ.command.json",
+        "content/public/tests/core-functionality/commands/CommandTaggingOQ.command.json",
+        "content/public/tests/core-functionality/content-connectors/restore/PrepareGithubForImport.command.json",
+        "content/public/tests/core-functionality/executors/statuses/commands/VoidsAndFailingForeach.command.json",
+        "content/public/tests/core-functionality/feature-toggles/OverwriteTriggerExecutionsQuotaToggle.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsCatalogLevelPermissionsOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsOQSuite.command.json",
+        "content/public/tests/core-functionality/service-accounts/ServiceAccountsSapPkiCertsOQ.command.json",
+        "content/public/tests/core-functionality/service-accounts/SetUpServiceAccountsResources.command.json",
+        "content/public/tests/ctms/CleanUpCtmsBtpResources.command.json",
+        "content/public/tests/dest/DestinationOQSuite.command.json",
+        "content/public/tests/dest/DestinationServiceKeyOQSuite.command.json",
+        "content/public/tests/http/HttpRequestViaDestinationOQ.command.json",
+        "content/public/tests/mcp/CallMcpToolOQ.command.json",
+        "content/public/tests/mcp/ListMcpResourcesOQ.command.json",
+        "content/public/tests/mcp/ListMcpToolsOQ.command.json",
+        "content/public/tests/mcp/ReadMcpResourceOQ.command.json",
+        "content/public/tests/resources/commands/AssertMcpCase.command.json",
+        "content/public/tests/resources/commands/ValidateCatalogTagsFiltering.command.json",
+        "content/public/tests/utils/ExecutionUtilsOQ.command.json",
+        "content/public/tests/utils/ForEachV2CurrentsCommand.command.json",
+        "content/public/tests/utils/ForEachV2CurrentsOQ.command.json",
+        "content/public/tests/utils/ForEachV2OQ.command.json",
+        "content/public/tests/utils/ForEachV2Sensitivity.command.json"
+      ]
+    },
+    {
+      "path": "content/public/catalogs/scripts/ExecutePythonScript.command.json",
+      "sha256": "cdc38280c6250e4ce0681250060cab33be1a36e9e4d3d4c24c22b1ef4266fa39",
+      "id_normalized_for_analysis": "scripts-sapcp:ExecutePythonScript:1",
+      "description": "Command to execute Python script",
+      "hidden": false,
+      "deprecated": false,
+      "executor_count": 1,
+      "controls": {
+        "when": 0,
+        "validate": 0,
+        "autoRetry": 0,
+        "repeat": 0,
+        "initialDelay": 0
+      },
+      "sensitive_output_keys": [],
+      "direct_test_reference_paths": [
+        "content/public/tests/autopi/gen-ai/CompletionsApiCommandsV2Scenarios.command.json",
+        "content/public/tests/autopi/gen-ai/CompletionsApiScenarios.command.json",
+        "content/public/tests/scripts/ExecutePythonScriptOQ.command.json",
+        "content/public/tests/scripts/PersistentScriptStorageOQ.command.json"
+      ]
+    }
+  ],
+  "limitations": [
+    "Counts refer to files, not runtime-tested capabilities.",
+    "OQ references are literal command ID matches, including helpers, not proof of coverage or passing tests.",
+    "Export placeholders were normalized for analysis only; eventual tenant IDs and contracts need validation.",
+    "Hidden sources are implementation-study candidates, not default direct-use recommendations.",
+    "Public test command definitions were inspected; stored test Input values were not exported."
+  ]
+}

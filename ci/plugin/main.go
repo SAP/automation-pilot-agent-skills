@@ -19,15 +19,15 @@ var links = regexp.MustCompile("!?\\[[^]\\n]*\\]\\(([^ )]+)(?: [^)]*)?\\)")
 
 func main() {
 	if len(os.Args) < 3 {
-		fatal(fmt.Errorf("usage: plugin stage|stage-evals ROOT DEST | check PLUGIN | version ROOT | zip PLUGIN OUTPUT.zip"))
+		fatal(fmt.Errorf("usage: plugin stage ROOT DEST | check PLUGIN | version ROOT | zip PLUGIN OUTPUT.zip"))
 	}
 	var err error
 	switch os.Args[1] {
-	case "stage", "stage-evals":
+	case "stage":
 		if len(os.Args) != 4 {
 			fatal(fmt.Errorf("stage requires root and new destination"))
 		}
-		err = stage(os.Args[2], os.Args[3], os.Args[1] == "stage-evals")
+		err = stage(os.Args[2], os.Args[3])
 	case "version":
 		var raw []byte
 		raw, err = os.ReadFile(filepath.Join(os.Args[2], ".claude-plugin", "plugin.json"))
@@ -62,8 +62,8 @@ func fatal(err error) {
 	}
 }
 
-func stage(root, dest string, evaluations bool) error {
-	for _, name := range []string{".claude-plugin", "skills", "ci/evals/agent-skills", "LICENSES"} {
+func stage(root, dest string) error {
+	for _, name := range []string{".claude-plugin", "skills", "LICENSES"} {
 		if within(filepath.Join(root, name), dest) {
 			return fmt.Errorf("stage destination must be outside copied source directories")
 		}
@@ -72,9 +72,6 @@ func stage(root, dest string, evaluations bool) error {
 		return err
 	}
 	assets := []string{".claude-plugin", "skills", "LICENSE", "LICENSES", "REUSE.toml", "README.md", "SECURITY.md", "CONTRIBUTING.md", "sap-automation-pilot.svg", "overview.svg"}
-	if evaluations {
-		assets = append(assets, "ci/evals/agent-skills")
-	}
 	for _, name := range assets {
 		source := filepath.Join(root, name)
 		if err := filepath.WalkDir(source, func(path string, entry fs.DirEntry, err error) error {
@@ -111,25 +108,6 @@ func stage(root, dest string, evaluations bool) error {
 			}
 			return os.WriteFile(target, b, info.Mode().Perm())
 		}); err != nil {
-			return err
-		}
-	}
-	if evaluations {
-		path := filepath.Join(dest, ".claude-plugin", "plugin.json")
-		raw, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		var manifest map[string]any
-		if err := json.Unmarshal(raw, &manifest); err != nil {
-			return err
-		}
-		manifest["experimental"] = map[string]string{"evals": "ci/evals/agent-skills"}
-		raw, err = json.MarshalIndent(manifest, "", "  ")
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(path, append(raw, '\n'), 0644); err != nil {
 			return err
 		}
 	}

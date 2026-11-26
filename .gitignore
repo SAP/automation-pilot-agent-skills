@@ -26,7 +26,6 @@ __pycache__/
 /ci/.local/
 
 evaluations
-ci/evals/agent-skills/results/
 skills/automation-pilot-cli/scripts/bin.stage.*/
 skills/automation-pilot-cli/scripts/bin.lock/
 docs

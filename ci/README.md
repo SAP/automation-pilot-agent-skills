@@ -16,14 +16,14 @@ Read the [maintainer build guide](cli/README.md) when changing CLI source or gen
 | Test real isolated marketplace installation | [Plugin install test](plugin/install-test.sh) | `sh ci/plugin/install-test.sh` (Claude Code 2.1.308) |
 | Validate packaged assets | [Plugin packager](plugin/main.go) | `go run ci/plugin/main.go check .` |
 | Check contract review freshness | [Contract review](contracts/main.go) | `go run ci/contracts/main.go` |
-| Evaluate independent agent behavior | [Installed-plugin cases](evals/agent-skills/README.md) | `sh ci/evals/agent-evals.sh` |
-| Evaluate skill behavior | [Evaluation suite](evals/skills-e2e/README.md) | Follow the suite's offline and live instructions |
+| Evaluate skill behavior | [Unified evals guide](evals/readme.md) | `sh ci/evals/evals.sh check` (offline); choose smoketest/minimal/full/e2e for approved live runs |
 
-Use the Go toolchain pinned in `cli/.go-version`. The Go helpers use the standard
-library. Shell handles build and installation orchestration; Python is not required
+Use the Go toolchain pinned in `cli/.go-version`. Most Go helpers use the standard
+library; the unified evaluator also uses a TOML parser for host configuration.
+Shell handles build and installation orchestration; Python is not required
 by CI. The shipped CLI needs neither Go nor Python.
 
-The [live suite coverage](evals/skills-e2e/FEATURE-COVERAGE.md) documents reusable
+The [live suite coverage](evals/docs/E2E_COVERAGE.md) documents reusable
 checks, cleanup, measurements and how to run release acceptance. Per-run
 reports, tenant evidence and development reviews belong in ignored local storage.
 The machine-readable `contracts/review.json` remains part of validation: it binds
@@ -31,8 +31,8 @@ the pinned API snapshot to a reviewed service revision and expiration date.
 
 The [GitHub workflow](../.github/workflows/validate.yml) runs validation automatically.
 See [local validation](../CONTRIBUTING.md#local-validation) for CLI and harness tests.
-Evaluation runs and raw evidence stay in `ci/evals/skills-e2e/runs/`, covered by the
-suite's own `.gitignore`. Keep this directory when resuming an evaluation.
+Evaluation runs and raw evidence stay in `ci/evals/runs/`, covered by the
+evaluation module's `.gitignore`. Keep this directory when resuming an evaluation.
 Per-call evidence records a source digest; `provenance/` captures the matching skill,
 CLI bundle and harness file hashes. Resumed runs retain accepted execution IDs and label
 mixed or legacy evidence rather than implying that old passes validate new skill text.
@@ -40,8 +40,11 @@ mixed or legacy evidence rather than implying that old passes validate new skill
 CI runs native launcher and harness checks for each shipped architecture, bounded Go
 fuzzing, pinned govulncheck against the current vulnerability database, and weekly review
 freshness checks. Tagged releases reuse these gates and attest the complete archive.
-Fresh-agent evaluations require an explicitly supplied evaluator API key and record
-three independent runs plus a baseline. Their raw traces stay local and are not published.
-The normal plugin package contains runtime assets and public documentation. Evaluation
-cases are included only by `ci/plugin/main.go stage-evals` for the disposable evaluator
-fixture; maintenance source and local reports are excluded from the release archive.
+The [unified evaluator](evals/readme.md) uses existing Claude/Codex configuration
+for local model sessions. Its CI checks are offline and explicitly disable live
+host probes and tenant credentials. Full includes 160 tasks plus agent-generated
+E2E; standalone E2E reference acceptance requires no model sessions. Reports remain
+local and are not published.
+
+The runtime plugin contains skills and public documentation. Eval cases, harness
+source and local reports are maintainer assets excluded from release archives.
