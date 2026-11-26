@@ -84,7 +84,7 @@ func TestCalibrationReuseRejectsChangedOrMissingGraderImplementation(t *testing.
 		t.Fatal(err)
 	}
 	for _, fingerprint := range []string{"", "old-implementation", gradingProtocolDigest()} {
-		previous := map[string]any{"host": h.Kind, "model": h.Model, "isolation": h.Isolation, "config_digest": hostConfigDigest(h), "grader_digest": fingerprint, "bank_digest": digest(b), "results": []any{map[string]any{"case": c.ID, "candidate": "correct-reference", "status": "PASS"}}}
+		previous := map[string]any{"host": h.Kind, "model": h.Model, "grader_effort": h.Effort, "isolation": h.Isolation, "config_digest": hostConfigDigest(h), "grader_digest": fingerprint, "bank_digest": digest(b), "results": []any{map[string]any{"case": c.ID, "candidate": "correct-reference", "status": "PASS"}}}
 		if err := writeJSON(path, previous); err != nil {
 			t.Fatal(err)
 		}
@@ -95,6 +95,33 @@ func TestCalibrationReuseRejectsChangedOrMissingGraderImplementation(t *testing.
 			}
 		} else if err == nil || !strings.Contains(err.Error(), "grader implementation") {
 			t.Fatal("stale grader results reused", err)
+		}
+	}
+}
+
+func TestCalibrationReuseRequiresRecordedMatchingEffort(t *testing.T) {
+	c := findCase(t, "checksum-recovery")
+	b := bank{Version: 1, Cases: []evalCase{c}}
+	h := hostConfig{Kind: "claude", Model: "sonnet", Effort: "high", Isolation: "native"}
+	path := filepath.Join(t.TempDir(), "calibration.json")
+	if err := writeJSON(strings.TrimSuffix(path, ".json")+".bank.json", b); err != nil {
+		t.Fatal(err)
+	}
+	for _, recorded := range []any{nil, "", "low", "high"} {
+		previous := map[string]any{"host": h.Kind, "model": h.Model, "isolation": h.Isolation, "config_digest": hostConfigDigest(h), "grader_digest": gradingProtocolDigest(), "bank_digest": digest(b), "results": []any{map[string]any{"case": c.ID, "candidate": "correct-reference", "status": "PASS"}}}
+		if recorded != nil {
+			previous["grader_effort"] = recorded
+		}
+		if err := writeJSON(path, previous); err != nil {
+			t.Fatal(err)
+		}
+		rows, err := calibrationReuse(b, h, path)
+		if recorded == "high" {
+			if err != nil || len(rows) != 1 {
+				t.Fatal(rows, err)
+			}
+		} else if err == nil || !strings.Contains(err.Error(), "effort") {
+			t.Fatal("unrecorded or different effort reused", recorded, err)
 		}
 	}
 }

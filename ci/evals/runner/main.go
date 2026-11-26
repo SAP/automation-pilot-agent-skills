@@ -461,7 +461,7 @@ func calibrateBankResumed(ctx context.Context, b bank, suite string, h hostConfi
 	}
 	cost := 0.0
 	save := func() error {
-		return writeJSON(out, map[string]any{"model": h.Model, "host": h.Kind, "config_digest": hostConfigDigest(h), "grader_digest": gradingProtocolDigest(), "isolation": h.Isolation, "parallel": parallel, "bank_digest": digest(b), "budget_charged_usd": cost, "results": results})
+		return writeJSON(out, map[string]any{"model": h.Model, "host": h.Kind, "grader_effort": h.Effort, "config_digest": hostConfigDigest(h), "grader_digest": gradingProtocolDigest(), "isolation": h.Isolation, "parallel": parallel, "bank_digest": digest(b), "budget_charged_usd": cost, "results": results})
 	}
 	if err := save(); err != nil {
 		return err
@@ -558,6 +558,9 @@ func calibrationReuse(b bank, h hostConfig, path string) (map[string]map[string]
 	}
 	if previous["host"] != h.Kind || previous["model"] != h.Model || previous["isolation"] != h.Isolation || previous["config_digest"] != hostConfigDigest(h) {
 		return nil, fmt.Errorf("calibration host/model/configuration differs; cannot reuse judgments")
+	}
+	if previous["grader_effort"] != h.Effort {
+		return nil, fmt.Errorf("calibration grader effort differs or was not recorded; cannot reuse judgments")
 	}
 	if previous["grader_digest"] != gradingProtocolDigest() {
 		return nil, fmt.Errorf("calibration grader implementation changed or was not recorded; cannot reuse judgments")

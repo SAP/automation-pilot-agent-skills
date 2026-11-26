@@ -3,7 +3,8 @@
 This table describes the 160 independent tasks. The full campaign additionally includes the complete [E2E acceptance workflow](E2E_COVERAGE.md).
 
 
-The 160 cases remain provisional pending independent review and fresh-agent calibration.
+All 160 cases have [current reference/grader calibration](CALIBRATION.md).
+Independent review and a fresh candidate campaign remain pending; the bank is provisional.
 Counts refer to tasks; partitions are not additional cases.
 
 Preferred presets: **smoketest 12**, **minimal 20**, **full 160**. Smoketest covers

@@ -32,6 +32,10 @@ type runOptions struct {
 	Budget, PerCase, PerGrade                                           float64
 }
 
+func frozenE2EAssets(directory string) string {
+	return filepath.Join(directory, "_e2e-reference")
+}
+
 func captureSources(repository string) (map[string]string, string, error) {
 	files := map[string]string{}
 	for _, dir := range []string{"skills", "ci/evals/runner", "ci/evals/e2e", "ci/evals/cases", "ci/evals/internal", "ci/plugin"} {
@@ -411,7 +415,9 @@ func runBank(ctx context.Context, b bank, options runOptions) (runReport, error)
 		}
 		options.RuntimeSnapshot = snapshot
 		if includesE2E(options.Suite) {
-			options.E2EAssets = filepath.Join(options.Directory, "e2e-reference")
+			// Go package discovery skips underscore-prefixed directories. Keep
+			// frozen source receipts out of go test ./... without discarding them.
+			options.E2EAssets = frozenE2EAssets(options.Directory)
 			if err = copyTree(filepath.Join(options.Repository, "ci/evals/e2e"), options.E2EAssets); err != nil {
 				return report, err
 			}

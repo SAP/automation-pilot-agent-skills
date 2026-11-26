@@ -178,6 +178,43 @@ func (h *harness) materialize(value any) any {
 	return value
 }
 func (h *harness) call(label string, args []string, body any) (any, error) {
+	response, err := h.callAttempt(label, args, body)
+	var failure *callError
+	if !errors.As(err, &failure) || failure.code != 3 || !retryableRead(args, body) {
+		return response, err
+	}
+	ctx := h.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	select {
+	case <-ctx.Done():
+		return response, err
+	case <-time.After(time.Second):
+	}
+	// Only transport-failed GET operations may retry. Both attempts retain
+	// their own redacted receipts; creates, triggers and actions never replay.
+	return h.callAttempt(label+"-read-retry", args, body)
+}
+
+func retryableRead(args []string, body any) bool {
+	if body != nil || len(args) < 2 {
+		return false
+	}
+	if args[0] == "connection" {
+		return args[1] == "info"
+	}
+	switch args[0] {
+	case "catalogs", "commands", "inputs", "executions", "scheduled-executions", "mcp-servers", "webhooks":
+		switch args[1] {
+		case "get", "list", "contract", "input", "output", "logs", "actions", "summary", "time-zones":
+			return true
+		}
+	}
+	return false
+}
+
+func (h *harness) callAttempt(label string, args []string, body any) (any, error) {
 	h.calls++
 	var input []byte
 	var e error

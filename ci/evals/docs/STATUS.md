@@ -1,4 +1,36 @@
-# Saved campaign status
+# Validation status
+
+Updated 2026-11-26. All 160 cases now have fresh reference/grader calibration
+using the current protocol. This is distinct from a new candidate skill-quality
+campaign. See [current calibration](CALIBRATION.md) for profiles and evidence.
+
+| Area | Current status |
+|---|---|
+| Offline implementation/reference checks | Pass |
+| Codex semantic calibration | 414/414 challenges pass, all 137 semantic cases |
+| Sonnet semantic calibration | Smoketest 33/33 and minimal 57/57; full 412/414, not qualified |
+| Actual engine references | 24/24 pass; cleanup verified |
+| Actual engine expression mutants | 46/46 rejected as intended; cleanup verified |
+| Integrated reference E2E | 118/118 checks pass, 29 core scenarios; cleanup verified |
+| Independent case review | Pending: all 160 cases |
+| Fresh full candidate campaign, including agent-generated E2E | Not run |
+
+The bank keeps its provisional review status because independent review remains
+outstanding. Use qualified profiles for experimental regression checks. Calibration
+alone does not establish a reviewed blocking quality gate or a new skill-quality
+score. Full includes agent-generated E2E; reference E2E validates supplied
+implementations without candidate generation.
+
+Fresh private evidence is in runs/calibration-20261126/ and the three
+calibration-20261126-e2e-reference run directories. Failed attempts and their
+original verdicts are retained. Cleanup verified absence for all three runs.
+These artifacts remain Git-ignored; a fresh checkout does not include them.
+
+The historical section below describes the branch before this authorized fresh
+calibration. Its prior 160-task candidate verdicts remain unchanged; it does not
+supersede the current calibration table.
+
+## Historical campaign snapshot (before fresh calibration)
 
 Final code review (2026-11-26) added E2E evidence/definition redaction, rejection
 of known environment-secret disclosures, dependency/fixture scope checks, and

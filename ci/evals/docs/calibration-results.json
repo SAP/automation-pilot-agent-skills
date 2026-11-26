@@ -1,0 +1,159 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-26",
+  "base_commit": "0ffac82cf7bcff176b2d61957ffc0dedab3fdabb",
+  "bank_digest": "d59fb0e26b53cd2b2f9e2eb8e0e1f3db857158775c599825dc9dfe7384c7d7be",
+  "bank_file_sha256": "1579780be2351f70a0c713d57b77e6836ac14b0caef6f22004826ef2402517eb",
+  "grader_digest": "06f3892c3f7394877d8bbe608509cdec886ca181494a6ecbb8b7bb1d2851c557",
+  "case_count": 160,
+  "semantic_case_count": 137,
+  "independent_review": "pending",
+  "fresh_full_candidate_campaign": "not-run",
+  "profiles": [
+    {
+      "host": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "xhigh",
+      "explicit_effort_override": "",
+      "cli_version": "0.172.0",
+      "config_digest": "d9911de621d52186196bf9803f80e4101f6854be8c5fa1ea7b43ecb836bb4162",
+      "isolation": "native",
+      "tested_grader_budget_usd": 1,
+      "selections": {
+        "smoketest": {
+          "cases": 12,
+          "challenges": 33,
+          "outcomes": {
+            "PASS": 33
+          },
+          "qualified": true
+        },
+        "minimal": {
+          "cases": 20,
+          "challenges": 57,
+          "outcomes": {
+            "PASS": 57
+          },
+          "qualified": true
+        },
+        "full": {
+          "cases": 160,
+          "challenges": 414,
+          "outcomes": {
+            "PASS": 414
+          },
+          "qualified": true
+        }
+      },
+      "report": "runs/calibration-20261126/full-codex-final.json",
+      "failures": []
+    },
+    {
+      "host": "claude",
+      "model": "anthropic--claude-4.6-sonnet",
+      "effort": "configured default",
+      "explicit_effort_override": "",
+      "cli_version": "2.1.326",
+      "config_digest": "163c6b1bf3f410cf2572577cbf9e7d2afb25bfb1e1ba6fcdd1355860f30c669d",
+      "isolation": "native",
+      "tested_grader_budget_usd": 1,
+      "selections": {
+        "smoketest": {
+          "cases": 12,
+          "challenges": 33,
+          "outcomes": {
+            "PASS": 33
+          },
+          "qualified": true
+        },
+        "minimal": {
+          "cases": 20,
+          "challenges": 57,
+          "outcomes": {
+            "PASS": 57
+          },
+          "qualified": true
+        },
+        "full": {
+          "cases": 160,
+          "challenges": 414,
+          "outcomes": {
+            "PASS": 412,
+            "FAIL": 2
+          },
+          "qualified": false
+        }
+      },
+      "report": "runs/calibration-20261126/full-sonnet-final.json",
+      "failures": [
+        {
+          "case": "cf-rolling-availability-guard",
+          "candidate": "source-derived-wrong-branch-explanation",
+          "status": "FAIL",
+          "reason": "mutant accepted"
+        },
+        {
+          "case": "cf-start-waits-for-health",
+          "candidate": "source-derived-incomplete-repair",
+          "status": "FAIL",
+          "reason": "mutant accepted"
+        }
+      ]
+    }
+  ],
+  "engine": {
+    "references_passed": 24,
+    "references_total": 24,
+    "expression_mutants_rejected": 46,
+    "expression_mutants_total": 46,
+    "cleanup": "verified",
+    "destination": "AUTOMATION_PILOT_HOSTNAME and AUTOMATION_PILOT_TOKEN"
+  },
+  "reference_e2e": {
+    "status": "PASS",
+    "attempt": 3,
+    "mode": "reference",
+    "checks_passed": 118,
+    "core_scenarios": 29,
+    "required_checks": 27,
+    "elapsed_seconds": 1393.272289291,
+    "cleanup": "verified",
+    "e2e_digest": "ca93ad6ac6693369058735d51198f7ea313d5e2d8bbf07fcea7e5ecb6ff4460a",
+    "acceptance_sources": {
+      "ci/evals/e2e/api.go": "ad767030d5e392474c57a60f1e04de32c06bd483dadbe358aa8294bed69d8505",
+      "ci/evals/e2e/cleanup.go": "857e35996b5e4ad4fc9e271deef1ba9b27c5f7809dfd6136a0d9ac611eb5f819",
+      "ci/evals/e2e/definitions/ApiConfiguration.input.json": "8a2aad291d0d97e660045b0ef0d609a7ffdcd3c40821c98f5378b09f91f7a79b",
+      "ci/evals/e2e/definitions/AuditListener.command.json": "b8b99ab63be610514c93496659c6eacc9eb59b3eee368eebdd38718669c63d1b",
+      "ci/evals/e2e/definitions/BindingFixture.input.json": "b4fece98d78e2e0430111737528dd51ca2b05812774f1733346f5bb1c92840c1",
+      "ci/evals/e2e/definitions/CollectionPolicy.input.json": "7227d453442fa04a4109da7ff3a92bb05c7149bea172838723648490a98c701e",
+      "ci/evals/e2e/definitions/ComparePosts.command.json": "396494e41e4598bca7e39491b15d55b1a73200ea8e5c52dde7313725d38e2379",
+      "ci/evals/e2e/definitions/EnrichPost.command.json": "b9ca85dcaaebed7f0c86ccf8360c4833d10b5b81e541a778ae06388a25cbaad4",
+      "ci/evals/e2e/definitions/FetchPost.command.json": "4db9cf60726fc1afb74c385eeca95a8279e0ea547f405a98262ce880c2f4f6c3",
+      "ci/evals/e2e/definitions/GetPostWithFallback.command.json": "6493c3277ae9c92ea6347b6e0d8d4f78f08bb3c871ea5fedd16f7c95c92bd33e",
+      "ci/evals/e2e/definitions/HttpControl.command.json": "979f26e5d6cc1c827420c2ccb67d4716c712db6e77be04ea7d62080e1b0826e1",
+      "ci/evals/e2e/definitions/HttpFixtures.input.json": "f0e0581653700dc4d97f4ad8cc0b860456916d3b45d265aa1dea53c15a9bd7b9",
+      "ci/evals/e2e/definitions/HttpSequence.command.json": "ff5a2253c9d43adc2858e549a411e8bb0fc420b4fabfa523a63074b961eab8fc",
+      "ci/evals/e2e/definitions/PortfolioReport.command.json": "5d065ec2d8bd17d21fd2e95d6e8a762a61c66ee8d5eb03bda8cbb2da72b34b69",
+      "ci/evals/e2e/definitions/ProbeBinding.command.json": "45b8df490c00eb0d6583c70a127d58903b7658353e6b7ea1f515025d515c481c",
+      "ci/evals/e2e/definitions/ProcessValidatedItems.command.json": "7c1d93ec06267a1682450d6bea2c41f92d15a86d29af214d9ae46ea2bafdc876",
+      "ci/evals/e2e/definitions/ScheduledArguments.input.json": "361c1e2f971adde00929ddf196f461f98a2751cad9ccee85645fd4ecc336cc53",
+      "ci/evals/e2e/definitions/control.mcp.json": "bbca4a550cbcb5573f09bfb5d7ebe53e117064a7614d71cc74dabba7ca35d2dc",
+      "ci/evals/e2e/definitions/core.catalog.json": "7125b993b6c1d0db9e6bea8699240f6cb99f8bdfa8b4d8db37abc3120e809309",
+      "ci/evals/e2e/definitions/ops.catalog.json": "27b89ae03ad3d68136c37151484269d17fb316ac93844a91eec3ec018b24cdf3",
+      "ci/evals/e2e/definitions/public.mcp.json": "c5a779352cd892e1ce0861bedce0b39cb9e305155b19c644078d94acfeb4204d",
+      "ci/evals/e2e/efficiency.go": "433a545cff4ffe3ec443796b4bf770f80d5fe8ef3afd3897e75f949497de4620",
+      "ci/evals/e2e/features.go": "1545a0c5d730c9e6db9c961c5bfd2c2d77672324b34e2d4c6955496a31a78363",
+      "ci/evals/e2e/harness.go": "67d1784e4c52c1f303948a9b318abd8e1df83d46b36aced330c0beb42040abbc",
+      "ci/evals/e2e/launcher_posix.go": "e55e2509db632d13fa84f0a1c963c4b554f18777044e72a62ae7cfa82ce2a41a",
+      "ci/evals/e2e/launcher_windows.go": "02ef82c98d43a22fc679ea6fa25153b3f6e5fcd155e6deb24612a94711df090c",
+      "ci/evals/e2e/provenance.go": "7407d1f9af1c034a3dd0ebf0398cdc08e501985b3d957e4fde5596da741070df",
+      "ci/evals/e2e/scope.go": "bafe74bac3f65978d5973f097e1504c511482e39364445059a5b0806b4897880",
+      "ci/evals/e2e/suite.json": "561f14996a96c8995e7a21f2371c4b609bfbc51c5b6bfd0eb14360186efad5e8",
+      "ci/evals/e2e/usage.go": "3982ea287a1e653c4558c7647dc7865c9e34cc35c1126a23d34c80fda7e314a4",
+      "ci/evals/internal/redact/protocol.go": "a1a65e2d7f4dbbf4f8f33739a6e48222aff7744cb0cc1c987e0b8fc12cef5f27",
+      "ci/evals/internal/redact/redact.go": "75fec7b70f69fac0cd8632e1f95c8ca8db0c6282b4f58a7257e1a296a6d80f37"
+    },
+    "report": "runs/calibration-20261126-e2e-reference-v3/report.json",
+    "report_sha256": "ef0672976c746abee350c98b3f665d44be72afe73edc1fd67c3f81de448e93ad"
+  }
+}

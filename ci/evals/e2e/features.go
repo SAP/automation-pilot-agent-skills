@@ -656,7 +656,7 @@ func featureEvents(p probe) {
 		p.require(subset(event, mapped), "ANS event mapping differs")
 	})
 	p.check("webhook-lifecycle", func() {
-		body := map[string]any{"name": "SkillTest" + p.h.featureRound + p.h.state.Run, "type": "GENERIC", "commandId": p.id("EventProbe"), "description": "Synthetic webhook with no external effects.", "eventKey": "event", "inputReferences": []any{}, "inputValues": map[string]any{}, "enabled": true, "tags": p.tags()}
+		body := map[string]any{"name": "SkillTest" + p.h.featureRound + strings.ReplaceAll(p.h.state.Run, "-", ""), "type": "GENERIC", "commandId": p.id("EventProbe"), "description": "Synthetic webhook with no external effects.", "eventKey": "event", "inputReferences": []any{}, "inputValues": map[string]any{}, "enabled": true, "tags": p.tags()}
 		file := filepath.Join(p.h.dir, "features", "probe.webhook.json")
 		p.must(write(file, body))
 		p.call("webhook-binding", []string{"webhooks", "validate", "-f", file}, nil)

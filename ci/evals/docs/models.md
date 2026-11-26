@@ -4,9 +4,11 @@ The implemented presets are **smoketest (12 cases)**, **minimal (20)** and
 **full (160 tasks + agent-generated E2E)**. All default to one generation, no repairs and one worker.
 Legacy pilot/smoke/all/regression/release selections remain available.
 
-No model runs were used to prepare this document. Model evaluation/calibration in
-this collaboration requires the user's approval. Each recipe starts an individual
-campaign, not the entire model matrix.
+Recipes list supported options, not certification of every model pairing.
+[Current calibration](CALIBRATION.md) qualifies the configured Codex grader for all
+three task presets, and Sonnet for smoketest/minimal only, with the tested session
+budget. Other grader profiles need calibration. Further delegated model runs require
+explicit approval. Each recipe starts one campaign, not the complete model matrix.
 
 ## Setup
 

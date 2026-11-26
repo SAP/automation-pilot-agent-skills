@@ -9,7 +9,7 @@ validated for its contract and behavior; it is not scored by resemblance to a go
 
 [How the evals work](docs/HOW_IT_WORKS.md) · [Quick start](#quick-start) · [Presets](#choose-a-preset) · [Run commands](#run-a-preset) ·
 [Models](#choose-agent-and-grader-models) · [Results](#read-the-results) ·
-[Command reference](docs/commands.md)
+[Command reference](docs/commands.md) · [Current calibration](docs/CALIBRATION.md)
 
 > [!IMPORTANT]
 > **Full includes all 160 task evals plus agent-generated E2E.** Even the complete
@@ -91,7 +91,7 @@ sh ci/evals/evals.sh run \
 
 ```sh
 sh ci/evals/evals.sh run \
-  --suite smoketest --agent claude \
+  --suite smoketest --agent claude --grader-model sonnet --grader-budget-usd 1 \
   --run "smoketest-claude-$(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
@@ -109,7 +109,7 @@ sh ci/evals/evals.sh run \
 
 ```sh
 sh ci/evals/evals.sh run \
-  --suite minimal --agent claude \
+  --suite minimal --agent claude --grader-model sonnet --grader-budget-usd 1 \
   --run "minimal-claude-$(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
@@ -127,7 +127,7 @@ sh ci/evals/evals.sh run \
 
 ```sh
 sh ci/evals/evals.sh run \
-  --suite full --agent claude \
+  --suite full --agent claude --grader codex --grader-budget-usd 1 \
   --run "full-claude-$(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
@@ -293,10 +293,10 @@ The run command succeeds only when all selected first attempts and required work
 checks pass. An incomplete report does not establish an overall skill-quality score.
 
 > [!NOTE]
-> The unified runner is verified offline. Live validation of the integrated E2E path
-> and current grader calibration remain pending. Earlier saved campaigns cover the
-> task bank; they do not establish a complete unified full score. See
-> [validation status](docs/STATUS.md).
+> Current calibration passes all 414 challenges with Codex, and the smoketest/minimal
+> selections with Sonnet. Sonnet is not qualified for full. Calibration validates
+> graders and reference expectations; independent case review and a fresh full
+> candidate campaign remain pending. See [current calibration](docs/CALIBRATION.md).
 
 ## Cleanup and recovery
 
@@ -333,7 +333,8 @@ ci/evals/
 | [Case format](docs/CASE_FORMAT.md) | Creating and maintaining evals |
 | [Task coverage](docs/COVERAGE.md) | Independent task-bank coverage |
 | [E2E coverage](docs/E2E_COVERAGE.md) | Runtime scenarios, feature groups and limits |
-| [Validation status](docs/STATUS.md) | Historical reports and pending calibration |
+| [Current calibration](docs/CALIBRATION.md) | Qualified grader profiles and reference/runtime checks |
+| [Validation status](docs/STATUS.md) | Current limitations and historical candidate campaigns |
 | [Historical design](docs/history/README.md) | Original research and rollout notes |
 
 The older four-case harness is retired; its behavioral requirements remain in the
